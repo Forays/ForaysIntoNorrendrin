@@ -1,0 +1,127 @@
+
+Combat  - Measures your deadliness with blade and bow.
+          Each level grants +1 damage and +1% to hit with all
+          weapons.
+
+Defense - Measures your ability to avoid physical harm.
+          Each level adds 3% to your chance to avoid attacks.
+
+Magic   - Measures your ability to cast spells.
+          Each level grants another spell and increases your
+          mana by 5.
+
+Spirit  - Measures your willpower and ability to tap into your
+          emotions, whether devotion or rage.
+          Each level increases your chance to ignore certain
+          status effects by 8%.
+
+Stealth - Measures your ability to avoid notice.
+          Each level increases your chance to remain unseen by
+          enemies.
+
+
+Combat feats:
+
+Quick draw - Switch from a melee weapon to another weapon
+             instantly. (You can fire arrows without first
+             switching to your bow. However, putting your bow
+             away still takes time.)
+
+Whirlwind style - When you take a step, you automatically
+                  attack every enemy still adjacent to you.
+
+Lunge - Leap from one space away and attack your target with
+        perfect accuracy. The intervening space must be
+        unoccupied.
+
+Drive back - Enemies must yield ground in order to avoid your
+             attacks, and cornered enemies are more vulnerable
+             to critical hits. (When your target has nowhere
+             to run, your attacks won't miss.)
+
+
+
+Defense feats:
+
+Armor mastery - When your armor blocks an enemy's attack,
+                you're twice as likely to score a critical hit
+                on it next turn. The exhaustion total at which
+                armor becomes too heavy is increased by 25%.
+
+Cunning dodge - Relying on mobility and tricks, you can
+                entirely avoid the first attack of each foe
+                you face.
+
+Deflect attack - When an enemy attacks you, you might deflect
+                 the attack to any other enemy next to you.
+                 (The two enemies don't need to be adjacent to
+                 one another.)
+
+Tumble - Move up to two spaces while avoiding arrows. Takes two
+         turns to perform.
+
+
+
+Magic feats:
+
+Master's edge - The first offensive spell you've learned is
+                empowered - it'll deal 1d6 extra damage.
+                (Affects the first spell in the list that
+                deals damage directly.)
+
+Arcane interference - When you cast a spell, nearby enemy
+                      spellcasters are stunned for a short
+                      time. Additionally, they permanently
+                      lose their ability to cast the spell
+                      you just cast.
+
+Chain casting - The mana cost of your spells is reduced by one
+                if you cast a spell last turn. (This doesn't
+                ever reduce mana costs to zero.)
+
+Force of will - Exhaustion will never make you fail an attempt
+                at casting. (Casting without mana still
+                increases your exhaustion, and you can't cast
+                if your exhaustion would exceed 100%.)
+
+
+
+Spirit feats:
+
+Conviction - Each turn you're engaged in combat (attacking or
+             being attacked) you gain 1 bonus Spirit, and
+             bonus Combat skill equal to half that, rounded up.
+
+Enduring soul - Your health recovers over time. You'll regain
+                one HP every five turns until your total health
+                is a multiple of 10.
+
+Feel no pain - When your health becomes very low (less than
+               20%), you briefly enter a state of
+               invulnerability. (For about 5 turns, you'll be
+               immune to damage, but not other effects.)
+
+Boiling blood - Taking damage briefly increases your movement
+                speed. (This effect can stack up to 5 times.
+                At 5 stacks, your speed is doubled and you are
+                immune to fire damage.)
+
+
+
+Stealth feats:
+
+Neck snap - Automatically perform a stealth kill when attacking
+            an unaware medium humanoid. (Living enemies of
+            approximately human size.)
+
+Disarm trap - Alter a trap so that you can walk past it safely
+              (but enemies still trigger it). You can use this
+              feat again to disable it entirely.
+
+Corner climb - If you're in a corner (and in the dark), enemies
+               can't see you unless they're adjacent to you.
+
+Danger sense - Once you've seen or detected an enemy, you can
+               sense where it's safe and where that enemy might
+               detect you. Your torch must be extinguished
+               while you're sneaking.

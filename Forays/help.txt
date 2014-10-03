@@ -1,0 +1,72 @@
+(Forays into Norrendrin is a roguelike game. Don't know what a
+ roguelike is? Visit roguebasin.roguelikedevelopment.org for
+ more info.)
+
+
+How to play:
+
+Important commands to remember are 'e' to examine and change
+your equipment, and 'a' to use your consumable items.
+If your health drops, press 'r' to rest - but only once per
+level!
+
+
+Your torch illuminates your surroundings, but also gives away
+your position. If you wish to avoid notice, put away your
+torch with 't'. ('t' will also bring it back out again.)
+
+
+Press tab to look at your surroundings. (Pressing escape or
+space will exit most menus and selections.)
+
+
+If you've learned a spell, you can cast it by pressing 'z'. 
+
+
+You can view and activate feats from the character screen 'c'.
+(Some feats are activated, while some are entirely passive.)
+
+
+Try switching to your bow and firing some arrows('e' to switch,
+'s' to shoot). You always have access to five different weapons
+and three different armors. 
+
+
+Remember that you don't need to kill every enemy you encounter.
+Some enemies - mostly humanoids - can carry consumable items,
+though.
+
+
+When you find stairs, you can walk down them with '>'. (It's a
+one-way trip, so don't leave anything behind!)
+
+
+Press 'f' now to switch to the command help page. (The command
+list can be accessed directly in-game by pressing '-'.)
+
+
+Command list:
+
+tab : look around                             z : cast a spell 
+r : rest to recover health and mana           c : use a feat
+t : turn your torch on/off                    s : fire an arrow
+e : view and change equipment
+
+i : view your inventory
+a : use a consumable item
+g : pick up an item                        d : drop an item
+
+> : take stairs to next level              o : operate terrain
+w : walk automatically in a direction      x : explore
+m : view map for the current level         X : travel
+
+c : view character information (and activate feats)
+p : view previous messages
+
+q : quit                             = : change options
+? : view the help screen             - : view this command list
+alt+enter : fullscreen
+
+(You can also switch weapons with 1-5 on the top row of the
+ keyboard, and armor with 8-0. You can press tab to cycle
+ between interesting targets.)

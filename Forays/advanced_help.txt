@@ -1,0 +1,40 @@
+Tips and advanced topics:
+
+Damage:
+
+Damage values are described as die rolls. For instance, a 2d6
+attack will deal damage equal to two dice with six sides each,
+added together.
+
+
+Stealth:
+
+Several factors determine whether you'll be spotted on a given
+turn: Your stealth skill, your distance from enemies, whether
+you're in darkness or light, and how long you've been within
+the sight range of enemies. 
+
+Here's the formula:
+Skill * Distance * 10  -  TurnsVisible * 5
+The result is your chance to remain unnoticed, in percentage.
+(100 and above will always succeed.)
+Darkness gives a +2 bonus to stealth skill in this calculation.
+Animals and some other foes are harder to sneak past - they use
+a 5 instead of a 10 in the formula.
+
+Because of this, you're much more likely to remain unseen
+if you stay two or more spaces away. Enemies automatically see
+you if you're carrying a light source, or if you're wearing
+plate mail and simply standing in the light.
+
+
+Spell failure formula:
+
+The chance for a spell to fail depends upon your exhaustion
+and the spell's tier. The percentage is equal to:
+Exhaustion - 20 * (6 - Tier)
+
+
+
+
+With special thanks to the people of #rgrd and -ot.

@@ -1,0 +1,161 @@
+Potions:
+
+Potion of healing - This invaluable elixir will instantly
+  restore you to full health.
+
+Potion of regeneration - The potent healing magic in this
+  potion will steadily grant you health for 100 turns.
+
+Potion of stoneform - This potion will change you temporarily
+  to unliving stone, granting a slight resistance to all
+  damage. You'll no longer be able to catch fire,
+  and no toxin, gas, or potion will affect you.
+
+Potion of vampirism - Consuming this potion will grant many of
+  the powers of a true vampire. You'll fly and drain life from
+  living enemies, but light will leave you vulnerable.
+
+Potion of brutish strength - Drinking this potion grants the
+  strength of a juggernaut. For a short time you'll be able to
+  smash through various dungeon features. Additionally, your
+  attacks will deal maximum damage and knock foes back 5
+  spaces, and you'll keep moving afterward if possible.
+
+Potion of roots - Drinking this potion will cause thick roots
+  to grow from you, holding you tightly to the ground and
+  providing defense against attacks.
+
+Potion of haste - Drinking this potion will double your
+  movement speed and greatly enhance your reflexes. You'll
+  sometimes dodge an attack by leaping to a nearby space.
+  You're more likely to dodge in an open area, but be careful
+  around dangerous terrain.
+
+Potion of silence - This potion will cause you to radiate an
+  aura of silence, preventing all sounds within 2 spaces. This
+  can help you remain stealthy, but leaves you unable to speak
+  words of magic.
+
+Potion of cloaking - This potion will cover you in shadows, 
+  causing you to fade to invisibility while in darkness.
+
+Potion of mystic mind - This potion will expand your mind,
+  allowing you to sense foes no matter where they are, and
+  granting immunity to stuns, sleep, rage, confusion, and fear.
+
+
+Scrolls:
+
+Scroll of blinking - This scroll will teleport you a short
+  distance randomly.
+
+Scroll of passage - This scroll will move you to the other side
+  of an adjacent wall (but not diagonally).
+
+Scroll of time - Reading this scroll will halt the flow of time
+  for a single turn, allowing you to take an extra action.
+
+Scroll of knowledge - Reading this scroll will grant knowledge
+  of the items in your pack, and of the current level,
+  including secret doors and traps.
+
+Scroll of sunlight - This scroll fills the level with sunlight,
+  illuminating every corner of the dungeon.
+
+Scroll of darkness - This scroll covers the dungeon in a
+  blanket of darkness that suppresses all light.
+
+Scroll of renewal - This scroll's magic will strip negative
+  effects from your weapons & armor, charge any wands in your
+  possession, and remove any slime or oil covering you.
+
+Scroll of calling - This scroll's magic will find the nearest
+  foe and transport it next to you. Immobile creatures are
+  immune to this effect.
+
+Scroll of trap clearing - This scroll will cause all traps
+  within 12 spaces to be triggered simultaneously.
+
+Scroll of enchantment - This potent scroll will impart a
+  permanent magical effect on the weapon you're holding.
+
+Scroll of thunderclap - When this scroll is read, a cacophonous
+  crash of thunder sweeps outward, shattering fragile objects
+  like potions & cracked walls, and damaging & stunning foes.
+
+Scroll of fire ring - This scroll will surround you with a ring
+  of fire, just far enough to avoid its heat...if you stand
+  still.
+
+Scroll of rage - When read, this scroll radiates a wave of fury
+  over those nearby. Those affected will attack anything
+  nearest to them, friend or foe.
+
+
+Orbs:
+
+Orb of freezing - Breaking this orb will encase nearby entities
+  in ice.
+
+Orb of flames - Leaping flames will pour from this orb when it
+  shatters.
+
+Orb of fog - Thick fog will expand from this orb when it
+  breaks, blocking sight and reducing accuracy.
+
+Orb of detonation - On impact, this orb will explode violently,
+  inflicting great damage on its surroundings.
+
+Orb of breaching - This orb will temporarily lower nearby
+  walls, which will slowly return to their original state.
+
+Orb of shielding - This orb will create a zone of protection,
+  shielding entities within for several turns.
+
+Orb of teleportal - Releasing this orb's energy will create an
+  unstable rift. Creatures stepping into the rift will be
+  transported elsewhere in the dungeon.
+
+Orb of pain - Anything caught in this orb's area of effect will
+  become vulnerable to extra damage.
+
+Orb of blades - This orb's magic manifests in the form of
+  several flying blades. These animated weapons fly quickly and
+  attack anything nearby.
+
+Orb of confusion - Breaking this orb will release a befuddling
+  gas, causing those affected to move and attack in random
+  directions.
+
+
+Wands:
+
+Wand of dust storm - When zapped, this wand creates a billowing
+  cloud of thick blinding dust, so heavy that it can extinguish
+  flames.
+
+Wand of invisibility - This wand will render its target
+  invisible. Carrying a light source (or being on fire) will
+  still reveal an invisible being's location.
+
+Wand of flesh to fire - The target of this wand undergoes a
+  grisly transfiguration as part of its substance turns to
+  fire! It'll lose half of its current health and burst into
+  flames.
+
+Wand of webs - This wand will create a line of sticky webs,
+  stretching between you and the targeted space.
+
+Wand of slumber - The target of this wand will fall asleep (or
+  become dormant, in the case of nonliving creatures) for a
+  while. Sleepers will awaken upon taking damage as usual.
+
+Wand of reach - By zapping this wand, you can make a melee
+  attack at range (with your current weapon) against your
+  chosen target.
+
+Wand of telekinesis - After zapping this wand at your target,
+  you can throw it forcefully. You can throw items, monsters,
+  terrain features, and even yourself.
+
+

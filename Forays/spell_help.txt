@@ -1,0 +1,79 @@
+Spell tier 1:
+
+Radiance -- Increases your target's light radius by 2, then
+            deals 1d6 damage to enemies within its new radius.
+
+Force palm -- Deals 1d6 magic damage to an adjacent target
+              and knocks it backward 1 space.
+
+Detect movement -- Enemy movement will be indicated on the map.
+
+Flying leap -- Fly and move at double speed for a few turns.
+
+
+
+Spell tier 2:
+
+Mercurial sphere -- Deals 2d6 magic damage at range, and
+                    bounces 3 times (within 3 spaces).
+
+Grease -- Covers the target and adjacent tiles with oil.
+
+Blink -- Teleports you up to 8 spaces away (and at least
+         3 spaces away).
+
+Freeze -- Encases your target in ice until they can break out.
+
+
+
+Spell tier 3:
+
+Scorch -- Sets your target on fire. (Burning lasts for several
+          turns and deals 1d6 damage each turn.)
+
+Lightning bolt -- A bolt leaps between foes (and some types of
+                  terrain), dealing 3d6 damage.
+
+Magic hammer -- Deals 4d6 magic damage to an adjacent target,
+                stunning it for 2 turns.
+
+Portal -- Creates a portal. The first one won't be active until
+          you create a second one. Each new portal will be
+          linked with the previous ones.
+
+
+
+Spell tier 4:
+
+Passage -- Travel all the way through an adjacent wall.
+
+Amnesia -- Causes an adjacent enemy to forget your presence
+           and do nothing for 4-5 turns.
+
+Stone spikes -- Radius 2. Stalagmites appear, dealing 4d6
+                damage to enemies in their area.
+
+Shadowsight -- Grants low-light vision and increases
+               perception in darkness.
+
+
+
+Spell tier 5:
+
+Blizzard -- A freezing storm deals 5d6 cold damage to each
+            enemy within 5 spaces and slows them for
+            several turns.
+
+Collapse -- Part of the dungeon crashes down on the chosen
+            spot, dealing 3d6 damage to adjacent enemies.
+            Adjacent walls will crack or break into rubble
+            or gravel. A wall targeted directly will always
+            be turned to gravel.
+            
+Doom -- Deals 4d6 magic damage and leaves the target vulnerable
+        for several turns.
+
+Telekinesis -- Target and throw enemies, items, many terrain
+               features, or yourself. Most objects (except for
+               items) will deal 3d6 damage on impact.
+
