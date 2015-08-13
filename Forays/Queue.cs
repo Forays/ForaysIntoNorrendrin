@@ -9,6 +9,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using Utilities;
+using PosArrays;
 namespace Forays{
 	public class Queue{
 		public LinkedList<Event> list;
@@ -207,7 +208,7 @@ namespace Forays{
 			dead=false;
 			tiebreaker = Q.Tiebreaker;
 		}
-		public Event(PhysicalObject target_,int delay_,AttrType attr_,int value_,string msg_){
+		/*public Event(PhysicalObject target_,int delay_,AttrType attr_,int value_,string msg_){
 			target=target_;
 			delay=delay_;
 			type=EventType.REMOVE_ATTR;
@@ -218,7 +219,7 @@ namespace Forays{
 			time_created=Q.turn;
 			dead=false;
 			tiebreaker = Q.Tiebreaker;
-		}
+		}*/
 		public Event(PhysicalObject target_,int delay_,AttrType attr_,string msg_,params PhysicalObject[] objs){
 			target=target_;
 			delay=delay_;
@@ -285,7 +286,7 @@ namespace Forays{
 			dead=false;
 			tiebreaker = Q.Tiebreaker;
 		}
-		public Event(int delay_,string msg_,params PhysicalObject[] objs){
+		/*public Event(int delay_,string msg_,params PhysicalObject[] objs){
 			target=null;
 			delay=delay_;
 			type=EventType.ANY_EVENT;
@@ -299,7 +300,7 @@ namespace Forays{
 			time_created=Q.turn;
 			dead=false;
 			tiebreaker = Q.Tiebreaker;
-		}
+		}*/
 		public Event(List<Tile> area_,int delay_,EventType type_){
 			target=null;
 			/*area = new List<Tile>(); //todo: reverted this. hope it works.
@@ -330,7 +331,7 @@ namespace Forays{
 			dead=false;
 			tiebreaker = Q.Tiebreaker;
 		}
-		public Event(List<Tile> area_,int delay_,EventType type_,string msg_,params PhysicalObject[] objs){
+		/*public Event(List<Tile> area_,int delay_,EventType type_,string msg_,params PhysicalObject[] objs){
 			target=null;
 			area=area_;
 			delay=delay_;
@@ -345,7 +346,7 @@ namespace Forays{
 			time_created=Q.turn;
 			dead=false;
 			tiebreaker = Q.Tiebreaker;
-		}
+		}*/
 		public Event(PhysicalObject target_,List<Tile> area_,int delay_,EventType type_){
 			target=target_;
 			area=area_;
@@ -618,7 +619,7 @@ namespace Forays{
 							if(target != null){ //if it has a stolen item
 								Tile tile = null;
 								tile = area.Where(t => t.actor() == null && t.DistanceFrom(player) >= 2
-								                  && t.HasLOE(player) && t.FirstActorInLine(player) == player).Random();
+									&& t.HasLOE(player) && t.FirstActorInLine(player) == player).RandomOrDefault();
 								if(tile != null){
 									Actor temporary = new Actor(ActorType.POLTERGEIST,"something",'G',Color.DarkGreen,1,1,0,0);
 									temporary.a_name = "something";
@@ -668,7 +669,7 @@ namespace Forays{
 									else{
 										Tile tile = null; //check for items to throw...
 										tile = area.Where(t => t.inv != null && t.actor() == null && t.DistanceFrom(player) >= 2
-										                  && t.HasLOE(player) && t.FirstActorInLine(player) == player).Random();
+											&& t.HasLOE(player) && t.FirstActorInLine(player) == player).RandomOrDefault();
 										if(tile != null){
 											Actor temporary = new Actor(ActorType.POLTERGEIST,"something",'G',Color.DarkGreen,1,1,0,0);
 											temporary.a_name = "something";
@@ -850,7 +851,7 @@ namespace Forays{
 					i.other_data--;
 					if(i.other_data == 0){
 						Tile t = null;
-						if(U.BoundsCheck(i.row,i.col) && M.tile[i.p].inv == i){
+						if(M.tile.BoundsCheck(i.row,i.col) && M.tile[i.p].inv == i){
 							t = M.tile[i.p];
 							t.inv = null;
 						}
@@ -874,7 +875,7 @@ namespace Forays{
 					}
 					else{
 						Tile t = null;
-						if(U.BoundsCheck(i.row,i.col) && M.tile[i.p].inv == i){
+						if(M.tile.BoundsCheck(i.row,i.col) && M.tile[i.p].inv == i){
 							t = M.tile[i.p];
 						}
 						else{
@@ -974,7 +975,7 @@ namespace Forays{
 						target.actor().ApplyBurning();
 					}
 					for(int i=0;i<4;++i){
-						Tile t = target.TilesWithinDistance(2).Where(x=>target.HasLOE(x)).Random();
+						Tile t = target.TilesWithinDistance(2).Where(x=>target.HasLOE(x)).RandomOrDefault();
 						if(t != null){
 							if(t.passable){
 								t.AddFeature(FeatureType.FIRE);
@@ -1370,7 +1371,7 @@ namespace Forays{
 							}
 							List<int> valid_circles = new List<int>();
 							for(int i=0;i<5;++i){
-								if(M.FinalLevelSummoningCircle(i).PositionsWithinDistance(2).Any(x=>M.tile[x].Is(TileType.DEMONIC_IDOL))){
+								if(M.FinalLevelSummoningCircle(i).PositionsWithinDistance(2,M.tile).Any(x=>M.tile[x].Is(TileType.DEMONIC_IDOL))){
 									valid_circles.Add(i);
 								}
 							}
@@ -1620,11 +1621,11 @@ namespace Forays{
 						Tile dest = null;
 						if(a != null && !a.HasAttr(AttrType.JUST_TELEPORTED,AttrType.IMMOBILE)){
 							if(area != null){
-								dest = area.Random();
+								dest = area.RandomOrDefault();
 							}
 							else{
 								List<Tile> tiles = M.AllTiles().Where(x => x.passable && x.actor() == null && t.ApproximateEuclideanDistanceFromX10(x) >= 45);
-								dest = tiles.Random();
+								dest = tiles.RandomOrDefault();
 							}
 							if(dest != null){
 								a.RefreshDuration(AttrType.JUST_TELEPORTED,101);
@@ -1657,7 +1658,7 @@ namespace Forays{
 						}
 						if(t.inv != null && t.Is(FeatureType.TELEPORTAL)){
 							List<Tile> tiles = M.AllTiles().Where(x => x.passable && x.inv == null && t.ApproximateEuclideanDistanceFromX10(x) >= 45);
-							dest = tiles.Random();
+							dest = tiles.RandomOrDefault();
 							if(dest != null){
 								Item i = t.inv;
 								bool visible = false;
@@ -1711,7 +1712,7 @@ namespace Forays{
 				case EventType.BREACH:
 				{
 					if(!R.OneIn(3)){
-						Tile t = area.WhereGreatest(x=>x.DistanceFrom(target)).Random();
+						Tile t = area.WhereGreatest(x=>x.DistanceFrom(target)).RandomOrDefault();
 						if(t != null){
 							t.Toggle(null);
 							if(t.actor() != null || t.inv != null){
@@ -1876,7 +1877,7 @@ namespace Forays{
 					if(new_area.Count > 0){
 						Q.Add(new Event(new_area,100,EventType.POPPIES));
 						if(recalculate_distance_map){
-							M.poppy_distance_map = M.tile.GetDijkstraMap(x=>!M.tile[x].Is(TileType.POPPY_FIELD),x=>M.tile[x].passable && !M.tile[x].Is(TileType.POPPY_FIELD));
+							M.CalculatePoppyDistanceMap();
 						}
 					}
 					break;

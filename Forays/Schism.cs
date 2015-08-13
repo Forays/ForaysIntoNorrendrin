@@ -1,4 +1,4 @@
-/*Copyright (c) 2013-2014 Derrick Creamer
+/*Copyright (c) 2013-2015 Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -55,6 +55,7 @@ mark as background?
  */
 //using System.IO;
 //using ParabolaConsoleLib;
+using PosArrays;
 using Utilities;
 /*
 
@@ -1299,8 +1300,8 @@ namespace SchismDungeonGenerator{
 						if(!map[i,j].IsPassable()){
 							pos p = new pos(i,j);
 							bool make_wall = true;
-							foreach(pos neighbor in p.PositionsAtDistance(1)){
-								if(neighbor.BoundsCheck(map) && num[neighbor.row,neighbor.col] == biggest_area){
+							foreach(pos neighbor in p.PositionsAtDistance(1,map)){
+								if(num[neighbor.row,neighbor.col] == biggest_area){
 									make_wall = false;
 									break;
 								}
@@ -1860,13 +1861,14 @@ namespace SchismDungeonGenerator{
 					for(int j=0;j<rw;++j){
 						if(room[i,j].IsPassable()){
 							foreach(pos neighbor in new pos(i,j).PositionsWithinDistance(1)){
+								pos neighbor_offset = new pos(p.row + neighbor.row,p.col + neighbor.col);
 								if(!force_cardinal_direction_connection){ //if this bool is set, check later.
-									if(map[p.row+neighbor.row,p.col+neighbor.col].IsPassable()){
+									if(map.BoundsCheck(neighbor_offset) && map[neighbor_offset].IsPassable()){
 										bad_connection = false;
 									}
 								}
 								if(connected.BoundsCheck(neighbor)){
-									connected[neighbor] = map[p.row+neighbor.row,p.col+neighbor.col];
+									connected[neighbor] = map[neighbor_offset];
 								}
 							}
 							if(force_cardinal_direction_connection){
@@ -2326,7 +2328,7 @@ namespace SchismDungeonGenerator{
 									next = next.PosInDir(dir);
 								}
 							}
-							int valid_dir = valid_dirs.Random();
+							int valid_dir = valid_dirs.RandomOrDefault();
 							pos next2 = p.PosInDir(valid_dir);
 							List<pos> new_corridor = new List<pos>{p};
 							while(true){
@@ -2379,7 +2381,7 @@ namespace SchismDungeonGenerator{
 							for(int j=0;j<W;++j){
 								pos p = new pos(i,j);
 								if(in_list[p]){
-									foreach(pos neighbor in p.PositionsAtDistance(1)){
+									foreach(pos neighbor in p.PositionsAtDistance(1,in_list)){
 										if(!in_list[neighbor]){
 											frontier.Add(p);
 											break;
@@ -2565,7 +2567,7 @@ namespace SchismDungeonGenerator{
 				bool good = true;
 				foreach(pos p in edge_positions){
 					pos n = new pos(p.row + new_offset.row,p.col + new_offset.col);
-					foreach(pos neighbor in n.PositionsWithinDistance(1,false,true)){
+					foreach(pos neighbor in n.PositionsAtDistance(1)){
 						if(!neighbor.BoundsCheck(map,true) || !map[neighbor].IsWall()){
 							good = false;
 							break;
@@ -2687,10 +2689,10 @@ namespace SchismDungeonGenerator{
 		}
 		public bool CreateCaveCorridor(int percent_coverage){
 			return CreateTwistyCave(false,percent_coverage,80,(x,density,cells)=>{
-				foreach(pos n2 in x.PositionsWithinDistance(8)){
+				foreach(pos n2 in x.PositionsWithinDistance(8,density)){
 					density[n2]++;
 				}
-				foreach(pos n2 in x.PositionsWithinDistance(4)){
+				foreach(pos n2 in x.PositionsWithinDistance(4,density)){
 					density[n2]++;
 				}
 			});
@@ -2759,7 +2761,7 @@ namespace SchismDungeonGenerator{
 						for(int i=start_r;i<=end_r;++i){
 							for(int j=start_c;j<=end_c;++j){
 								pos p = new pos(i,j);
-								if(!p.PositionsWithinDistance(minimum_distance_from_wall-1).All(x=>list.Contains(x))){
+								if(!p.PositionsWithinDistance(minimum_distance_from_wall-1,room.map).All(x=>list.Contains(x))){ //todo: I probably broke this. 
 									room[i-start_r+1,j-start_c+1] = CellType.RoomInterior;
 								}
 							}
@@ -3056,7 +3058,7 @@ namespace SchismDungeonGenerator{
 						for(int j=0;j<W;++j){
 							pos p = new pos(i,j);
 							if(in_list[p]){
-								foreach(pos neighbor in p.PositionsAtDistance(1)){
+								foreach(pos neighbor in p.PositionsAtDistance(1,in_list)){
 									if(!in_list[neighbor]){
 										frontier.Add(p);
 										break;
@@ -3206,18 +3208,18 @@ namespace SchismDungeonGenerator{
 			}
 		}
 		public void MarkInterestingLocationsNonRectangular(){
-			var dijkstra = map.GetDijkstraMap(x=>!map[x].IsPassable(),x=>!map[x].IsPassable());
+			var dijkstra = map.GetDijkstraMap(x=>!map[x].IsPassable(),x=>false);
 			PosArray<int> values = new PosArray<int>(H,W);
 			for(int i=0;i<H;++i){
 				for(int j=0;j<W;++j){
 					if(dijkstra[i,j].IsValidDijkstraValue() && dijkstra[i,j] > 1){
 						values[i,j] = dijkstra[i,j] * 4;
-						foreach(pos p in new pos(i,j).PositionsAtDistance(1)){
+						foreach(pos p in new pos(i,j).PositionsAtDistance(1,dijkstra)){
 							if(dijkstra[p].IsValidDijkstraValue()){
 								values[i,j] += dijkstra[p] * 2;
 							}
 						}
-						foreach(pos p in new pos(i,j).PositionsAtDistance(2)){
+						foreach(pos p in new pos(i,j).PositionsAtDistance(2,dijkstra)){
 							if(dijkstra[p].IsValidDijkstraValue()){
 								values[i,j] += dijkstra[p];
 							}
@@ -3228,7 +3230,7 @@ namespace SchismDungeonGenerator{
 			for(int i=0;i<H;++i){
 				for(int j=0;j<W;++j){
 					if(values[i,j] > 0){
-						if(!new pos(i,j).PositionsAtDistance(1).Any(x=>values[x] > values[i,j])){
+						if(!new pos(i,j).PositionsAtDistance(1,values).Any(x=>values[x] > values[i,j])){
 							map[i,j] = CellType.InterestingLocation;
 						}
 					}
@@ -3447,7 +3449,7 @@ namespace SchismDungeonGenerator{
 				for(int j=1;j<W-1;++j){
 					pos p = new pos(i,j);
 					bool good = true;
-					foreach(pos neighbor in p.PositionsWithinDistance(1)){ //assumes at least 3x3 rooms. this might need to change in the future.
+					foreach(pos neighbor in p.PositionsWithinDistance(1,map)){ //assumes at least 3x3 rooms. this might need to change in the future.
 						if(!map[neighbor].IsRoomType()){
 							good = false;
 							break;
@@ -3481,11 +3483,11 @@ namespace SchismDungeonGenerator{
 				++k;
 			}
 			CellType[] away = stay_away_from.ToArray();
-			PosArray<int> distance = map.GetDijkstraMap(x=>map[x].Is(away),x=>map[x].Is(away),x=>1-source_values[map[x]],x=>1);
+			PosArray<int> distance = map.GetDijkstraMap(x=>map[x].Is(away),x=>1-source_values[map[x]],x=>false,x=>1);
 			List<pos> remaining = map.AllPositions();
 			k = 0;
 			foreach(CellType ct in stay_near){
-				PosArray<int> nearby = map.GetDijkstraMap(x=>false,x=>map[x] == ct);
+				PosArray<int> nearby = map.GetDijkstraMap(x=>map[x] == ct,x=>false);
 				for(int i=0;i<H;++i){
 					for(int j=0;j<W;++j){
 						if(nearby[i,j] > max_distance_away_from[k]){
@@ -3702,7 +3704,7 @@ namespace SchismExtensionMethods{
 			}
 			return max_count;
 		}
-		public static bool HasAdjacentWhere(this pos p,U.BooleanPositionDelegate condition){
+		public static bool HasAdjacentWhere(this pos p,U.BooleanPositionDelegate condition){ //you probably want to do bounds-checking if you use this one.
 			foreach(pos neighbor in p.PositionsAtDistance(1)){
 				if(condition(neighbor)){
 					return true;

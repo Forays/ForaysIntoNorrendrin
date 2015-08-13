@@ -13,9 +13,10 @@ using System.Threading;
 using OpenTK.Input;
 using OpenTK.Graphics;
 using Utilities;
+using PosArrays;
 namespace Forays{
 	public static class Global{
-		public const string VERSION = "version 0.8.3 ";
+		public const string VERSION = "version 0.8.X ";
 		public static bool LINUX = false;
 		public static bool GRAPHICAL = false;
 		public const int SCREEN_H = 25;
@@ -886,12 +887,6 @@ namespace Forays{
 		}
 	}
 	public static class Extensions{
-		public static T Last<T>(this List<T> l){ //note that this doesn't work the way I wanted it to - 
-			if(l.Count == 0){ // you can't assign to list.Last()
-				return default(T);
-			}
-			return l[l.Count-1];
-		}
 		public static List<string> GetWordWrappedList(this string s,int max_length){ //max_length MUST be longer than any single word in the string
 			List<string> result = new List<string>();
 			while(s.Length > max_length){
@@ -1073,7 +1068,7 @@ namespace Forays{
 		public static void StopAtBlockingTerrain(this List<pos> path){
 			int i = 0;
 			foreach(pos p in path){
-				if(!Actor.M.tile[p].passable && !Actor.M.tile[p].IsDoorType(false)){
+				if(Actor.M.tile[p].BlocksConnectivityOfMap(false)){
 					break;
 				}
 				++i;
@@ -1082,12 +1077,24 @@ namespace Forays{
 				path.RemoveRange(i,path.Count - i);
 			}
 		}
-		public static List<pos> SharedNeighbors(this pos p,pos other,bool return_origins_if_adjacent){
-			List<pos> result = p.PositionsWithinDistance(1,!return_origins_if_adjacent,true);
-			List<pos> others = other.PositionsWithinDistance(1,!return_origins_if_adjacent,true);
+		public static void StopAtUnseenTerrain(this List<pos> path){
+			int i = 0;
+			foreach(pos p in path){
+				if(!Actor.M.tile[p].seen){
+					break;
+				}
+				++i;
+			}
+			if(i < path.Count){
+				path.RemoveRange(i,path.Count - i);
+			}
+		}
+		/*public static List<pos> SharedNeighbors(this pos p,pos other,bool return_origins_if_adjacent){
+			List<pos> result = p.PositionsWithinDistance(1,!return_origins_if_adjacent);
+			List<pos> others = other.PositionsWithinDistance(1,!return_origins_if_adjacent);
 			result.RemoveWhere(x=>!others.Contains(x));
 			return result;
-		}
+		}*/
 		public static float[] GetFloatValues(this Color color){
 			Color4 c = GLGame.ConvertColor(color);
 			return new float[]{c.R,c.G,c.B,c.A};

@@ -9,6 +9,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using PosArrays;
 using Utilities;
 namespace Forays{
 	public class Item : PhysicalObject{
@@ -160,7 +161,7 @@ namespace Forays{
 		}
 		public static Item Create(ConsumableType type,int r,int c){
 			Item i = null;
-			if(U.BoundsCheck(r,c)){
+			if(M.tile.BoundsCheck(r,c)){
 				if(M.tile[r,c].inv == null){
 					i = new Item(proto[type],r,c);
 					if(i.light_radius > 0){
@@ -276,7 +277,7 @@ namespace Forays{
 			case 0:
 				return "buggy item";
 			case 1:
-				if(!consider_low_light || !U.BoundsCheck(row,col) || tile().IsLit()){
+				if(!consider_low_light || !M.tile.BoundsCheck(row,col) || tile().IsLit()){
 					if(identified[type]){
 						result = name;
 					}
@@ -299,7 +300,7 @@ namespace Forays{
 					return NameOfItemType();
 				}
 			default:
-				if(!consider_low_light || !U.BoundsCheck(row,col) || tile().IsLit()){
+				if(!consider_low_light || !M.tile.BoundsCheck(row,col) || tile().IsLit()){
 					if(identified[type]){
 						result = name;
 					}
@@ -334,7 +335,7 @@ namespace Forays{
 			case 0:
 				return "a buggy item";
 			case 1:
-				if(!consider_low_light || !U.BoundsCheck(row,col) || tile().IsLit()){
+				if(!consider_low_light || !M.tile.BoundsCheck(row,col) || tile().IsLit()){
 					if(identified[type]){
 						result = name;
 					}
@@ -379,7 +380,7 @@ namespace Forays{
 					}
 				}
 			default:
-				if(!consider_low_light || !U.BoundsCheck(row,col) || tile().IsLit()){
+				if(!consider_low_light || !M.tile.BoundsCheck(row,col) || tile().IsLit()){
 					if(identified[type]){
 						result = name;
 					}
@@ -414,7 +415,7 @@ namespace Forays{
 			case 0:
 				return "the buggy item";
 			case 1:
-				if(!consider_low_light || !U.BoundsCheck(row,col) || tile().IsLit()){
+				if(!consider_low_light || !M.tile.BoundsCheck(row,col) || tile().IsLit()){
 					if(identified[type]){
 						result = the_name;
 					}
@@ -437,7 +438,7 @@ namespace Forays{
 					return "the " + NameOfItemType();
 				}
 			default:
-				if(!consider_low_light || !U.BoundsCheck(row,col) || tile().IsLit()){
+				if(!consider_low_light || !M.tile.BoundsCheck(row,col) || tile().IsLit()){
 					if(identified[type]){
 						result = name;
 					}
@@ -654,7 +655,7 @@ namespace Forays{
 					}
 				}
 			}
-			return list.Random();
+			return list.RandomOrDefault();
 		}
 		public static ConsumableType RandomChestItem(){ //ignores item rarity and includes magic trinkets
 			List<ConsumableType> list = new List<ConsumableType>();
@@ -668,7 +669,7 @@ namespace Forays{
 					list.Add(ConsumableType.MAGIC_TRINKET);
 				}
 			}
-			return list.Random();
+			return list.RandomOrDefault();
 		}
 		public bool IsBreakable(){
 			if(NameOfItemType() == "potion" || NameOfItemType() == "orb"){
@@ -848,13 +849,13 @@ namespace Forays{
 						}
 					}
 				}
-				if(user.HasAttr(AttrType.LIGHT_SENSITIVE)){ //hacky way to detect vampirism
+				if(user.HasAttr(AttrType.PSEUDO_VAMPIRIC)){
 					user.attrs[AttrType.LIGHT_SENSITIVE] = 0;
 					user.attrs[AttrType.FLYING] = 0;
-					user.attrs[AttrType.LIFE_DRAIN_HIT] = 0; //this will break if the player can gain these from anything else
+					user.attrs[AttrType.PSEUDO_VAMPIRIC] = 0;
 					Q.KillEvents(user,AttrType.LIGHT_SENSITIVE);
 					Q.KillEvents(user,AttrType.FLYING);
-					Q.KillEvents(user,AttrType.LIFE_DRAIN_HIT);
+					Q.KillEvents(user,AttrType.PSEUDO_VAMPIRIC);
 					B.Add(user.YouAre() + " no longer vampiric. ",user);
 				}
 				if(user.HasAttr(AttrType.ROOTS)){
@@ -900,7 +901,7 @@ namespace Forays{
 				int duration = R.Roll(2,20) + 20;
 				user.RefreshDuration(AttrType.LIGHT_SENSITIVE,duration*100);
 				user.RefreshDuration(AttrType.FLYING,duration*100);
-				user.RefreshDuration(AttrType.LIFE_DRAIN_HIT,duration*100,user.YouAre() + " no longer vampiric. ",user);
+				user.RefreshDuration(AttrType.PSEUDO_VAMPIRIC,duration*100,user.YouAre() + " no longer vampiric. ",user);
 				if(user == player){
 					Help.TutorialTip(TutorialTopic.Vampirism);
 				}
@@ -2244,7 +2245,7 @@ namespace Forays{
 				line = user.GetTargetTile(12,radius,false,!(never_target_enemies && identified[type]));
 			}
 			if(line != null){
-				Tile t = line.Last();
+				Tile t = line.LastOrDefault();
 				Tile prev = line.LastBeforeSolidTile();
 				Actor first = null;
 				bool trigger_trap = true;
@@ -2528,17 +2529,17 @@ namespace Forays{
 		public AttackInfo Attack(){
 			switch(type){
 			case WeaponType.SWORD:
-				return new AttackInfo(100,2,CriticalEffect.PERCENT_DAMAGE,"& hit *");
+				return new AttackInfo(100,2,AttackEffect.PERCENT_DAMAGE,"& hit *");
 			case WeaponType.MACE:
-				return new AttackInfo(100,2,CriticalEffect.KNOCKBACK,"& hit *");
+				return new AttackInfo(100,2,AttackEffect.KNOCKBACK,"& hit *");
 			case WeaponType.DAGGER:
-				return new AttackInfo(100,2,CriticalEffect.STUN,"& hit *");
+				return new AttackInfo(100,2,AttackEffect.STUN,"& hit *");
 			case WeaponType.STAFF:
-				return new AttackInfo(100,2,CriticalEffect.TRIP,"& hit *");
+				return new AttackInfo(100,2,AttackEffect.TRIP,"& hit *");
 			case WeaponType.BOW: //bow's melee damage
-				return new AttackInfo(100,1,CriticalEffect.NO_CRIT,"& hit *");
+				return new AttackInfo(100,1,AttackEffect.NO_CRIT,"& hit *");
 			default:
-				return new AttackInfo(100,0,CriticalEffect.NO_CRIT,"error");
+				return new AttackInfo(100,0,AttackEffect.NO_CRIT,"error");
 			}
 		}
 		public override string ToString(){

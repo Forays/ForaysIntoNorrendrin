@@ -129,11 +129,11 @@ namespace Forays{
 			int lines = str.Count;
 			bool repeated_message = false;
 			string repeated_string = "";
-			if(str.Last() == ""){
+			if(str.LastOrDefault() == ""){
 				--lines;
 			}
 			else{
-				string s = str.Last();
+				string s = str.LastOrDefault();
 				int last = (position-1).Modulo(log_length);
 				//if(last == -1){ last = 19; }
 				string prev = log[last];
@@ -245,7 +245,7 @@ namespace Forays{
 				}
 			}
 			int lines = str.Count;
-			if(str.Last() == ""){
+			if(str.LastOrDefault() == ""){
 				--lines;
 			}
 			for(int i=0;i<3;++i){
@@ -275,7 +275,7 @@ namespace Forays{
 				}
 			}
 			if(overflow != "" || special_message == true){
-				int cursor_col = str.Last().Length + Global.MAP_OFFSET_COLS;
+				int cursor_col = str.LastOrDefault().Length + Global.MAP_OFFSET_COLS;
 				int cursor_row = Screen.CursorTop;
 				if(cursor_row > 2){
 					cursor_row = 2; //hack - attempts a quick fix for the [more] appearing at the player's row
@@ -297,17 +297,17 @@ namespace Forays{
 		}
 		public void PrintAll(){
 			Screen.ResetColors();
-			if(str.Last() != ""){
-				if(str.Last().Length > max_length-7){
+			if(str.LastOrDefault() != ""){
+				if(str.LastOrDefault().Length > max_length-7){
 					for(int i=max_length-8;i>=0;--i){
-						if(str.Last().Substring(i,1)==" "){
-							overflow = str.Last().Substring(i+1);
-							str[str.Count-1] = str.Last().Substring(0,i+1);
+						if(str.LastOrDefault().Substring(i,1)==" "){
+							overflow = str.LastOrDefault().Substring(i+1);
+							str[str.Count-1] = str.LastOrDefault().Substring(0,i+1);
 							break;
 						}
 					}
 					Print(true);
-					if(str.Last() != ""){
+					if(str.LastOrDefault() != ""){
 						Print(true);
 					}
 				}
@@ -344,12 +344,12 @@ namespace Forays{
 			num_messages = num_msgs;
 		}
 		public void AddDependingOnLastPartialMessage(string s){ //   =|
-			if(!str.Last().EndsWith(s,true,null)){
+			if(!str.LastOrDefault().EndsWith(s,true,null)){
 				Add(s);
 			}
 		}
 		public void AddIfEmpty(string s){
-			if(str.Last().Length == 0){
+			if(str.LastOrDefault().Length == 0){
 				Add(s);
 			}
 		}

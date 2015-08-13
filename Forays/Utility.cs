@@ -1,4 +1,4 @@
-/*Copyright (c) 2013-2014  Derrick Creamer
+/*Copyright (c) 2013-2015  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -8,38 +8,9 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTH
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
 using System;
 using System.Collections.Generic;
-//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v5+)
+using PosArrays;
+//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v10)
 namespace Utilities{
-	public struct pos{ //a generic position object
-		public int row;
-		public int col;
-		public pos(int r,int c){
-			row = r;
-			col = c;
-		}
-	}
-	public class PosArray<T>{ //a 2D array with a position indexer in addition to the usual 2-int indexer
-		public T[,] objs;
-		public T this[int row,int col]{
-			get{
-				return objs[row,col];
-			}
-			set{
-				objs[row,col] = value;
-			}
-		}
-		public T this[pos p]{
-			get{
-				return objs[p.row,p.col];
-			}
-			set{
-				objs[p.row,p.col] = value;
-			}
-		}
-		public PosArray(int rows,int cols){
-			objs = new T[rows,cols];
-		}
-	}
 	public class Dict<TKey,TValue>{ //a Dictionary that returns the default value for keys that haven't been added
 		public Dictionary<TKey,TValue> d;
 		public TValue this[TKey key]{
@@ -112,51 +83,10 @@ namespace Utilities{
 			return result;
 		}
 	}
+	public enum DistanceMetric{Manhattan,Chebyshev};
 	public static class U{ //for Utility, of course
-		public static int HorizontalMinimum = 1; //When using a method like PositionsWithinDistance(x), these bounds will be considered if
-		public static int HorizontalMaximum = -1;//  min <= max (this isn't the case by default).
-		public static int VerticalMinimum = 1;   //  If you only care about one dimension, you can set only
-		public static int VerticalMaximum = -1;  //  that one, and the other dimension will be ignored.
-		public static void SetBounds(int h_min,int h_max,int v_min,int v_max){
-			HorizontalMinimum = h_min;
-			HorizontalMaximum = h_max;
-			VerticalMinimum = v_min;
-			VerticalMaximum = v_max;
-		}
-		public static void SetBoundsStartingAtZero(int height,int width){
-			HorizontalMinimum = 0;
-			HorizontalMaximum = height - 1;
-			VerticalMinimum = 0;
-			VerticalMaximum = width - 1;
-		}
-		public static bool BoundsCheck(this pos p){
-			if(HorizontalMinimum <= HorizontalMaximum){
-				if(p.row < HorizontalMinimum || p.row > HorizontalMaximum){
-					return false;
-				}
-			}
-			if(VerticalMinimum <= VerticalMaximum){
-				if(p.col < VerticalMinimum || p.col > VerticalMaximum){
-					return false;
-				}
-			}
-			return true;
-		}
-		public static bool BoundsCheck(int r,int c){
-			if(HorizontalMinimum <= HorizontalMaximum){
-				if(r < HorizontalMinimum || r > HorizontalMaximum){
-					return false;
-				}
-			}
-			if(VerticalMinimum <= VerticalMaximum){
-				if(c < VerticalMinimum || c > VerticalMaximum){
-					return false;
-				}
-			}
-			return true;
-		}
-		public static bool BoundsCheck<T>(this pos p,PosArray<T> array){ return p.BoundsCheck(array,true); }
-		public static bool BoundsCheck<T>(this pos p,PosArray<T> array,bool allow_map_edges){
+		public static DistanceMetric DefaultMetric = DistanceMetric.Chebyshev;
+		public static bool BoundsCheck<T>(this pos p,PosArray<T> array,bool allow_map_edges = true){
 			int h = array.objs.GetLength(0);
 			int w = array.objs.GetLength(1);
 			if(p.row < 0 || p.row > h-1 || p.col < 0 || p.col > w-1){
@@ -169,12 +99,39 @@ namespace Utilities{
 			}
 			return true;
 		}
+		public static bool BoundsCheck<T>(this PosArray<T> array,pos p,bool allow_map_edges = true){
+			return p.BoundsCheck(array,allow_map_edges);
+		}
+		public static bool BoundsCheck<T>(this PosArray<T> array,int r,int c,bool allow_map_edges = true){
+			return new pos(r,c).BoundsCheck(array,allow_map_edges);
+		}
+		public static bool IsOnBorder<T>(this pos p,PosArray<T> array){
+			if(p.row == 0 || p.row == array.objs.GetLength(0)-1){
+				if(p.col == 0 || p.col == array.objs.GetLength(1)-1){
+					return true;
+				}
+			}
+			return false;
+		}
+		public static bool BoundsCheck<T>(this T[,] array,int r,int c){
+			int h = array.GetLength(0);
+			int w = array.GetLength(1);
+			if(r < 0 || r > h-1 || c < 0 || c > w-1){
+				return false;
+			}
+			return true;
+		}
 		public static int[] EightDirections = {8,9,6,3,2,1,4,7}; //these all start at 8 (up) and go clockwise.
 		public static int[] FourDirections = {8,6,2,4}; //the directions correspond to the numbers on a keyboard's numpad.
 		public static int[] DiagonalDirections = {9,3,1,7};
 		public static int[] NineDirections = {5,8,9,6,3,2,1,4,7}; //eight, plus the direction that corresponds to "here".
-		public static int RotateDir(this int dir,bool clockwise){ return dir.RotateDir(clockwise,1); }
-		public static int RotateDir(this int dir,bool clockwise,int times){
+		public static int RotateDir(this int dir,bool clockwise,int times = 1){
+			if(DefaultMetric == DistanceMetric.Chebyshev){
+				return dir.RotateEightWayDir(clockwise,times);
+			}
+			return dir.RotateFourWayDir(clockwise,times);
+		}
+		public static int RotateEightWayDir(this int dir,bool clockwise,int times = 1){
 			if(dir == 5){
 				return 5;
 			}
@@ -185,44 +142,77 @@ namespace Utilities{
 			for(int i=0;i<times;++i){
 				switch(dir){
 				case 7:
-					dir = clockwise?8:4;
-					break;
+				dir = clockwise?8:4;
+				break;
 				case 8:
-					dir = clockwise?9:7;
-					break;
+				dir = clockwise?9:7;
+				break;
 				case 9:
-					dir = clockwise?6:8;
-					break;
+				dir = clockwise?6:8;
+				break;
 				case 4:
-					dir = clockwise?7:1;
-					break;
+				dir = clockwise?7:1;
+				break;
 				case 6:
-					dir = clockwise?3:9;
-					break;
+				dir = clockwise?3:9;
+				break;
 				case 1:
-					dir = clockwise?4:2;
-					break;
+				dir = clockwise?4:2;
+				break;
 				case 2:
-					dir = clockwise?1:3;
-					break;
+				dir = clockwise?1:3;
+				break;
 				case 3:
-					dir = clockwise?2:6;
-					break;
+				dir = clockwise?2:6;
+				break;
 				default:
-					return 0;
+				return 0;
 				}
 			}
 			return dir;
 		}
-		public static List<int> GetArc(this int i,int distance){ return i.GetArc(distance,true); } //returns a list of directions: the original direction plus some number of other adjacent directions. 'distance' is how far you want to go out on each side.
-		public static List<int> GetArc(this int i,int distance,bool clockwise){
+		public static int RotateFourWayDir(this int dir,bool clockwise,int times = 1){
+			if(dir == 5){
+				return 5;
+			}
+			if(times < 0){
+				times = -times;
+				clockwise = !clockwise;
+			}
+			for(int i=0;i<times;++i){
+				switch(dir){
+				case 8:
+				dir = clockwise?6:4;
+				break;
+				case 4:
+				dir = clockwise?8:2;
+				break;
+				case 6:
+				dir = clockwise?2:8;
+				break;
+				case 2:
+				dir = clockwise?4:6;
+				break;
+				default:
+				throw new ArgumentException("Rotate4WayDir accepts only 4-way directions: 2(down), 4(left), 5(neutral), 6(right), and 8(up).");
+				}
+			}
+			return dir;
+		}
+		public static List<int> GetArc(this int i,int distance,bool clockwise = true){ //returns a list of directions: the original direction plus some number of other adjacent directions. 'distance' is how far you want to go out on each side.
 			List<int> result = new List<int>();
 			for(int num = -distance;num <= distance;++num){
 				result.Add(i.RotateDir(clockwise,num));
 			}
 			return result;
 		}
-		public static int DirectionOf(this pos p,pos obj){ //determines which of the 8 directions is closest to the actual direction
+		public static int DirectionOf(this pos p,pos obj){
+			if(DefaultMetric == DistanceMetric.Chebyshev){
+				return p.EightWayDirectionOf(obj);
+			}
+			return p.FourWayDirectionOf(obj);
+		}
+		public static int EightWayDirectionOf(this pos p,pos obj){ //determines which of the 8 directions is closest to the actual direction. Ties go to the cardinal directions.
 			int row = p.row;
 			int col = p.col;
 			int dy = Math.Abs(obj.row - row);
@@ -329,8 +319,39 @@ namespace Utilities{
 				}
 			}
 		}
+		public static int FourWayDirectionOf(this pos p,pos obj){ //determines which of the 4 directions is closest to the actual direction. Ties go to the vertical directions.
+			int row = p.row;
+			int col = p.col;
+			int dy = Math.Abs(obj.row - row);
+			int dx = Math.Abs(obj.col - col);
+			if(dx == 0 && dy == 0){
+				return 5;
+			}
+			if(dx > dy){
+				if(obj.col > col){
+					return 6;
+				}
+				return 4;
+			}
+			if(obj.row > row){ //dx <= dy
+				return 2;
+			}
+			return 8;
+		}
+		public static int Get1DIndex(int r,int c,int num_cols){
+			return r * num_cols + c;
+		}
 		public static int DistanceFrom(this pos p,pos dest){ return p.DistanceFrom(dest.row,dest.col); }
+		public static int DistanceFrom(int r1,int c1,int r2,int c2){ return new pos(r1,c1).DistanceFrom(r2,c2); }
 		public static int DistanceFrom(this pos p,int r,int c){
+			if(DefaultMetric == DistanceMetric.Chebyshev){
+				return p.ChebyshevDistanceFrom(r,c);
+			}
+			return p.ManhattanDistanceFrom(r,c);
+		}
+		public static int ChebyshevDistanceFrom(this pos p,pos dest){ return p.ChebyshevDistanceFrom(dest.row,dest.col); }
+		public static int ChebyshevDistanceFrom(int r1,int c1,int r2,int c2){ return new pos(r1,c1).ChebyshevDistanceFrom(r2,c2); }
+		public static int ChebyshevDistanceFrom(this pos p,int r,int c){
 			int dy = Math.Abs(r-p.row);
 			int dx = Math.Abs(c-p.col);
 			if(dx > dy){
@@ -339,6 +360,13 @@ namespace Utilities{
 			else{
 				return dy;
 			}
+		}
+		public static int ManhattanDistanceFrom(this pos p,pos dest){ return p.ManhattanDistanceFrom(dest.row,dest.col); }
+		public static int ManhattanDistanceFrom(int r1,int c1,int r2,int c2){ return new pos(r1,c1).ManhattanDistanceFrom(r2,c2); }
+		public static int ManhattanDistanceFrom(this pos p,int r,int c){
+			int dy = Math.Abs(r-p.row);
+			int dx = Math.Abs(c-p.col);
+			return dx + dy;
 		}
 		public static int ChebyshevDistanceFromX10(this pos p,pos dest){ return p.ChebyshevDistanceFromX10(dest.row,dest.col); } //this is the same as DistanceFrom x 10
 		public static int ChebyshevDistanceFromX10(this pos p,int dest_r,int dest_c){ //note that distances are multiplied by 10 so that integer euclidean distances work properly
@@ -368,13 +396,24 @@ namespace Utilities{
 				return dy + (dx/2);
 			}
 		}
-		public static List<pos> PositionsWithinDistance(this pos p,int dist){ return p.PositionsWithinDistance(dist,false,false); }
-		public static List<pos> PositionsWithinDistance(this pos p,int dist,bool exclude_origin,bool ignore_bounds){
+		public static List<pos> PositionsWithinDistance(this pos p,int dist,bool exclude_origin = false){
+			return p.PositionsWithinDistance<int>(dist,null,exclude_origin);
+		}
+		public static List<pos> PositionsWithinDistance<T>(this pos p,int dist,PosArray<T> array,bool exclude_origin = false){
+			if(DefaultMetric == DistanceMetric.Chebyshev){
+				return p.PositionsWithinChebyshevDistance(dist,array,exclude_origin);
+			}
+			return p.PositionsWithinManhattanDistance(dist,array,exclude_origin);
+		}
+		public static List<pos> PositionsWithinChebyshevDistance(this pos p,int dist,bool exclude_origin = false){
+			return p.PositionsWithinChebyshevDistance<int>(dist,null,exclude_origin);
+		}
+		public static List<pos> PositionsWithinChebyshevDistance<T>(this pos p,int dist,PosArray<T> array,bool exclude_origin = false){
 			List<pos> result = new List<pos>();
 			for(int i=p.row-dist;i<=p.row+dist;++i){
 				for(int j=p.col-dist;j<=p.col+dist;++j){
-					if(i!=p.row || j!=p.col || exclude_origin==false){
-						if(ignore_bounds || BoundsCheck(i,j)){
+					if(!exclude_origin || i != p.row || j != p.col){
+						if(array == null || array.BoundsCheck(i,j)){
 							result.Add(new pos(i,j));
 						}
 					}
@@ -382,13 +421,42 @@ namespace Utilities{
 			}
 			return result;
 		}
-		public static List<pos> PositionsAtDistance(this pos p,int dist){ return p.PositionsAtDistance(dist,false); }
-		public static List<pos> PositionsAtDistance(this pos p,int dist,bool ignore_bounds){
+		public static List<pos> PositionsWithinManhattanDistance(this pos p,int dist,bool exclude_origin = false){
+			return p.PositionsWithinManhattanDistance<int>(dist,null,exclude_origin);
+		}
+		public static List<pos> PositionsWithinManhattanDistance<T>(this pos p,int dist,PosArray<T> array,bool exclude_origin = false){
 			List<pos> result = new List<pos>();
 			for(int i=p.row-dist;i<=p.row+dist;++i){
 				for(int j=p.col-dist;j<=p.col+dist;++j){
-					if(p.DistanceFrom(i,j) == dist){
-						if(ignore_bounds || BoundsCheck(i,j)){
+					if(!exclude_origin || i != p.row || j != p.col){
+						if(array == null || array.BoundsCheck(i,j)){
+							if(p.ManhattanDistanceFrom(i,j) <= dist){ //room for improvement here.
+								result.Add(new pos(i,j));
+							}
+						}
+					}
+				}
+			}
+			return result;
+		}
+		public static List<pos> PositionsAtDistance(this pos p,int dist){
+			return p.PositionsAtDistance<int>(dist,null);
+		}
+		public static List<pos> PositionsAtDistance<T>(this pos p,int dist,PosArray<T> array){
+			if(DefaultMetric == DistanceMetric.Chebyshev){
+				return p.PositionsAtChebyshevDistance(dist,array);
+			}
+			return p.PositionsAtManhattanDistance(dist,array);
+		}
+		public static List<pos> PositionsAtChebyshevDistance(this pos p,int dist){
+			return p.PositionsAtChebyshevDistance<int>(dist,null);
+		}
+		public static List<pos> PositionsAtChebyshevDistance<T>(this pos p,int dist,PosArray<T> array){
+			List<pos> result = new List<pos>();
+			for(int i=p.row-dist;i<=p.row+dist;++i){
+				for(int j=p.col-dist;j<=p.col+dist;++j){
+					if(p.ChebyshevDistanceFrom(i,j) == dist){
+						if(array == null || array.BoundsCheck(i,j)){
 							result.Add(new pos(i,j));
 						}
 					}
@@ -399,31 +467,53 @@ namespace Utilities{
 			}
 			return result;
 		}
+		public static List<pos> PositionsAtManhattanDistance(this pos p,int dist){
+			return p.PositionsAtManhattanDistance<int>(dist,null);
+		}
+		public static List<pos> PositionsAtManhattanDistance<T>(this pos p,int dist,PosArray<T> array){
+			List<pos> result = new List<pos>();
+			for(int i=p.row-dist;i<=p.row+dist;++i){ //room for improvement
+				for(int j=p.col-dist;j<=p.col+dist;++j){
+					if(p.ManhattanDistanceFrom(i,j) == dist){
+						if(array == null || array.BoundsCheck(i,j)){
+							result.Add(new pos(i,j));
+						}
+					}
+				}
+			}
+			return result;
+		}
 		public static pos PosInDir(this pos p,int dir){
 			switch(dir){
 			case 7:
-				return new pos(p.row-1,p.col-1);
+			return new pos(p.row-1,p.col-1);
 			case 8:
-				return new pos(p.row-1,p.col);
+			return new pos(p.row-1,p.col);
 			case 9:
-				return new pos(p.row-1,p.col+1);
+			return new pos(p.row-1,p.col+1);
 			case 4:
-				return new pos(p.row,p.col-1);
+			return new pos(p.row,p.col-1);
 			case 5:
-				return p;
+			return p;
 			case 6:
-				return new pos(p.row,p.col+1);
+			return new pos(p.row,p.col+1);
 			case 1:
-				return new pos(p.row+1,p.col-1);
+			return new pos(p.row+1,p.col-1);
 			case 2:
-				return new pos(p.row+1,p.col);
+			return new pos(p.row+1,p.col);
 			case 3:
-				return new pos(p.row+1,p.col+1);
+			return new pos(p.row+1,p.col+1);
 			default:
-				return new pos(-1,-1);
+			return new pos(-1,-1);
 			}
 		}
 		public static T Random<T>(this List<T> l){ //now, some utility extension methods for lists.
+			if(l.Count == 0){
+				throw new IndexOutOfRangeException("This list is empty! It has no values to return.");
+			}
+			return l[R.Roll(l.Count)-1];
+		}
+		public static T RandomOrDefault<T>(this List<T> l){ //now, some utility extension methods for lists.
 			if(l.Count == 0){
 				return default(T);
 			}
@@ -431,24 +521,32 @@ namespace Utilities{
 		}
 		public static T RemoveRandom<T>(this List<T> l){
 			if(l.Count == 0){
-				return default(T);
+				throw new IndexOutOfRangeException("This list is empty! It has no last value.");
 			}
 			int idx = R.Roll(l.Count)-1;
 			T result = l[idx];
 			l.RemoveAt(idx);
-			//T result = l[R.Roll(l.Count)-1];
-			//l.Remove(result);
 			return result;
+		}
+		public static T Last<T>(this List<T> l){
+			if(l.Count == 0){
+				throw new IndexOutOfRangeException("This list is empty! It has no last value.");
+			}
+			return l[l.Count-1];
+		}
+		public static T LastOrDefault<T>(this List<T> l){
+			if(l.Count == 0){
+				return default(T);
+			}
+			return l[l.Count-1];
 		}
 		public static T RemoveLast<T>(this List<T> l){
 			if(l.Count == 0){
-				return default(T);
+				throw new IndexOutOfRangeException("This list is empty! It has no last value.");
 			}
 			int idx = l.Count-1;
 			T result = l[idx];
 			l.RemoveAt(idx);
-			//T result = l[l.Count-1];
-			//l.Remove(result);
 			return result;
 		}
 		public static void AddUnique<T>(this List<T> l,T obj){
@@ -517,6 +615,16 @@ namespace Utilities{
 			}
 			return result;
 		}
+		public static int Greatest<T>(this List<T> l,IntegerDelegate<T> value){ //if list is empty, returns int.MinValue
+			int highest = int.MinValue;
+			foreach(T t in l){
+				int i = value(t);
+				if(i > highest){
+					highest = i;
+				}
+			}
+			return highest;
+		}
 		public static List<T> WhereLeast<T>(this List<T> l,IntegerDelegate<T> value){
 			List<T> result = new List<T>();
 			int lowest = 0;
@@ -543,6 +651,16 @@ namespace Utilities{
 			}
 			return result;
 		}
+		public static int Least<T>(this List<T> l,IntegerDelegate<T> value){ //if list is empty, returns int.MaxValue
+			int lowest = int.MaxValue;
+			foreach(T t in l){
+				int i = value(t);
+				if(i < lowest){
+					lowest = i;
+				}
+			}
+			return lowest;
+		}
 		public static void RemoveWhere<T>(this List<T> l,BooleanDelegate<T> condition){
 			List<T> removed = new List<T>();
 			foreach(T t in l){
@@ -563,7 +681,22 @@ namespace Utilities{
 				return r;
 			}
 		}
-		public static string PadOuter(this string s,int totalWidth){ //and the missing counterpart to PadRight and PadLeft
+		public static int IntDivide(this int i,int divisor){ //rounds down instead of toward zero, so -2 / 5 evaluates to -1, not zero.
+			return (i < 0 && divisor > 0)? (i - divisor + 1) / divisor : (i > 0 && divisor < 0)? (i - divisor - 1) / divisor : i / divisor;
+		}
+		public static int Cap(this int i,int max){ //todo: keep these or not?
+			if(i > max){
+				return max;
+			}
+			return i;
+		}
+		public static int Floor(this int i,int min){
+			if(i < min){
+				return min;
+			}
+			return i;
+		}
+		public static string PadOuter(this string s,int totalWidth){ //here's the missing counterpart to PadRight and PadLeft.
 			return s.PadOuter(totalWidth,' ');
 		}
 		public static string PadOuter(this string s,int totalWidth,char paddingChar){
@@ -572,7 +705,7 @@ namespace Utilities{
 			}
 			int added = totalWidth - s.Length;
 			string left = "";
-			for(int i=0;i<(added+1)/2;++i){
+			for(int i=0;i<(added+1)/2;++i){ //todo: This seems to look better if it puts the extra space on the RIGHT, not the left. Consider changing.
 				left = left + paddingChar;
 			}
 			string right = "";
@@ -580,6 +713,14 @@ namespace Utilities{
 				right = right + paddingChar;
 			}
 			return left + s + right;
+		}
+		public static string Capitalize(this string s){
+			if(s.Length == 0){
+				return s;
+			}
+			char[] c = s.ToCharArray();
+			c[0] = Char.ToUpper(c[0]);
+			return new string(c);
 		}
 		public static List<pos> AllPositions<T>(this PosArray<T> array){
 			List<pos> result = new List<pos>();
@@ -605,26 +746,14 @@ namespace Utilities{
 		}
 		public static pos RandomPosition<T>(this PosArray<T> array,bool allow_borders){
 			if(allow_borders){
-				return new pos(R.Between(0,array.objs.GetLength(0)),R.Between(0,array.objs.GetLength(1)));
+				return new pos(R.Between(0,array.objs.GetLength(0)-1),R.Between(0,array.objs.GetLength(1)-1));
 			}
 			else{
-				return new pos(R.Between(1,array.objs.GetLength(0)-1),R.Between(1,array.objs.GetLength(1)-1));
+				return new pos(R.Between(1,array.objs.GetLength(0)-2),R.Between(1,array.objs.GetLength(1)-2));
 			}
 		}
 		public static List<pos> PositionsWhere<T>(this PosArray<T> array,BooleanPositionDelegate condition){
 			return array.objs.PositionsWhere(condition);
-			/*List<pos> result = new List<pos>();
-			int rows = array.objs.GetLength(0);
-			int cols = array.objs.GetLength(1);
-			for(int i=0;i<rows;++i){
-				for(int j=0;j<cols;++j){
-					pos p = new pos(i,j);
-					if(condition(p)){
-						result.Add(p);
-					}
-				}
-			}
-			return result;*/
 		}
 		public static List<pos> PositionsWhere<T>(this T[,] array,BooleanPositionDelegate condition){
 			List<pos> result = new List<pos>();
@@ -708,6 +837,26 @@ namespace Utilities{
 			}
 			return result;
 		}
+		public static List<pos> PositionsNearBorder<T>(this PosArray<T> array,int dist){
+			List<pos> result = new List<pos>();
+			if(dist <= 0){
+				return result;
+			}
+			int rows = array.objs.GetLength(0);
+			int cols = array.objs.GetLength(1);
+			if(dist * 2 >= rows && dist * 2 >= cols){
+				return array.AllPositions();
+			}
+			for(int i=0;i<rows;++i){
+				for(int j=0;j<cols;++j){
+					if(j == dist && i >= dist && i < rows-dist){
+						j = cols-dist;
+					}
+					result.Add(new pos(i,j));
+				}
+			}
+			return result;
+		}
 		public delegate bool BooleanPositionDelegate(pos p);
 		public static List<pos> GetFloodFillPositions<T>(this PosArray<T> array,pos origin,bool exclude_origin,BooleanPositionDelegate condition){
 			return array.GetFloodFillPositions(new List<pos>{origin},exclude_origin,condition);
@@ -721,8 +870,8 @@ namespace Utilities{
 			List<pos> frontier = new List<pos>(origins);
 			while(frontier.Count > 0){
 				pos p = frontier.RemoveLast();
-				foreach(pos neighbor in p.PositionsAtDistance(1,true).Where(x=>x.BoundsCheck(array))){
-					if(!result_map[neighbor] && condition(neighbor)){
+				foreach(pos neighbor in p.PositionsAtDistance(1)){
+					if(neighbor.BoundsCheck(array) && !result_map[neighbor] && condition(neighbor)){
 						result_map[neighbor] = true;
 						frontier.Add(neighbor);
 						result.Add(neighbor);
@@ -747,8 +896,8 @@ namespace Utilities{
 			List<pos> frontier = new List<pos>(origins);
 			while(frontier.Count > 0){
 				pos p = frontier.RemoveLast();
-				foreach(pos neighbor in p.PositionsAtDistance(1,true).Where(x=>x.BoundsCheck(array))){
-					if(!result_map[neighbor] && condition(neighbor)){
+				foreach(pos neighbor in p.PositionsAtDistance(1)){
+					if(neighbor.BoundsCheck(array) && !result_map[neighbor] && condition(neighbor)){
 						result_map[neighbor] = true;
 						frontier.Add(neighbor);
 					}
@@ -761,15 +910,14 @@ namespace Utilities{
 			}
 			return result_map;
 		}
-		public static List<pos> GetRandomizedFloodFillPositions<T>(this PosArray<T> array, pos origin,int desired_count,bool exclude_origin_from_count,bool exclude_origin_from_result,bool cardinal_directions_only,BooleanPositionDelegate condition){
-			return array.GetRandomizedFloodFillPositions(new List<pos>{origin},desired_count,exclude_origin_from_count,exclude_origin_from_result,cardinal_directions_only,condition);
+		public static List<pos> GetRandomizedFloodFillPositions<T>(this PosArray<T> array, pos origin,int desired_count,bool exclude_origin_from_count,bool exclude_origin_from_result,BooleanPositionDelegate condition){
+			return array.GetRandomizedFloodFillPositions(new List<pos>{origin},desired_count,exclude_origin_from_count,exclude_origin_from_result,condition);
 		}
-		public static List<pos> GetRandomizedFloodFillPositions<T>(this PosArray<T> array, List<pos> origins,int desired_count,bool exclude_origins_from_count,bool exclude_origins_from_result,bool cardinal_directions_only,BooleanPositionDelegate condition){
+		public static List<pos> GetRandomizedFloodFillPositions<T>(this PosArray<T> array, List<pos> origins,int desired_count,bool exclude_origins_from_count,bool exclude_origins_from_result,BooleanPositionDelegate condition){
 			List<pos> result = new List<pos>();
 			PosArray<bool> result_map = new PosArray<bool>(array.objs.GetLength(0),array.objs.GetLength(1));
 			List<pos> frontier = new List<pos>();
 			int count = 0;
-			int[] dirs = cardinal_directions_only? U.FourDirections : U.EightDirections;
 			foreach(pos origin in origins){
 				result_map[origin] = true;
 				if(condition(origin)){
@@ -780,8 +928,7 @@ namespace Utilities{
 						result.Add(origin);
 					}
 				}
-				foreach(int dir in dirs){
-					pos neighbor = origin.PosInDir(dir);
+				foreach(pos neighbor in origin.PositionsAtDistance(1)){
 					if(neighbor.BoundsCheck(array) && !result_map[neighbor]){
 						result_map[neighbor] = true;
 						frontier.Add(neighbor);
@@ -793,8 +940,7 @@ namespace Utilities{
 				if(condition(p)){
 					result.Add(p);
 					++count;
-					foreach(int dir in dirs){
-						pos neighbor = p.PosInDir(dir);
+					foreach(pos neighbor in p.PositionsAtDistance(1)){
 						if(neighbor.BoundsCheck(array) && !result_map[neighbor]){
 							result_map[neighbor] = true;
 							frontier.Add(neighbor);
@@ -813,50 +959,44 @@ namespace Utilities{
 			return true;
 		}
 		public delegate int IntegerPositionDelegate(pos p);
-		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_blocked,List<pos> sources){ return array.GetDijkstraMap(is_blocked,x=>1,sources); }
-		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_blocked,IntegerPositionDelegate get_cost,List<pos> sources){ return array.GetDijkstraMap(is_blocked,get_cost,sources,new pos(-1,-1)); }
-		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_blocked,IntegerPositionDelegate get_cost,List<pos> sources,pos destination){
+		public delegate int EdgeCostDelegate(pos start,pos end);
+		public delegate bool EdgeBlockedDelegate(pos start,pos end); //todo: really, all of these should be changed so they don't need a PosArray<T>
+		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,List<pos> sources,BooleanPositionDelegate is_blocked){
+			return array.GetDijkstraMap(sources,x=>0,(p1,p2)=>is_blocked(p2),(p1,p2)=>1);
+		}
+		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_source,BooleanPositionDelegate is_blocked){
+			return array.GetDijkstraMap(is_source,x=>0,(p1,p2)=>is_blocked(p2),(p1,p2)=>1);
+		}
+		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,List<pos> sources,BooleanPositionDelegate is_blocked,IntegerPositionDelegate get_cost){
+			return array.GetDijkstraMap(sources,x=>0,(p1,p2)=>is_blocked(p2),(p1,p2)=>get_cost(p2));
+		}
+		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_source,BooleanPositionDelegate is_blocked,IntegerPositionDelegate get_cost){
+			return array.GetDijkstraMap(is_source,x=>0,(p1,p2)=>is_blocked(p2),(p1,p2)=>get_cost(p2));
+		}
+		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,List<pos> sources,IntegerPositionDelegate source_value,BooleanPositionDelegate is_blocked,IntegerPositionDelegate get_cost){
+			return array.GetDijkstraMap(sources,source_value,(p1,p2)=>is_blocked(p2),(p1,p2)=>get_cost(p2));
+		}
+		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_source,IntegerPositionDelegate source_value,BooleanPositionDelegate is_blocked,IntegerPositionDelegate get_cost){
+			return array.GetDijkstraMap(is_source,source_value,(p1,p2)=>is_blocked(p2),(p1,p2)=>get_cost(p2));
+		}
+		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,List<pos> sources,IntegerPositionDelegate source_value,EdgeBlockedDelegate is_blocked,EdgeCostDelegate get_cost){
 			int height = array.objs.GetLength(0);
 			int width = array.objs.GetLength(1);
 			PosArray<int> map = new PosArray<int>(height,width);
 			PriorityQueue<pos> frontier = new PriorityQueue<pos>(x => -map[x]);
 			for(int i=0;i<height;++i){
 				for(int j=0;j<width;++j){
-					if(is_blocked(new pos(i,j))){
-						map[i,j] = DijkstraMin;
-					}
-					else{
-						map[i,j] = DijkstraMax;
-					}
+					map[i,j] = DijkstraMax;
 				}
 			}
 			foreach(pos p in sources){
-				map[p] = 0;
+				map[p] = source_value(p);
 				frontier.Add(p);
 			}
-			while(frontier.list.Count > 0){
-				pos p = frontier.Pop();
-				if(p.Equals(destination)){ //if a destination is supplied, a partial map will be returned that contains the shortest path.
-					break;
-				}
-				for(int s=-1;s<=1;++s){
-					for(int t=-1;t<=1;++t){
-						if(p.row+s >= 0 && p.row+s < height && p.col+t >= 0 && p.col+t < width){
-							pos neighbor = new pos(p.row+s,p.col+t);
-							int cost = get_cost(neighbor);
-							if(map[neighbor] > map[p]+cost){
-								map[neighbor] = map[p]+cost;
-								frontier.Add(neighbor);
-							}
-						}
-					}
-				}
-			}
+			DijkstraScan(map,frontier,is_blocked,get_cost);
 			return map;
 		}
-		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_blocked,BooleanPositionDelegate is_source){ return array.GetDijkstraMap(is_blocked,is_source,x=>0,x=>1); }
-		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_blocked,BooleanPositionDelegate is_source,IntegerPositionDelegate source_value,IntegerPositionDelegate get_cost){ return array.GetDijkstraMap(is_blocked,is_source,source_value,get_cost,new pos(-1,-1)); }
-		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_blocked,BooleanPositionDelegate is_source,IntegerPositionDelegate source_value,IntegerPositionDelegate get_cost,pos destination){
+		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_source,IntegerPositionDelegate source_value,EdgeBlockedDelegate is_blocked,EdgeCostDelegate get_cost){
 			int height = array.objs.GetLength(0);
 			int width = array.objs.GetLength(1);
 			PosArray<int> map = new PosArray<int>(height,width);
@@ -869,25 +1009,36 @@ namespace Utilities{
 						frontier.Add(p);
 					}
 					else{
-						if(is_blocked(p)){
-							map[p] = DijkstraMin;
-						}
-						else{
-							map[p] = DijkstraMax;
+						map[p] = DijkstraMax;
+					}
+				}
+			}
+			DijkstraScan(map,frontier,is_blocked,get_cost);
+			return map;
+		}
+		private static void DijkstraScan(PosArray<int> map,PriorityQueue<pos> frontier,EdgeBlockedDelegate is_blocked,EdgeCostDelegate get_cost){
+			while(frontier.list.Count > 0){
+				pos p = frontier.Pop();
+				foreach(pos neighbor in p.PositionsAtDistance(1)){
+					if(neighbor.BoundsCheck(map) && !is_blocked(p,neighbor)){
+						int cost = get_cost(p,neighbor);
+						if(map[neighbor] > map[p]+cost){
+							map[neighbor] = map[p]+cost;
+							frontier.Add(neighbor);
 						}
 					}
 				}
 			}
+		}
+		private static void DijkstraScanWithDuplicates(PosArray<int> map,PriorityQueue<pos> frontier,EdgeBlockedDelegate is_blocked,EdgeCostDelegate get_cost){
+			PosArray<bool> visited = new PosArray<bool>(map.objs.GetLength(0),map.objs.GetLength(1)); //this version handles a frontier list that might contain the same position more than once, by marking visited positions and not rechecking them.
 			while(frontier.list.Count > 0){
 				pos p = frontier.Pop();
-				if(p.Equals(destination)){
-					break;
-				}
-				for(int s=-1;s<=1;++s){
-					for(int t=-1;t<=1;++t){
-						if(p.row+s >= 0 && p.row+s < height && p.col+t >= 0 && p.col+t < width){
-							pos neighbor = new pos(p.row+s,p.col+t);
-							int cost = get_cost(neighbor);
+				if(!visited[p]){
+					visited[p] = true;
+					foreach(pos neighbor in p.PositionsAtDistance(1)){
+						if(neighbor.BoundsCheck(map) && !is_blocked(p,neighbor)){
+							int cost = get_cost(p,neighbor);
 							if(map[neighbor] > map[p]+cost){
 								map[neighbor] = map[p]+cost;
 								frontier.Add(neighbor);
@@ -896,49 +1047,29 @@ namespace Utilities{
 					}
 				}
 			}
-			return map;
 		}
-		public static PosArray<int> GetManhattanDijkstraMap<T>(this PosArray<T> array,BooleanPositionDelegate is_blocked,BooleanPositionDelegate is_source){
-			int height = array.objs.GetLength(0);
-			int width = array.objs.GetLength(1);
-			PosArray<int> map = new PosArray<int>(height,width);
+		public static void RescanDijkstraMap(this PosArray<int> map){
+			map.RescanDijkstraMap((p1,p2)=>!map[p2].IsValidDijkstraValue(),(p1,p2)=>1);
+		}
+		public static void RescanDijkstraMap(this PosArray<int> map,IntegerPositionDelegate get_cost){ //This version can assume a cell is blocked from all sides if it doesn't have a valid Dijkstra value.
+			map.RescanDijkstraMap((p1,p2)=>!map[p2].IsValidDijkstraValue(),(p1,p2)=>get_cost(p2));
+		}
+		public static void RescanDijkstraMap(this PosArray<int> map,EdgeBlockedDelegate is_blocked,EdgeCostDelegate get_cost){ //This version still needs to know which edges are blocked, though.
 			PriorityQueue<pos> frontier = new PriorityQueue<pos>(x => -map[x]);
-			for(int i=0;i<height;++i){
-				for(int j=0;j<width;++j){
+			for(int i=0;i<map.objs.GetLength(0);++i){
+				for(int j=0;j<map.objs.GetLength(1);++j){
 					pos p = new pos(i,j);
-					if(is_source(p)){
-						map[p] = 0;
+					if(map[p].IsValidDijkstraValue()){
 						frontier.Add(p);
 					}
-					else{
-						if(is_blocked(p)){
-							map[p] = DijkstraMin;
-						}
-						else{
-							map[p] = DijkstraMax;
-						}
-					}
 				}
 			}
-			while(frontier.list.Count > 0){
-				pos p = frontier.Pop();
-				foreach(int dir in U.FourDirections){
-					pos neighbor = p.PosInDir(dir);
-					if(neighbor.BoundsCheck(map)){
-						int cost = 1;
-						if(map[neighbor] > map[p]+cost){
-							map[neighbor] = map[p]+cost;
-							frontier.Add(neighbor);
-						}
-					}
-				}
-			}
-			return map;
+			DijkstraScanWithDuplicates(map,frontier,is_blocked,get_cost);
 		}
-		public static List<pos> GetAStarPath<T>(this PosArray<T> array,pos start,pos goal,BooleanPositionDelegate is_blocked){
-			return array.GetAStarPath(start,goal,is_blocked,x=>1,1);
+		public static List<pos> GetAStarPath<T>(this PosArray<T> array,pos start,pos goal,BooleanPositionDelegate is_blocked,bool deterministic_results){
+			return array.GetAStarPath(start,goal,is_blocked,x=>1,1,deterministic_results);
 		}
-		public static List<pos> GetAStarPath<T>(this PosArray<T> array,pos start,pos goal,BooleanPositionDelegate is_blocked,IntegerPositionDelegate get_cost,int default_cost){
+		public static List<pos> GetAStarPath<T>(this PosArray<T> array,pos start,pos goal,BooleanPositionDelegate is_blocked,IntegerPositionDelegate get_cost,int default_cost,bool deterministic_results){
 			int height = array.objs.GetLength(0);
 			int width = array.objs.GetLength(1);
 			PosArray<int> map = new PosArray<int>(height,width);
@@ -961,15 +1092,15 @@ namespace Utilities{
 					List<pos> result = new List<pos>();
 					pos current_position = goal;
 					while(true){
-						List<pos> valid = current_position.PositionsAtDistance(1).Where(x=>map[x].IsValidDijkstraValue() && map[x] < map[current_position]).WhereLeast(x=>map[x]).WhereLeast(x=>x.ApproximateEuclideanDistanceFromX10(current_position));
+						result.Add(current_position);
+						List<pos> valid = current_position.PositionsAtDistance(1,map).Where(x=>map[x].IsValidDijkstraValue() && map[x] < map[current_position]).WhereLeast(x=>map[x]).WhereLeast(x=>x.ApproximateEuclideanDistanceFromX10(current_position));
 						if(valid.Count > 0){
-							/*if(deterministic_results){
+							if(deterministic_results){
 								current_position = valid.Last();
 							}
-							else{*/
+							else{
 								current_position = valid.Random();
-							//}
-							result.Add(current_position);
+							}
 							if(current_position.Equals(start)){
 								result.Reverse();
 								return result;
@@ -980,10 +1111,10 @@ namespace Utilities{
 						}
 					}
 				}
-				for(int s=-1;s<=1;++s){
-					for(int t=-1;t<=1;++t){
-						if(p.row+s >= 0 && p.row+s < height && p.col+t >= 0 && p.col+t < width){
-							pos neighbor = new pos(p.row+s,p.col+t);
+				foreach(int[] dirs in new List<int[]>{DiagonalDirections,FourDirections}){ //this ordering relies on PriorityQueue behavior: given 2 elements with the same priority, the most recently added is first.
+					foreach(int dir in dirs){
+						pos neighbor = p.PosInDir(dir);
+						if(neighbor.BoundsCheck(map)){
 							int cost = get_cost(neighbor);
 							if(map[neighbor] > map[p]+cost){
 								map[neighbor] = map[p]+cost;
@@ -1020,22 +1151,19 @@ namespace Utilities{
 				if(p.Equals(goal)){
 					return map[p];
 				}
-				for(int s=-1;s<=1;++s){
-					for(int t=-1;t<=1;++t){
-						if(p.row+s >= 0 && p.row+s < height && p.col+t >= 0 && p.col+t < width){
-							pos neighbor = new pos(p.row+s,p.col+t);
-							int cost = get_cost(neighbor);
-							if(map[neighbor] > map[p]+cost){
-								map[neighbor] = map[p]+cost;
-								frontier.Add(neighbor);
-							}
+				foreach(pos neighbor in p.PositionsAtDistance(1)){
+					if(neighbor.BoundsCheck(map)){
+						int cost = get_cost(neighbor);
+						if(map[neighbor] > map[p]+cost){
+							map[neighbor] = map[p]+cost;
+							frontier.Add(neighbor);
 						}
 					}
 				}
 			}
 			return -1; //no path found
 		}
-		public static T GetWrapped<T>(this PosArray<T> array,pos p){
+		public static T GetWrapped<T>(this PosArray<T> array,pos p){ //todo: do I use any of these?
 			return array.GetWrapped(p.row,p.col);
 		}
 		public static T GetWrapped<T>(this PosArray<T> array,int row,int col){
@@ -1148,6 +1276,13 @@ namespace Utilities{
 		public static bool PercentChance(int x){
 			return r.Next(1,101) <= x;
 		}
+		public static int Choose(params int[] choices){
+			int len = choices.Length;
+			if(len == 0){
+				throw new ArgumentException("The Choose method requires at least one argument.");
+			}
+			return choices[R.Between(0,len-1)];
+		}
 	}
 	public enum NumberType{Value,Range,Sequence,Delta};
 	public class Number{
@@ -1164,7 +1299,7 @@ namespace Utilities{
 		public int GetValue(){ //also, need to enforce the requirement that every number eventually evaluates to an int.
 			switch(Type){
 			case NumberType.Range:
-				return R.Between(RangeMin.GetValue(),RangeMax.GetValue());
+			return R.Between(RangeMin.GetValue(),RangeMax.GetValue());
 			case NumberType.Sequence:
 			{
 				int result = Sequence[sequence_index].GetValue();
@@ -1182,7 +1317,7 @@ namespace Utilities{
 			}
 			case NumberType.Value:
 			default:
-				return Value;
+			return Value;
 			}
 		}
 		public static Number CreateValue(int value){
@@ -1278,7 +1413,7 @@ namespace Utilities{
 			}
 			case NumberType.Value:
 			default:
-				return Value;
+			return Value;
 			}
 		}
 		public static FloatNumber CreateValue(float value){

@@ -9,6 +9,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using Utilities;
+using PosArrays;
 namespace Forays{
 	public class PhysicalObject{
 		public pos p;
@@ -1205,7 +1206,8 @@ compare this number to 1/2:  if less than 1/2, major.
 			return result;
 		}
 		public List<pos> PositionsAtDistance(int dist){
-			List<pos> result = new List<pos>();
+			return p.PositionsAtDistance(dist,M.tile);
+			/*List<pos> result = new List<pos>();
 			for(int i=row-dist;i<=row+dist;++i){
 				for(int j=col-dist;j<=col+dist;++j){
 					if(DistanceFrom(i,j) == dist){
@@ -1218,7 +1220,7 @@ compare this number to 1/2:  if less than 1/2, major.
 					}
 				}
 			}
-			return result;
+			return result;*/
 		}
 		public bool IsAdjacentTo(TileType type){ return IsAdjacentTo(type,false); } //didn't need an Actor (or Item) version yet
 		public bool IsAdjacentTo(TileType type,bool consider_origin){
@@ -3126,10 +3128,10 @@ compare this number to 1/2:  if less than 1/2, major.
 						}
 					}
 					Targeting_ShowLine(tc,radius,mem,line,oldline,ref blocked,x=>{
-						if(x.seen && !x.passable && x != line.Last()){
+						if(x.seen && !x.passable && x != line.LastOrDefault()){
 							return true;
 						}
-						if(x.actor() != null && player.CanSee(x.actor()) && !no_line && x != line.Last() && x != line[0]){
+						if(x.actor() != null && player.CanSee(x.actor()) && !no_line && x != line.LastOrDefault() && x != line[0]){
 							return true;
 						}
 						return false;
@@ -3260,14 +3262,12 @@ compare this number to 1/2:  if less than 1/2, major.
 						//player.path = player.GetPath(r,c);
 						Tile nearest = M.tile[r,c];
 						PosArray<bool> known_reachable = M.tile.GetFloodFillArray(this.p,false,x=>(M.tile[x].passable || M.tile[x].IsDoorType(false)) && M.tile[x].seen);
-						PosArray<int> distance_to_nearest_known_passable = M.tile.GetDijkstraMap(x=>false,y=>M.tile[y].seen && (M.tile[y].passable || M.tile[y].IsDoorType(false)) && !M.tile[y].IsKnownTrap() && known_reachable[y]);
+						PosArray<int> distance_to_nearest_known_passable = M.tile.GetDijkstraMap(y=>M.tile[y].seen && (M.tile[y].passable || M.tile[y].IsDoorType(false)) && !M.tile[y].IsKnownTrap() && known_reachable[y],x=>false);
 						if(!nearest.seen || nearest.IsKnownTrap() || !nearest.TilesWithinDistance(1).Any(x=>x.passable && known_reachable[x.p])){
-							nearest = nearest.TilesAtDistance(distance_to_nearest_known_passable[r,c]).Where(x=>x.seen && (x.passable || x.IsDoorType(false)) && !x.IsKnownTrap() && known_reachable[x.p]).WhereLeast(x=>x.ApproximateEuclideanDistanceFromX10(r,c)).Last();
+							nearest = nearest.TilesAtDistance(distance_to_nearest_known_passable[r,c]).Where(x=>x.seen && (x.passable || x.IsDoorType(false)) && !x.IsKnownTrap() && known_reachable[x.p]).WhereLeast(x=>x.ApproximateEuclideanDistanceFromX10(r,c)).LastOrDefault();
 						}
 						player.path = player.GetPath(nearest.row,nearest.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreClosed);
-						if(player.path.Count > 0 && !M.tile[player.path.Last()].passable){
-							player.path.RemoveLast();
-						}
+						player.path.StopAtBlockingTerrain();
 						Actor.interrupted_path = new pos(-1,-1);
 						done = true;
 					}

@@ -9,6 +9,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using Utilities;
+using PosArrays;
 namespace Forays{
 	public class Tile : PhysicalObject{
 		public TileType type;
@@ -1395,7 +1396,7 @@ namespace Forays{
 				else{
 					if(inv != null){
 						B.Add("An unstable energy covers " + inv.TheName(true) + ". ",this);
-						Tile dest = M.AllTiles().Where(x=>x.passable && x.CanGetItem()).Random();
+						Tile dest = M.AllTiles().Where(x=>x.passable && x.CanGetItem()).RandomOrDefault();
 						if(dest != null){
 							B.Add("It vanishes! ",this);
 							bool seen = player.CanSee(this);
@@ -1567,7 +1568,7 @@ namespace Forays{
 				break;
 			case TileType.PHANTOM_TRAP:
 			{
-				Tile open = TilesWithinDistance(3).Where(t => t.passable && t.actor() == null && t.HasLOE(this)).Random();
+				Tile open = TilesWithinDistance(3).Where(t => t.passable && t.actor() == null && t.HasLOE(this)).RandomOrDefault();
 				if(open != null){
 					Actor a = Actor.CreatePhantom(open.row,open.col);
 					if(a != null){
@@ -1966,8 +1967,8 @@ namespace Forays{
 		public bool IsPassableOrDoor(){ //but only real doors. maybe I should rename one of these.
 			return (passable || type == TileType.DOOR_C);
 		}
-		public bool BlocksConnectivityOfMap(){
-			if(passable || IsDoorType(true)){
+		public bool BlocksConnectivityOfMap(bool count_hidden_doors_as_passable = true){ //todo: this is all in need of refactoring. How many door methods do I need?!?
+			if(passable || IsDoorType(count_hidden_doors_as_passable)){
 				return false;
 			}
 			return true;

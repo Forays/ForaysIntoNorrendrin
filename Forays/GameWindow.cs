@@ -1,4 +1,4 @@
-/*Copyright (c) 2014  Derrick Creamer
+/*Copyright (c) 2014-2015  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -15,6 +15,7 @@ using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
 using GLDrawing;
+using PosArrays;
 using Utilities;
 namespace Forays{
 	public class GLGame : GLWindow{
@@ -250,6 +251,7 @@ namespace Forays{
 							if(desc_box != null){
 								int h = desc_box.Count;
 								int w = desc_box[0].Length();
+								MouseUI.mouselook_current_desc_area = new System.Drawing.Rectangle(description_on_right? Global.COLS - w : 0,0,w,h);
 								int player_r = Actor.player.row;
 								int player_c = Actor.player.col;
 								colorchar[,] array = new colorchar[h,w];
@@ -279,11 +281,13 @@ namespace Forays{
 								}
 							}
 							if(MouseUI.VisiblePath){
-								MouseUI.mouse_path = Actor.player.GetPath(o.row,o.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
+								MouseUI.mouse_path = Actor.player.GetPlayerTravelPath(o.p);
+								//MouseUI.mouse_path = Actor.player.GetPath(o.row,o.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
 								if(MouseUI.mouse_path.Count == 0){
 									foreach(Tile t in Actor.M.TilesByDistance(o.row,o.col,true,true)){
 										if(t.passable){
-											MouseUI.mouse_path = Actor.player.GetPath(t.row,t.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
+											MouseUI.mouse_path = Actor.player.GetPlayerTravelPath(t.p);
+											//MouseUI.mouse_path = Actor.player.GetPath(t.row,t.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
 											break;
 										}
 									}
@@ -385,7 +389,8 @@ namespace Forays{
 								}
 								else{
 									Tile nearest = Actor.M.tile[map_row,map_col];
-									Actor.player.path = Actor.player.GetPath(nearest.row,nearest.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
+									Actor.player.path = Actor.player.GetPlayerTravelPath(nearest.p);
+									//Actor.player.path = Actor.player.GetPath(nearest.row,nearest.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
 									if(Actor.player.path.Count > 0){
 										Actor.player.path.StopAtBlockingTerrain();
 										if(Actor.player.path.Count > 0){
@@ -407,6 +412,7 @@ namespace Forays{
 											if(t.passable){
 												nearest = t;
 												Actor.player.path = Actor.player.GetPath(nearest.row,nearest.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
+												Actor.player.path.StopAtBlockingTerrain();
 												break;
 											}
 											/*}

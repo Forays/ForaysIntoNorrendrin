@@ -14,6 +14,7 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using Utilities;
+using PosArrays;
 using GLDrawing;
 namespace Forays{
 	public enum Color{Black,White,Gray,Red,Green,Blue,Yellow,Magenta,Cyan,DarkGray,DarkRed,DarkGreen,DarkBlue,DarkYellow,DarkMagenta,DarkCyan,RandomFire,RandomIce,RandomLightning,RandomBreached,RandomExplosion,RandomGlowingFungus,RandomTorch,RandomDoom,RandomConfusion,RandomDark,RandomBright,RandomRGB,RandomDRGB,RandomRGBW,RandomCMY,RandomDCMY,RandomCMYW,RandomRainbow,RandomAny,OutOfSight,TerrainDarkGray,DarkerGray,Transparent}; //transparent is a special exception. it only works in GL mode.
@@ -1342,7 +1343,10 @@ namespace Forays{
 				List<pos> cells = new List<pos>();
 				List<pos> nearby = origin.PositionsWithinDistance(radius);
 				for(int j=0;j<num_per_frame;++j){
-					cells.Add(nearby.RemoveRandom());
+					pos p = nearby.RemoveRandom();
+					if(BoundsCheck(p.row,p.col)){ //the ones that are out of bounds still count toward the total, so they don't become more dense as you get near edges.
+						cells.Add(p);
+					}
 				}
 				Screen.AnimateMapCells(cells,ch);
 			}
@@ -1746,13 +1750,14 @@ namespace Forays{
 		public static Button Highlighted = null;
 		public static PhysicalObject[,] mouselook_objects = new PhysicalObject[Global.ROWS,Global.COLS];
 		public static PhysicalObject mouselook_current_target = null;
+		public static Rectangle mouselook_current_desc_area = Rectangle.Empty;
 		public static List<pos> mouse_path = null;
 		public static int LastRow = -1;
 		public static int LastCol = -1;
 		public static bool fire_arrow_hack = false; //hack, used to allow double-clicking [s]hoot to fire arrows.
 		public static bool descend_hack = false; //hack, used to make double-clicking Descend [>] cancel the action.
 		public static Button GetButton(int row,int col){
-			if(button_map.Last() == null || row < 0 || col < 0 || row >= Global.SCREEN_H || col >= Global.SCREEN_W){
+			if(button_map.LastOrDefault() == null || row < 0 || col < 0 || row >= Global.SCREEN_H || col >= Global.SCREEN_W){
 				return null;
 			}
 			return button_map.Last()[row,col];
@@ -1767,7 +1772,7 @@ namespace Forays{
 		}
 		public static Button[,] ButtonMap{
 			get{
-				if(button_map.Last() == null){
+				if(button_map.LastOrDefault() == null){
 					button_map[button_map.Count-1] = new Button[Global.SCREEN_H,Global.SCREEN_W];
 				}
 				return button_map[button_map.Count-1];
@@ -1867,48 +1872,11 @@ namespace Forays{
 		}
 		public static void RemoveMouseover(){
 			if(mouselook_current_target != null){
-				bool description_on_right = false;
-				int max_length = MaxDescriptionBoxLength;
-				if(mouselook_current_target.col - 6 < max_length){
-					max_length = mouselook_current_target.col - 6;
-				}
-				if(max_length < 20){
-					description_on_right = true;
-					max_length = MaxDescriptionBoxLength;
-				}
-				List<colorstring> desc_box = null;
-				Actor a = mouselook_current_target as Actor;
-				if(a != null){
-					desc_box = Actor.MonsterDescriptionBox(a,true,max_length);
-				}
-				else{
-					Item i = mouselook_current_target as Item;
-					if(i != null){
-						desc_box = Actor.ItemDescriptionBox(i,true,true,max_length);
-					}
-				}
-				if(desc_box != null){
-					int h = desc_box.Count;
-					int w = desc_box[0].Length();
-					//colorchar[,] array = new colorchar[h,w];
-					if(description_on_right){
-						Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS + Global.COLS - w,Global.MAP_OFFSET_ROWS + h - 1,Global.MAP_OFFSET_COLS + Global.COLS - 1);
-						/*for(int i=0;i<h;++i){
-							for(int j=0;j<w;++j){
-								array[i,j] = Screen.Char(i+Global.MAP_OFFSET_ROWS,j+Global.MAP_OFFSET_COLS + Global.COLS - w);
-							}
-						}
-						Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS + Global.COLS - w,array); */
-					}
-					else{
-						Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,Global.MAP_OFFSET_ROWS + h - 1,Global.MAP_OFFSET_COLS + w - 1);
-						/*for(int i=0;i<h;++i){
-							for(int j=0;j<w;++j){
-								array[i,j] = Screen.Char(i+Global.MAP_OFFSET_ROWS,j+Global.MAP_OFFSET_COLS);
-							}
-						}
-						Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,array);*/
-					}
+				if(mouselook_current_desc_area != Rectangle.Empty){
+					int h = mouselook_current_desc_area.Height;
+					int w = mouselook_current_desc_area.Width;
+					Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS + mouselook_current_desc_area.Left,Global.MAP_OFFSET_ROWS + h - 1,Global.MAP_OFFSET_COLS + mouselook_current_desc_area.Right - 1);
+					mouselook_current_desc_area = Rectangle.Empty;
 				}
 				mouselook_current_target = null;
 				Screen.CursorVisible = true;
