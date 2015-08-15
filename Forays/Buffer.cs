@@ -286,7 +286,7 @@ namespace Forays{
 				Screen.SetCursorPosition(cursor_col+6,cursor_row);
 				//Screen.ForegroundColor = ConsoleColor.Gray;
 				Screen.CursorVisible = true;
-				Global.ReadKey();
+				Input.ReadKey();
 				MouseUI.PopButtonMap();
 			}
 			str.Clear();
@@ -366,7 +366,7 @@ namespace Forays{
 			DisplayNow(s + " (y/n): ");
 			Screen.CursorVisible = true;
 			while(true){
-				switch(Global.ReadKey().KeyChar){
+				switch(Input.ReadKey().KeyChar){
 				case 'y':
 				case 'Y':
 					MouseUI.PopButtonMap();

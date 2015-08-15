@@ -134,7 +134,7 @@ namespace Forays{
 						Console.Write("Please resize your terminal to 80x25, then press any key.");
 						Screen.SetCursorPosition(0,1);
 						Console.Write("         Current dimensions are {0}x{1}.".PadRight(57),Console.BufferWidth,Console.BufferHeight);
-						Global.ReadKey();
+						Input.ReadKey();
 						Screen.SetCursorPosition(0,0);
 						if(Console.BufferWidth < 80 || Console.BufferHeight < 25){
 							Environment.Exit(0);
@@ -167,7 +167,8 @@ namespace Forays{
 					}
 				}
 			}
-			Global.ReadKey();
+			Input.LoadKeyRebindings();
+			Input.ReadKey();
 			MainMenu();
 		}
 		static void MainMenu(){
@@ -200,7 +201,7 @@ namespace Forays{
 				MouseUI.CreateButton(ConsoleKey.D,false,7+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
 				Screen.ResetColors();
 				Screen.SetCursorPosition(Global.MAP_OFFSET_COLS,Global.MAP_OFFSET_ROWS+8);
-				command = Global.ReadKey();
+				command = Input.ReadKey();
 				switch(command.KeyChar){
 				case 'a':
 				{
@@ -299,12 +300,12 @@ namespace Forays{
 								Screen.SetCursorPosition(Global.MAP_OFFSET_COLS + 12 + s.Length,Global.MAP_OFFSET_ROWS + 4);
 								MouseUI.CreateButton(ConsoleKey.Enter,false,6+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
 								MouseUI.CreateButton(ConsoleKey.Tab,false,20+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
-								MouseUI.CreateButton(ConsoleKey.F1,false,15+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
-								MouseUI.CreateButton(ConsoleKey.F2,false,16+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
-								MouseUI.CreateButton(ConsoleKey.F3,false,17+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
-								MouseUI.CreateButton(ConsoleKey.F4,false,18+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
+								MouseUI.CreateButton(ConsoleKey.F21,false,15+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
+								MouseUI.CreateButton(ConsoleKey.F22,false,16+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
+								MouseUI.CreateButton(ConsoleKey.F23,false,17+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
+								MouseUI.CreateButton(ConsoleKey.F24,false,18+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
 								Screen.CursorVisible = true;
-								command = Global.ReadKey();
+								command = Input.ReadKey();
 								if((command.KeyChar >= '!' && command.KeyChar <= '~') || command.KeyChar == ' '){
 									if(s.Length < 26){
 										s = s + command.KeyChar;
@@ -334,16 +335,16 @@ namespace Forays{
 												}
 												else{
 													switch(command.Key){
-													case ConsoleKey.F1:
+													case ConsoleKey.F21:
 														name_option = 0;
 														break;
-													case ConsoleKey.F2:
+													case ConsoleKey.F22:
 														name_option = 1;
 														break;
-													case ConsoleKey.F3:
+													case ConsoleKey.F23:
 														name_option = 2;
 														break;
-													case ConsoleKey.F4:
+													case ConsoleKey.F24:
 														name_option = 3;
 														break;
 													}
@@ -838,7 +839,7 @@ namespace Forays{
 						Screen.CursorVisible = false;
 						Screen.Blank();
 						Screen.WriteString(11,3,"An error has occured. See error.txt for more details. Press any key to quit. ");
-						Global.ReadKey();
+						Input.ReadKey();
 						Global.Quit();
 					}
 					MouseUI.PopButtonMap();
@@ -967,7 +968,7 @@ namespace Forays{
 						}
 						++line;
 					}
-					Global.ReadKey();
+					Input.ReadKey();
 					file.Close();
 					break;
 				}*/
@@ -1071,7 +1072,7 @@ namespace Forays{
 						}
 						++line;
 					}
-					Global.ReadKey();
+					Input.ReadKey();
 					MouseUI.PopButtonMap();
 					break;
 				}
@@ -1171,7 +1172,7 @@ namespace Forays{
 					game.player.GetTarget(true,-1,-1,true,false,false,"");
 					//game.B.DisplayNow("Press any key to continue. ");
 					//Screen.CursorVisible = true;
-					//Global.ReadKey();
+					//Input.ReadKey();
 					MouseUI.PopButtonMap();
 					foreach(Actor a in drawn){
 						game.M.last_seen[a.row,a.col] = old_ch[a];
@@ -1194,7 +1195,7 @@ namespace Forays{
 					Screen.CursorVisible = true;
 					Screen.WriteMapChar(0,0,'-');
 					game.M.Draw();
-					Global.ReadKey();*/
+					Input.ReadKey();*/
 					break;
 				case 1:
 				{
@@ -1212,7 +1213,7 @@ namespace Forays{
 					}
 					MouseUI.AutomaticButtonsFromStrings = false;
 					game.player.Select("In your pack: ",game.player.InventoryList(),true,false,false);
-					Global.ReadKey();
+					Input.ReadKey();
 					MouseUI.PopButtonMap();
 					break;
 				case 4:
@@ -1228,7 +1229,7 @@ namespace Forays{
 					game.B.DisplayNow("Enter file name: ");
 					Screen.CursorVisible = true;
 					MouseUI.PushButtonMap();
-					string filename = Global.EnterString(40);
+					string filename = Input.EnterString(40);
 					MouseUI.PopButtonMap();
 					if(filename == ""){
 						break;

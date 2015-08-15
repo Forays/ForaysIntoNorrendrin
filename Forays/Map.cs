@@ -446,48 +446,6 @@ namespace Forays{
 				}
 			}
 		}
-		/*public void LoadLevel(string filename){ //this is ancient and was only used for testing purposes.
-			TextReader file = new StreamReader(filename);
-			char ch;
-			List<Tile> hidden = new List<Tile>();
-			for(int i=0;i<ROWS;++i){
-				for(int j=0;j<COLS;++j){
-					ch = (char)file.Read();
-					switch(ch){
-					case '#':
-						Tile.Create(TileType.WALL,i,j);
-						break;
-					case '.':
-						Tile.Create(TileType.FLOOR,i,j);
-						break;
-					case '+':
-						Tile.Create(TileType.DOOR_C,i,j);
-						break;
-					case '-':
-						Tile.Create(TileType.DOOR_O,i,j);
-						break;
-					case '>':
-						Tile.Create(TileType.STAIRS,i,j);
-						break;
-					case 'H':
-						Tile.Create(TileType.HIDDEN_DOOR,i,j);
-						hidden.Add(tile[i,j]);
-						break;
-					default:
-						Tile.Create(TileType.FLOOR,i,j);
-						break;
-					}
-					//alltiles.Add(tile[i,j]);
-				}
-				file.ReadLine();
-			}
-			file.Close();
-			if(hidden.Count > 0){
-				Event e = new Event(hidden,100,EventType.CHECK_FOR_HIDDEN);
-				e.tiebreaker = 0;
-				Q.Add(e);
-			}
-		}*/
 		public void Draw(){ //Draw should be faster than Redraw when most of the screen is unchanged.
 			if(Screen.MapChar(0,0).c == '-' && !Global.GRAPHICAL){ //kinda hacky. there won't be an open door in the corner, so this looks for
 				Redraw(); //evidence of Select being called (& therefore, the map needing to be redrawn entirely) //todo! this breaks in console mode if you have the option on.
@@ -2778,7 +2736,7 @@ namespace Forays{
 					tile[i,j].solid_rock = true;
 				}
 			}
-			//Global.ReadKey();
+			//Input.ReadKey();
 			player.ResetForNewLevel();
 			foreach(Tile t in AllTiles()){
 				if(t.light_radius > 0){

@@ -467,7 +467,7 @@ namespace Forays{
 				case EventType.MOVE:
 				{
 					Actor temp = target as Actor;
-					temp.Input();
+					temp.Act();
 					break;
 				}
 				case EventType.REMOVE_ATTR:

@@ -1079,7 +1079,7 @@ namespace Forays{
 						last_wall = t;
 						t = t.TileInDirection(dir);
 					}
-					Global.FlushInput();
+					Input.FlushInput();
 					if(t.actor() == null){
 						int r = user.row;
 						int c = user.col;
@@ -1092,7 +1092,7 @@ namespace Forays{
 							Game.GLUpdate();
 							Thread.Sleep(35);
 						}
-						Global.FlushInput();
+						Input.FlushInput();
 						B.Add(user.You("travel") + " through the passage. ",user,t);
 					}
 					else{
@@ -1121,7 +1121,7 @@ namespace Forays{
 								Game.GLUpdate();
 								Thread.Sleep(35);
 							}
-							Global.FlushInput();
+							Input.FlushInput();
 							B.Add(user.You("travel") + " through the passage. ",user,destination);
 						}
 						else{

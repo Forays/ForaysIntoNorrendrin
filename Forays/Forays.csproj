@@ -85,6 +85,7 @@
     <Compile Include="Tile.cs" />
     <Compile Include="Utility.cs" />
     <Compile Include="PosArray.cs" />
+    <Compile Include="Input.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
@@ -112,15 +113,11 @@
     <Content Include="help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="highscore.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="highscore.txt" />
     <Content Include="item_help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="options.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Content Include="options.txt" />
     <Content Include="spell_help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

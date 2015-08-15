@@ -74,7 +74,7 @@ namespace Forays{
 						Screen.WriteString(i,16,text[i+startline-1].PadRight(64));
 					}
 				}
-				command = Global.ReadKey();
+				command = Input.ReadKey();
 				ConsoleKey ck = command.Key;
 				switch(ck){
 				case ConsoleKey.Backspace:
@@ -95,7 +95,7 @@ namespace Forays{
 					ch = ']';
 					break;
 				default:
-					ch = Actor.ConvertInput(command);
+					ch = command.GetCommandChar();
 					break;
 				}
 				switch(ch){
@@ -362,8 +362,8 @@ namespace Forays{
 			Screen.CursorVisible = false;
 			Game.GLUpdate();
 			Thread.Sleep(500);
-			Global.FlushInput();
-			/*	switch(Global.ReadKey().KeyChar){
+			Input.FlushInput();
+			/*	switch(Input.ReadKey().KeyChar){
 				case 'q':
 					box_edge_color = NextColor(box_edge_color);
 					break;
@@ -381,7 +381,7 @@ namespace Forays{
 					break;
 				}
 			}*/
-			if(Global.ReadKey().KeyChar == '='){
+			if(Input.ReadKey().KeyChar == '='){
 				Global.Options[OptionType.NEVER_DISPLAY_TIPS] = true;
 			}
 			Screen.WriteArray((Global.SCREEN_H - boxheight) / 2,x,memory);

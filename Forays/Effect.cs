@@ -101,7 +101,7 @@ namespace Forays{
 			}
 			B.DisplayNow("Discovered item types: ");
 			Screen.CursorVisible = true;
-			Global.ReadKey();
+			Input.ReadKey();
 			MouseUI.PopButtonMap();
 		}
 		public static void ShowPreviousMessages(bool show_footsteps){
@@ -143,7 +143,7 @@ namespace Forays{
 				}
 				B.DisplayNow("Previous messages: ");
 				Screen.CursorVisible = true;
-				command2 = Global.ReadKey();
+				command2 = Input.ReadKey();
 				ConsoleKey ck = command2.Key;
 				switch(ck){
 				case ConsoleKey.Backspace:
@@ -167,7 +167,7 @@ namespace Forays{
 				ch2 = ']';
 				break;
 				default:
-				ch2 = Actor.ConvertInput(command2);
+				ch2 = command2.GetCommandChar();
 				break;
 				}
 				switch(ch2){
@@ -753,7 +753,7 @@ namespace Forays{
 			foreach(pos p in list){
 				Screen.WriteMapChar(p.row,p.col,'!',Color.Red);
 			}
-			Global.ReadKey();
+			Input.ReadKey();
 			Screen.WriteArray(0,0,temp);
 		}
 		public static void DebugDisplayDijkstra(PosArray<int> d){ DebugDisplayDijkstra(d,1); }
@@ -786,7 +786,7 @@ namespace Forays{
 					}
 				}
 			}
-			Global.ReadKey();
+			Input.ReadKey();
 		}
 	}
 }

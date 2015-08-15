@@ -74,8 +74,8 @@ namespace Forays{
 		}
 		protected override void KeyDownHandler(object sender,KeyboardKeyEventArgs args){
 			key_down[args.Key] = true;
-			if(!Global.KeyPressed){
-				ConsoleKey ck = Global.GetConsoleKey(args.Key);
+			if(!Input.KeyPressed){
+				ConsoleKey ck = Input.GetConsoleKey(args.Key);
 				if(ck != ConsoleKey.NoName){
 					bool alt = KeyIsDown(Key.LAlt) || KeyIsDown(Key.RAlt);
 					bool shift = KeyIsDown(Key.LShift) || KeyIsDown(Key.RShift);
@@ -91,8 +91,8 @@ namespace Forays{
 						}
 					}
 					else{
-						Global.KeyPressed = true;
-						Global.LastKey = new ConsoleKeyInfo(Global.GetChar(ck,shift),ck,shift,alt,ctrl);
+						Input.KeyPressed = true;
+						Input.LastKey = new ConsoleKeyInfo(Input.GetChar(ck,shift),ck,shift,alt,ctrl);
 					}
 				}
 				MouseUI.RemoveHighlight();
@@ -139,17 +139,17 @@ namespace Forays{
 					}
 				}
 				else{
-					if(!Global.KeyPressed && (row != MouseUI.LastRow || col != MouseUI.LastCol) && !KeyIsDown(Key.LControl) && !KeyIsDown(Key.RControl)){
+					if(!Input.KeyPressed && (row != MouseUI.LastRow || col != MouseUI.LastCol) && !KeyIsDown(Key.LControl) && !KeyIsDown(Key.RControl)){
 						MouseUI.LastRow = row;
 						MouseUI.LastCol = col;
-						Global.KeyPressed = true;
+						Input.KeyPressed = true;
 						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
-							ConsoleKey key = ConsoleKey.F1;
-							Global.LastKey = new ConsoleKeyInfo(Global.GetChar(key,false),key,false,false,false);
+							ConsoleKey key = ConsoleKey.F21;
+							Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
 						}
 						else{
-							ConsoleKey key = ConsoleKey.F2;
-							Global.LastKey = new ConsoleKeyInfo(Global.GetChar(key,false),key,false,false,false);
+							ConsoleKey key = ConsoleKey.F22;
+							Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
 						}
 					}
 				}
@@ -348,11 +348,11 @@ namespace Forays{
 				col = args.X / cell_w;
 			}
 			Button b = MouseUI.GetButton(row,col);
-			if(!Global.KeyPressed){
-				Global.KeyPressed = true;
+			if(!Input.KeyPressed){
+				Input.KeyPressed = true;
 				if(b != null){
 					bool shifted = (b.mods & ConsoleModifiers.Shift) == ConsoleModifiers.Shift;
-					Global.LastKey = new ConsoleKeyInfo(Global.GetChar(b.key,shifted),b.key,shifted,false,false);
+					Input.LastKey = new ConsoleKeyInfo(Input.GetChar(b.key,shifted),b.key,shifted,false,false);
 				}
 				else{
 					switch(MouseUI.Mode){
@@ -362,7 +362,7 @@ namespace Forays{
 						int map_col = col - Global.MAP_OFFSET_COLS;
 						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
 							if(map_row == Actor.player.row && map_col == Actor.player.col){
-								Global.LastKey = new ConsoleKeyInfo('.',ConsoleKey.OemPeriod,false,false,false);
+								Input.LastKey = new ConsoleKeyInfo('5',ConsoleKey.NumPad5,false,false,false);
 							}
 							else{
 								if(KeyIsDown(Key.LControl) || KeyIsDown(Key.RControl) || (Math.Abs(map_row-Actor.player.row) <= 1 && Math.Abs(map_col-Actor.player.col) <= 1)){
@@ -385,7 +385,7 @@ namespace Forays{
 										}
 									}
 									ConsoleKey dir_key = (ConsoleKey)(ConsoleKey.NumPad0 + Actor.player.DirectionOf(Actor.M.tile[Actor.player.row + rowchange,Actor.player.col + colchange]));
-									Global.LastKey = new ConsoleKeyInfo(Global.GetChar(dir_key,false),dir_key,false,false,false);
+									Input.LastKey = new ConsoleKeyInfo(Input.GetChar(dir_key,false),dir_key,false,false,false);
 								}
 								else{
 									Tile nearest = Actor.M.tile[map_row,map_col];
@@ -396,11 +396,11 @@ namespace Forays{
 										if(Actor.player.path.Count > 0){
 											Actor.interrupted_path = new pos(-1,-1);
 											ConsoleKey path_key = (ConsoleKey)(ConsoleKey.NumPad0 + Actor.player.DirectionOf(Actor.player.path[0]));
-											Global.LastKey = new ConsoleKeyInfo(Global.GetChar(path_key,false),path_key,false,false,false);
+											Input.LastKey = new ConsoleKeyInfo(Input.GetChar(path_key,false),path_key,false,false,false);
 											Actor.player.path.RemoveAt(0);
 										}
 										else{
-											Global.LastKey = new ConsoleKeyInfo(' ',ConsoleKey.Spacebar,false,false,false);
+											Input.LastKey = new ConsoleKeyInfo(' ',ConsoleKey.Spacebar,false,false,false);
 										}
 									}
 									else{
@@ -424,18 +424,18 @@ namespace Forays{
 										if(Actor.player.path.Count > 0){
 											Actor.interrupted_path = new pos(-1,-1);
 											ConsoleKey path_key = (ConsoleKey)(ConsoleKey.NumPad0 + Actor.player.DirectionOf(Actor.player.path[0]));
-											Global.LastKey = new ConsoleKeyInfo(Global.GetChar(path_key,false),path_key,false,false,false);
+											Input.LastKey = new ConsoleKeyInfo(Input.GetChar(path_key,false),path_key,false,false,false);
 											Actor.player.path.RemoveAt(0);
 										}
 										else{
-											Global.LastKey = new ConsoleKeyInfo(' ',ConsoleKey.Spacebar,false,false,false);
+											Input.LastKey = new ConsoleKeyInfo(' ',ConsoleKey.Spacebar,false,false,false);
 										}
 									}
 								}
 							}
 						}
 						else{
-							Global.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+							Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
 						}
 						break;
 					}
@@ -449,11 +449,11 @@ namespace Forays{
 							Button dir_b = MouseUI.GetButton(Global.MAP_OFFSET_ROWS + p.row,Global.MAP_OFFSET_COLS + p.col);
 							if(dir_b != null){
 								bool shifted = (dir_b.mods & ConsoleModifiers.Shift) == ConsoleModifiers.Shift;
-								Global.LastKey = new ConsoleKeyInfo(Global.GetChar(dir_b.key,shifted),dir_b.key,shifted,false,false);
+								Input.LastKey = new ConsoleKeyInfo(Input.GetChar(dir_b.key,shifted),dir_b.key,shifted,false,false);
 							}
 						}
 						else{
-							Global.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+							Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
 						}
 						break;
 					}
@@ -462,21 +462,21 @@ namespace Forays{
 						int map_row = row - Global.MAP_OFFSET_ROWS;
 						int map_col = col - Global.MAP_OFFSET_COLS;
 						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
-							Global.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+							Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
 						}
 						else{
-							Global.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+							Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
 						}
 						break;
 					}
 					case MouseMode.YesNoPrompt:
-						Global.LastKey = new ConsoleKeyInfo('y',ConsoleKey.Y,false,false,false);
+						Input.LastKey = new ConsoleKeyInfo('y',ConsoleKey.Y,false,false,false);
 						break;
 					case MouseMode.Inventory:
-						Global.LastKey = new ConsoleKeyInfo('a',ConsoleKey.A,false,false,false);
+						Input.LastKey = new ConsoleKeyInfo('a',ConsoleKey.A,false,false,false);
 						break;
 					default:
-						Global.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+						Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
 						break;
 					}
 				}
@@ -485,17 +485,17 @@ namespace Forays{
 			MouseUI.RemoveMouseover();
 		}
 		void HandleRightClick(){
-			if(!Global.KeyPressed){
-				Global.KeyPressed = true;
+			if(!Input.KeyPressed){
+				Input.KeyPressed = true;
 				switch(MouseUI.Mode){
 				case MouseMode.YesNoPrompt:
-					Global.LastKey = new ConsoleKeyInfo('n',ConsoleKey.N,false,false,false);
+					Input.LastKey = new ConsoleKeyInfo('n',ConsoleKey.N,false,false,false);
 					break;
 				case MouseMode.Map:
-					Global.LastKey = new ConsoleKeyInfo('i',ConsoleKey.I,false,false,false);
+					Input.LastKey = new ConsoleKeyInfo('i',ConsoleKey.I,false,false,false);
 					break;
 				default:
-					Global.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+					Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
 					break;
 				}
 			}
@@ -503,14 +503,14 @@ namespace Forays{
 			MouseUI.RemoveMouseover();
 		}
 		void HandleMiddleClick(){
-			if(!Global.KeyPressed){
-				Global.KeyPressed = true;
+			if(!Input.KeyPressed){
+				Input.KeyPressed = true;
 				switch(MouseUI.Mode){
 				case MouseMode.Map:
-					Global.LastKey = new ConsoleKeyInfo('v',ConsoleKey.V,false,false,false);
+					Input.LastKey = new ConsoleKeyInfo('v',ConsoleKey.V,false,false,false);
 					break;
 				default:
-					Global.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+					Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
 					break;
 				}
 			}
@@ -518,36 +518,36 @@ namespace Forays{
 			MouseUI.RemoveMouseover();
 		}
 		void MouseWheelHandler(object sender,MouseWheelEventArgs args){
-			if(!Global.KeyPressed){
+			if(!Input.KeyPressed){
 				if(args.Delta > 0){
 					switch(MouseUI.Mode){
 					case MouseMode.ScrollableMenu:
-						Global.KeyPressed = true;
-						Global.LastKey = new ConsoleKeyInfo('8',ConsoleKey.UpArrow,false,false,false);
+						Input.KeyPressed = true;
+						Input.LastKey = new ConsoleKeyInfo('8',ConsoleKey.NumPad8,false,false,false);
 						break;
 					case MouseMode.Targeting:
-						Global.KeyPressed = true;
-						Global.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,true,false,false);
+						Input.KeyPressed = true;
+						Input.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,true,false,false);
 						break;
 					case MouseMode.Map:
-						Global.KeyPressed = true;
-						Global.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
+						Input.KeyPressed = true;
+						Input.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
 						break;
 					}
 				}
 				if(args.Delta < 0){
 					switch(MouseUI.Mode){
 					case MouseMode.ScrollableMenu:
-						Global.KeyPressed = true;
-						Global.LastKey = new ConsoleKeyInfo('2',ConsoleKey.DownArrow,false,false,false);
+						Input.KeyPressed = true;
+						Input.LastKey = new ConsoleKeyInfo('2',ConsoleKey.NumPad2,false,false,false);
 						break;
 					case MouseMode.Targeting:
-						Global.KeyPressed = true;
-						Global.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
+						Input.KeyPressed = true;
+						Input.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
 						break;
 					case MouseMode.Map:
-						Global.KeyPressed = true;
-						Global.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
+						Input.KeyPressed = true;
+						Input.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
 						break;
 					}
 				}
@@ -559,9 +559,9 @@ namespace Forays{
 			MouseUI.RemoveHighlight();
 		}
 		protected override void OnClosing(System.ComponentModel.CancelEventArgs e){
-			if(NoClose && !Global.KeyPressed && MouseUI.Mode == MouseMode.Map){
-				Global.KeyPressed = true;
-				Global.LastKey = new ConsoleKeyInfo('q',ConsoleKey.Q,false,false,false);
+			if(NoClose && !Input.KeyPressed && MouseUI.Mode == MouseMode.Map){
+				Input.KeyPressed = true;
+				Input.LastKey = new ConsoleKeyInfo('q',ConsoleKey.Q,false,false,false);
 			}
 			base.OnClosing(e);
 		}
