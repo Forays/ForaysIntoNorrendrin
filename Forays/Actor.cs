@@ -124,9 +124,7 @@ namespace Forays{
 		public static List<Actor> tiebreakers = null; //a list of all actors on this level. used to determine sub-turn order of events
 		public static Dict<ActorType,List<AttackInfo>> attack = new Dict<ActorType,List<AttackInfo>>();
 		public static pos interrupted_path = new pos(-1,-1);
-		public static bool viewing_more_commands = false; //used in DisplayStats to show extra commands
-		public static bool viewing_map_shrine_info = false; //used in DisplayStats to show map info
-		
+
 		private static Dict<ActorType,Actor> proto = new Dict<ActorType, Actor>();
 		public static Actor Prototype(ActorType type){ return proto[type]; }
 		static Actor(){
@@ -2025,7 +2023,7 @@ namespace Forays{
 			if(HasAttr(AttrType.SWITCHING_ARMOR)){
 				attrs[AttrType.SWITCHING_ARMOR]--;
 			}
-			DisplayStats(true);
+			UI.DisplayStats(true);
 			if(HasFeat(FeatType.DANGER_SENSE)){
 				M.UpdateDangerValues();
 			}
@@ -2316,7 +2314,7 @@ namespace Forays{
 						}
 					}
 					B.Print(false);
-					DisplayStats(true);
+					UI.DisplayStats(true);
 					Cursor();
 				}
 				else{
@@ -3246,7 +3244,7 @@ namespace Forays{
 						for(int letter=0;letter<inv.Count;++letter){
 							Screen.WriteMapChar(letter+1,1,(char)(letter+'a'),Color.DarkCyan);
 						}
-						List<colorstring> box = ItemDescriptionBox(inv[sel.value],false,false,31);
+						List<colorstring> box = UI.ItemDescriptionBox(inv[sel.value],false,false,31);
 						int i = (Global.SCREEN_H - box.Count) / 2;
 						int j = (Global.SCREEN_W - box[0].Length()) / 2;
 						foreach(colorstring cs in box){
@@ -3902,9 +3900,9 @@ namespace Forays{
 				}
 				Screen.MapDrawWithStrings(M.last_seen,0,0,ROWS,COLS);
 				Screen.CursorVisible = true;
-				viewing_map_shrine_info = true;
+				UI.viewing_map_shrine_info = true;
 				ChoosePathingDestination(false,false,"Map of dungeon level " + M.current_level + ": ");
-				viewing_map_shrine_info = false;
+				UI.viewing_map_shrine_info = false;
 				if(stairs != null){
 					M.last_seen[stairs.row,stairs.col] = cch;
 				}
@@ -4220,28 +4218,14 @@ namespace Forays{
 				break;
 			}
 			case 'v':
-				if(viewing_more_commands){
-					viewing_more_commands = false;
+			{
+				if(UI.viewing_more_commands){
+					UI.viewing_more_commands = false;
 					MouseUI.PopButtonMap();
-					MouseUI.PushButtonMap(MouseMode.Map);
-					MouseUI.CreateStatsButton(ConsoleKey.I,false,12,1);
-					MouseUI.CreateStatsButton(ConsoleKey.E,false,13,1);
-					MouseUI.CreateStatsButton(ConsoleKey.C,false,14,1);
-					MouseUI.CreateStatsButton(ConsoleKey.T,false,15,1);
-					MouseUI.CreateStatsButton(ConsoleKey.Tab,false,16,1);
-					MouseUI.CreateStatsButton(ConsoleKey.R,false,17,1);
-					MouseUI.CreateStatsButton(ConsoleKey.A,false,18,1);
-					MouseUI.CreateStatsButton(ConsoleKey.G,false,19,1);
-					MouseUI.CreateStatsButton(ConsoleKey.F,false,20,1);
-					MouseUI.CreateStatsButton(ConsoleKey.S,false,21,1);
-					MouseUI.CreateStatsButton(ConsoleKey.Z,false,22,1);
-					MouseUI.CreateStatsButton(ConsoleKey.X,false,23,1);
-					MouseUI.CreateStatsButton(ConsoleKey.V,false,24,1);
-					MouseUI.CreateStatsButton(ConsoleKey.E,false,7,2);
-					MouseUI.CreateMapButton(ConsoleKey.P,false,0,3);
+					UI.CreateDefaultStatsButtons();
 				}
 				else{
-					viewing_more_commands = true;
+					UI.viewing_more_commands = true;
 					MouseUI.PopButtonMap();
 					MouseUI.PushButtonMap(MouseMode.Map);
 					MouseUI.CreateStatsButton(ConsoleKey.O,false,12,1);
@@ -4259,6 +4243,7 @@ namespace Forays{
 				}
 				Q0();
 				break;
+			}
 			case '~': //debug mode 
 			{
 				if(false){
@@ -4297,16 +4282,18 @@ namespace Forays{
 							t.TransformTo(TileType.CHEST);
 						}
 						Q0();
-						while(true){
+						for(int i=0;i<20;++i){
+							Screen.WriteMapString(i,0,Item.GenerateScrollName().ToLower().PadRight(Global.COLS));
+						}
+						Input.ReadKey();
+						/*while(true){
 							var k = Input.ReadKey();
 							B.Add(k.Key.ToString() + "! ");
 							B.Print(true);
 							if(k.Key == ConsoleKey.M){
 								break;
 							}
-						}
-						//Screen.AnimateExplosion(this,5,new colorchar(Color.RandomIce,'*'),25);
-						//Q1();
+						}*/
 						break;
 					}
 					case 2:
@@ -14827,107 +14814,6 @@ namespace Forays{
 			}
 			return result;
 		}
-		/*public int GetDangerRating(Tile t){
-			if(HasAttr(AttrType.MINDLESS) || (type == ActorType.BERSERKER && HasAttr(AttrType.COOLDOWN_2)) || type == ActorType.FINAL_LEVEL_CULTIST){
-				return 0;
-			}
-			int total = 0;
-			int dr = attrs[AttrType.DAMAGE_RESISTANCE];
-			if(!HasAttr(AttrType.IMMUNE_BURNING,AttrType.IMMUNE_FIRE) && dr < 3){
-				bool might_catch = false;
-				foreach(Tile neighbor in t.TilesWithinDistance(1)){
-					if(neighbor.IsBurning()){
-						if(dr == 0){
-							++total;
-						}
-						if(t.IsCurrentlyFlammable() && HasAttr(AttrType.HUMANOID_INTELLIGENCE)){
-							might_catch = true;
-						}
-					}
-				}
-				if(t.IsBurning()){
-					if(IsBurning()){
-						total += 3;
-					}
-					else{
-						if(dr == 0){ //this DR handling is not very good! can be improved later.
-							total += 20;
-						}
-						else{
-							total += 15;
-						}
-					}
-				}
-				else{
-					if(might_catch){
-						if(dr == 0){
-							total += 15;
-						}
-						else{
-							total += 10;
-						}
-					}
-				}
-			}
-			if(HasAttr(AttrType.HUMANOID_INTELLIGENCE)){
-				if(!HasAttr(AttrType.NONLIVING,AttrType.PLANTLIKE)){
-					if(t.Is(FeatureType.SPORES)){
-						if(!HasAttr(AttrType.MENTAL_IMMUNITY)){
-							if(HasAttr(AttrType.STUNNED)){
-								++total;
-							}
-							else{
-								total += 4;
-							}
-						}
-						if(dr < 2){
-							if(HasAttr(AttrType.POISONED)){
-								++total;
-							}
-							else{
-								if(dr > 0){
-									total += 2;
-								}
-								else{
-									total += 4;
-								}
-							}
-						}
-					}
-					if(t.Is(FeatureType.POISON_GAS) && type != ActorType.NOXIOUS_WORM && dr < 2){
-						if(HasAttr(AttrType.POISONED)){
-							++total;
-						}
-						else{
-							if(dr > 0){
-								total += 2;
-							}
-							else{
-								total += 4;
-							}
-						}
-					}
-					if(t.Is(FeatureType.CONFUSION_GAS) && !HasAttr(AttrType.MENTAL_IMMUNITY)){
-						total += 15;
-					}
-					if(t.Is(TileType.POPPY_FIELD) && !HasAttr(AttrType.MAGICAL_DROWSINESS,AttrType.MENTAL_IMMUNITY) && attrs[AttrType.POPPY_COUNTER] + M.poppy_distance_map[t.p] >= 4){
-						total += 7; //todo: check for valid dijkstra int here
-					}
-				}
-				if(t.Is(FeatureType.THICK_DUST) && !HasAttr(AttrType.BLINDSIGHT,AttrType.PLANTLIKE)){
-					total += 8;
-				}
-				if(t.Is(FeatureType.GRENADE)){
-					total += 20;
-				}
-				foreach(Tile neighbor in t.TilesAtDistance(1)){
-					if(neighbor.Is(FeatureType.GRENADE)){
-						total += 20;
-					}
-				}
-			}
-			return total;
-		}*/
 		public bool CollideWith(Tile t){
 			if(t.Is(TileType.FIREPIT) && !t.Is(FeatureType.SLIME)){
 				B.Add(You("fall") + " into the fire pit. ",this);
@@ -15010,195 +14896,10 @@ namespace Forays{
 			}
 			return result;
 		}
-		public static List<colorstring> ItemDescriptionBox(Item item,bool lookmode,bool mouselook,int max_string_length){
-			List<string> text = item.Description().GetWordWrappedList(max_string_length);
-			Color box_edge_color = Color.DarkGreen;
-			Color box_corner_color = Color.Green;
-			Color text_color = Color.Gray;
-			int widest = 31; // length of "[Press any other key to cancel]"
-			if(lookmode){
-				widest = 20; // length of "[=] Hide description"
-			}
-			foreach(string s in text){
-				if(s.Length > widest){
-					widest = s.Length;
-				}
-			}
-			if((!lookmode || mouselook) && item.Name(true).Length > widest){
-				widest = item.Name(true).Length;
-			}
-			widest += 2; //one space on each side
-			List<colorstring> box = new List<colorstring>();
-			box.Add(new colorstring("+",box_corner_color,"".PadRight(widest,'-'),box_edge_color,"+",box_corner_color));
-			if(!lookmode || mouselook){
-				box.Add(new colorstring("|",box_edge_color) + item.Name(true).PadOuter(widest).GetColorString(Color.White) + new colorstring("|",box_edge_color));
-				box.Add(new colorstring("|",box_edge_color,"".PadRight(widest),Color.Gray,"|",box_edge_color));
-			}
-			foreach(string s in text){
-				box.Add(new colorstring("|",box_edge_color) + s.PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
-			}
-			if(!mouselook){
-				box.Add(new colorstring("|",box_edge_color,"".PadRight(widest),Color.Gray,"|",box_edge_color));
-				if(lookmode){
-					box.Add(new colorstring("|",box_edge_color) + "[=] Hide description".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
-				}
-				else{
-					box.Add(new colorstring("|",box_edge_color) + "[a]pply  [f]ling  [d]rop".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
-					//box.Add(new colorstring("|",box_edge_color) + "[Press any other key to cancel]".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
-				}
-			}
-			box.Add(new colorstring("+",box_corner_color,"".PadRight(widest,'-'),box_edge_color,"+",box_corner_color));
-			return box;
-		}
-		public void DisplayStats(){ DisplayStats(false); }
-		public void DisplayStats(bool cyan_letters){
-			bool buttons = MouseUI.AutomaticButtonsFromStrings;
-			MouseUI.AutomaticButtonsFromStrings = false;
-			Screen.CursorVisible = false;
-			if(!viewing_map_shrine_info){
-				Screen.WriteStatsString(2,0,"HP: ");
-				if(curhp < 50){
-					if(curhp < 20){
-						Screen.WriteStatsString(2,4,new cstr(Color.DarkRed,curhp.ToString() + "  "));
-					}
-					else{
-						Screen.WriteStatsString(2,4,new cstr(Color.Red,curhp.ToString() + "  "));
-					}
-				}
-				else{
-					Screen.WriteStatsString(2,4,curhp.ToString() + "  ");
-				}
-				Screen.WriteStatsString(3,0,"Mana: ");
-				Screen.WriteStatsString(3,6,curmp + "  ");
-				Screen.WriteStatsString(4,0,"Exhaust:");
-				if(exhaustion == 100){
-					Screen.WriteStatsString(4,8,"100%");
-				}
-				else{
-					Screen.WriteStatsString(4,8," " + (exhaustion.ToString() + "%").PadRight(4));
-				}
-				Screen.WriteStatsString(5,0,"Depth: " + M.current_level + "  ");
-				Screen.WriteStatsString(6,0,"            ");
-				cstr cs = EquippedWeapon.StatsName();
-				cs.s = cs.s.PadRight(12);
-				Screen.WriteStatsString(7,0,cs);
-				colorstring statuses = new colorstring();
-				for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
-					if(EquippedWeapon.status[(EquipmentStatus)i]){
-						statuses.strings.Add(new cstr("*",Weapon.StatusColor((EquipmentStatus)i)));
-						if(EquippedWeapon.StatsName().s.Length + statuses.Length() >= 11){
-							break;
-						}
-					}
-				}
-				Screen.WriteString(7,EquippedWeapon.StatsName().s.Length + 1,statuses);
-				cs = EquippedArmor.StatsName();
-				cs.s = cs.s.PadRight(12);
-				Screen.WriteStatsString(8,0,cs);
-				statuses = new colorstring();
-				for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
-					if(EquippedArmor.status[(EquipmentStatus)i]){
-						statuses.strings.Add(new cstr("*",Weapon.StatusColor((EquipmentStatus)i)));
-						if(EquippedArmor.StatsName().s.Length + statuses.Length() >= 11){
-							break;
-						}
-					}
-				}
-				Screen.WriteString(8,EquippedArmor.StatsName().s.Length + 1,statuses);
-				Screen.WriteStatsString(9,0,"            ");
-				if(HasAttr(AttrType.BURNING)){
-					Screen.WriteStatsString(10,0,"Burning",Color.Red);
-				}
-				else{
-					if(HasAttr(AttrType.SLIMED)){
-						Screen.WriteStatsString(10,0,"Slimed ",Color.Green);
-					}
-					else{
-						if(HasAttr(AttrType.OIL_COVERED)){
-							Screen.WriteStatsString(10,0,"Oiled  ",Color.DarkYellow);
-						}
-						else{
-							if(HasAttr(AttrType.FROZEN)){
-								Screen.WriteStatsString(10,0,"Frozen ",Color.Blue);
-							}
-							else{
-								if(tile().Is(FeatureType.WEB) && !HasAttr(AttrType.BURNING,AttrType.OIL_COVERED,AttrType.SLIMED)){
-									Screen.WriteStatsString(10,0,"Webbed ",Color.White);
-								}
-								else{
-									Screen.WriteStatsString(10,0,"       ");
-								}
-							}
-						}
-					}
-				}
-			}
-			else{
-				Color[] colors = new Color[5];
-				string[] shrines = new string[]{"  Combat    ","  Defense   ","  Magic     ","  Spirit    ","  Stealth   "};
-				for(int i=0;i<5;++i){
-					if(Map.shrine_locations[i].BoundsCheck(M.tile,true) && M.tile[Map.shrine_locations[i]].seen){
-						if(M.tile[Map.shrine_locations[i]].type == TileType.RUINED_SHRINE){
-							colors[i] = Color.DarkGray;
-						}
-						else{
-							colors[i] = Color.Gray;
-						}
-					}
-					else{
-						colors[i] = Color.DarkGray;
-						//shrines[i] = "    ---     ";
-						shrines[i] = "  -------   ";
-					}
-				}
-				Screen.WriteStatsString(2,0,"            ");
-				Screen.WriteStatsString(3,0,"            ");
-				Screen.WriteStatsString(4,0," -Shrines-  ",Color.Yellow);
-				for(int i=0;i<5;++i){
-					Screen.WriteStatsString(5+i,0,shrines[i],colors[i]);
-				}
-				/*Screen.WriteStatsString(5,0,"  Combat    ",colors[0]);
-				Screen.WriteStatsString(6,0,"  Defense   ",colors[1]);
-				Screen.WriteStatsString(7,0,"  Magic     ",colors[2]);
-				Screen.WriteStatsString(8,0,"  Spirit    ",colors[3]);
-				Screen.WriteStatsString(9,0,"  Stealth   ",colors[4]);*/
-				Screen.WriteStatsString(10,0,"            ");
-			}
-			string[] commandhints;
-			List<int> blocked_commands = new List<int>();
-			if(viewing_more_commands){
-				commandhints = new string[]{"[o]perate   ","[w]alk      ","Travel [X]  ","Wait [.]    ","Descend [>] ",
-					"[m]ap       ","Known [\\]   ","Options [=] ","[q]uit      ","            ","            ",
-					"            ","[v]iew more "};
-			}
-			else{
-				commandhints = new string[]{"[i]nventory ","[e]quipment ","[c]haracter ","[t]orch     ",
-					"Look [Tab]  ","[r]est      ","[a]pply item","[g]et item  ","[f]ling item","[s]hoot bow ",
-					"Cast [z]    ","E[x]plore   ","[v]iew more "};
-				if(attrs[AttrType.RESTING] == -1){
-					blocked_commands.Add(5);
-				}
-				if(M.wiz_dark || M.wiz_lite){
-					blocked_commands.Add(3);
-				}
-			}
-			Color wordcolor = cyan_letters? Color.Gray : Color.DarkGray;
-			Color lettercolor = cyan_letters? Color.Cyan : Color.DarkCyan;
-			for(int i=0;i<commandhints.Length;++i){
-				if(blocked_commands.Contains(i)){
-					Screen.WriteString(12+i,0,commandhints[i].GetColorString(Color.DarkGray,Color.DarkCyan));
-				}
-				else{
-					Screen.WriteString(12+i,0,commandhints[i].GetColorString(wordcolor,lettercolor));
-				}
-			}
-			Screen.ResetColors();
-			MouseUI.AutomaticButtonsFromStrings = buttons;
-		}
 		public int DisplayCharacterInfo(){ return DisplayCharacterInfo(true); }
 		public int DisplayCharacterInfo(bool readkey){
 			MouseUI.PushButtonMap();
-			DisplayStats();
+			UI.DisplayStats();
 			for(int i=1;i<ROWS-1;++i){
 				Screen.WriteMapString(i,0,"".PadRight(COLS));
 			}
@@ -15879,7 +15580,7 @@ namespace Forays{
 					}
 					case '?':
 						Help.DisplayHelp(HelpTopic.Feats);
-						DisplayStats();
+						UI.DisplayStats();
 						break;
 					case (char)13:
 						if(feat_chosen != FeatType.NO_FEAT){
@@ -15945,348 +15646,6 @@ namespace Forays{
 				Help.TutorialTip(TutorialTopic.ActiveFeats);
 			}
 		}
-		/*public void GainXP(int num){
-			if(num <= 0){
-				num = 1;
-			}
-			xp += num;
-			//here's the formula for gaining the next level:
-			// (standard experience is mlevel * (10 + mlevel - playerlevel) )
-			// the number of monsters of the CURRENT level you would need to slay in order to reach the next level is equal to
-			//  10 + (currentlevel-1)*2 / 3
-			// therefore you reach level 2 after defeating 10 level 1 foes, which give 10xp each,
-			// and you reach level 3 after defeating 11 level 2 foes, which give 20xp each.
-			// (and so on)
-			List<string> learned = null;
-			switch(level){
-			case 0:
-				if(xp >= 0){
-					learned = LevelUp();
-				}
-				break;
-			case 1:
-				if(xp >= 100){
-					learned = LevelUp();
-				}
-				break;
-			case 2:
-				if(xp >= 320){
-					learned = LevelUp();
-				}
-				break;
-			case 3:
-				if(xp >= 680){
-					learned = LevelUp();
-				}
-				break;
-			case 4:
-				if(xp >= 1160){
-					learned = LevelUp();
-				}
-				break;
-			case 5:
-				if(xp >= 1810){
-					learned = LevelUp();
-				}
-				break;
-			case 6:
-				if(xp >= 2650){
-					learned = LevelUp();
-				}
-				break;
-			case 7:
-				if(xp >= 3630){
-					learned = LevelUp();
-				}
-				break;
-			case 8:
-				if(xp >= 4830){
-					learned = LevelUp();
-				}
-				break;
-			case 9:
-				if(xp >= 6270){
-					learned = LevelUp();
-				}
-				break;
-			}
-			if(learned != null){
-				foreach(string s in learned){
-					B.Add(s);
-				}
-			}
-		}
-		public List<string> LevelUp(){
-			List<string> learned = new List<string>();
-			++level;
-			if(level == 1){
-				//B.Add("Welcome, adventurer! ");
-				B.Add("Welcome, " + player_name + "! ");
-			}
-			else{
-				B.Add("Welcome to level " + level + ". ");
-			}
-			DisplayStats();
-			B.PrintAll();
-			ConsoleKeyInfo command;
-			List<SkillType> skills_increased = new List<SkillType>();
-			List<FeatType> feats_increased = new List<FeatType>();
-			bool done = false;
-			while(!done){
-				Screen.ResetColors();
-				B.DisplayNow("Choose which skills you'll increase: ");
-				Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
-				for(int i=0;i<5;++i){
-					SkillType sk = (SkillType)i;
-					Screen.WriteMapString(1+i*4,0,("["+(char)(i+97)+"] " + Skill.Name(sk)).PadRight(22));
-					Screen.WriteMapChar(1+i*4,1,new colorchar(Color.Cyan,(char)(i+97)));
-					Color levelcolor = skills_increased.Contains(sk)? Color.Green : Color.Gray;
-					int skill_level = skills_increased.Contains(sk)? skills[sk] + 1 : skills[sk];
-					Screen.WriteMapString(1+i*4,22,new cstr(levelcolor,("Level " + skill_level).PadRight(70)));
-					FeatType ft = Feat.OfSkill(sk,0);
-					Color featcolor = feats_increased.Contains(ft)? Color.Green : Color.Gray;
-					int feat_level = feats_increased.Contains(ft)? (-feats[ft]) + 1 : (-feats[ft]);
-					if(HasFeat(ft)){ featcolor = Color.Magenta; feat_level = Feat.MaxRank(ft); }
-					Screen.WriteMapString(2+i*4,0,new cstr(featcolor,("    " + Feat.Name(ft) + " (" + feat_level + "/" + Feat.MaxRank(ft) + ")").PadRight(35)));
-					ft = Feat.OfSkill(sk,1);
-					featcolor = feats_increased.Contains(ft)? Color.Green : Color.Gray;
-					feat_level = feats_increased.Contains(ft)? (-feats[ft]) + 1 : (-feats[ft]);
-					if(HasFeat(ft)){ featcolor = Color.Magenta; feat_level = Feat.MaxRank(ft); }
-					Screen.WriteMapString(2+i*4,35,new cstr(featcolor,(Feat.Name(ft) + " (" + feat_level + "/" + Feat.MaxRank(ft) + ")").PadRight(70)));
-					ft = Feat.OfSkill(sk,2);
-					featcolor = feats_increased.Contains(ft)? Color.Green : Color.Gray;
-					feat_level = feats_increased.Contains(ft)? (-feats[ft]) + 1 : (-feats[ft]);
-					if(HasFeat(ft)){ featcolor = Color.Magenta; feat_level = Feat.MaxRank(ft); }
-					Screen.WriteMapString(3+i*4,0,new cstr(featcolor,("    " + Feat.Name(ft) + " (" + feat_level + "/" + Feat.MaxRank(ft) + ")").PadRight(35)));
-					ft = Feat.OfSkill(sk,3);
-					featcolor = feats_increased.Contains(ft)? Color.Green : Color.Gray;
-					feat_level = feats_increased.Contains(ft)? (-feats[ft]) + 1 : (-feats[ft]);
-					if(HasFeat(ft)){ featcolor = Color.Magenta; feat_level = Feat.MaxRank(ft); }
-					Screen.WriteMapString(3+i*4,35,new cstr(featcolor,(Feat.Name(ft) + " (" + feat_level + "/" + Feat.MaxRank(ft) + ")").PadRight(70)));
-					Screen.WriteMapString(4+i*4,0,"".PadRight(COLS));
-				}
-				if(skills_increased.Count == 3){
-					Screen.WriteMapString(21,0,"--Type [a-e] to choose a skill--[?] for help--[Enter] to accept---");
-					Screen.WriteMapChar(21,8,new colorchar(Color.Cyan,'a'));
-					Screen.WriteMapChar(21,10,new colorchar(Color.Cyan,'e'));
-					Screen.WriteMapChar(21,33,new colorchar(Color.Cyan,'?'));
-					Screen.WriteMapString(21,47,new cstr(Color.Magenta,"Enter"));
-				}
-				else{
-					Screen.WriteMapString(21,0,"--Type [a-e] to choose a skill--[?] for help-------(" + (3-skills_increased.Count) + " left)-------");
-					Screen.WriteMapChar(21,8,new colorchar(Color.Cyan,'a'));
-					Screen.WriteMapChar(21,10,new colorchar(Color.Cyan,'e'));
-					Screen.WriteMapChar(21,33,new colorchar(Color.Cyan,'?'));
-				}
-				Screen.SetCursorPosition(37+Global.MAP_OFFSET_COLS,2);
-				Screen.CursorVisible = true;
-				command = Input.ReadKey();
-				Screen.CursorVisible = false;
-				char ch = command.GetCommandChar();
-				switch(ch){
-				case 'a':
-				case 'b':
-				case 'c':
-				case 'd':
-				case 'e':
-					SkillType chosen_skill = (SkillType)(((int)ch)-97);
-					if(skills_increased.Count == 3 && !skills_increased.Contains(chosen_skill)){
-						break;
-					}
-					if(skills_increased.Contains(chosen_skill)){
-						skills_increased.Remove(chosen_skill);
-						for(int i=0;i<4;++i){
-							if(feats_increased.Contains(Feat.OfSkill(chosen_skill,i))){
-								feats_increased.Remove(Feat.OfSkill(chosen_skill,i));
-							}
-						}
-					}
-					else{
-						skills_increased.Add(chosen_skill);
-						bool done2 = false;
-						while(!done2){
-							Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
-							for(int i=0;i<5;++i){
-								SkillType sk = (SkillType)i;
-								Color graycolor = Color.DarkGray;
-								Color greencolor = Color.DarkGreen;
-								Color magentacolor = Color.DarkMagenta;
-								if(sk == chosen_skill){
-									graycolor = Color.Gray;
-									greencolor = Color.Green;
-									magentacolor = Color.Magenta;
-								}
-								Screen.WriteMapString(1+i*4,0,new cstr(graycolor,("    " + Skill.Name(sk)).PadRight(22)));
-								Color levelcolor = skills_increased.Contains(sk)? greencolor : graycolor;
-								int skill_level = skills_increased.Contains(sk)? skills[sk] + 1 : skills[sk];
-								Screen.WriteMapString(1+i*4,22,new cstr(levelcolor,("Level " + skill_level).PadRight(70)));
-								FeatType ft = Feat.OfSkill(sk,0);
-								Color featcolor = feats_increased.Contains(ft)? greencolor : graycolor;
-								int feat_level = feats_increased.Contains(ft)? (-feats[ft]) + 1 : (-feats[ft]);
-								if(HasFeat(ft)){ featcolor = magentacolor; feat_level = Feat.MaxRank(ft); }
-								Screen.WriteMapString(2+i*4,4,new cstr(featcolor,(Feat.Name(ft) + " (" + feat_level + "/" + Feat.MaxRank(ft) + ")").PadRight(31)));
-								ft = Feat.OfSkill(sk,1);
-								featcolor = feats_increased.Contains(ft)? greencolor : graycolor;
-								feat_level = feats_increased.Contains(ft)? (-feats[ft]) + 1 : (-feats[ft]);
-								if(HasFeat(ft)){ featcolor = magentacolor; feat_level = Feat.MaxRank(ft); }
-								Screen.WriteMapString(2+i*4,35,new cstr(featcolor,(Feat.Name(ft) + " (" + feat_level + "/" + Feat.MaxRank(ft) + ")").PadRight(70)));
-								ft = Feat.OfSkill(sk,2);
-								featcolor = feats_increased.Contains(ft)? greencolor : graycolor;
-								feat_level = feats_increased.Contains(ft)? (-feats[ft]) + 1 : (-feats[ft]);
-								if(HasFeat(ft)){ featcolor = magentacolor; feat_level = Feat.MaxRank(ft); }
-								Screen.WriteMapString(3+i*4,4,new cstr(featcolor,(Feat.Name(ft) + " (" + feat_level + "/" + Feat.MaxRank(ft) + ")").PadRight(31)));
-								ft = Feat.OfSkill(sk,3);
-								featcolor = feats_increased.Contains(ft)? greencolor : graycolor;
-								feat_level = feats_increased.Contains(ft)? (-feats[ft]) + 1 : (-feats[ft]);
-								if(HasFeat(ft)){ featcolor = magentacolor; feat_level = Feat.MaxRank(ft); }
-								Screen.WriteMapString(3+i*4,35,new cstr(featcolor,(Feat.Name(ft) + " (" + feat_level + "/" + Feat.MaxRank(ft) + ")").PadRight(70)));
-								Screen.WriteMapString(4+i*4,0,"".PadRight(COLS));
-							}
-							Screen.WriteMapString(2+4*(int)chosen_skill,0,"[a]");
-							Screen.WriteMapString(2+4*(int)chosen_skill,31,"[b]");
-							Screen.WriteMapString(3+4*(int)chosen_skill,0,"[c]");
-							Screen.WriteMapString(3+4*(int)chosen_skill,31,"[d]");
-							if(feats[Feat.OfSkill(chosen_skill,0)] == 1){
-								Screen.WriteMapChar(2+4*(int)chosen_skill,1,new colorchar(Color.DarkRed,'a'));
-							}
-							else{
-								Screen.WriteMapChar(2+4*(int)chosen_skill,1,new colorchar(Color.Cyan,'a'));
-							}
-							if(feats[Feat.OfSkill(chosen_skill,1)] == 1){
-								Screen.WriteMapChar(2+4*(int)chosen_skill,32,new colorchar(Color.DarkRed,'b'));
-							}
-							else{
-								Screen.WriteMapChar(2+4*(int)chosen_skill,32,new colorchar(Color.Cyan,'b'));
-							}
-							if(feats[Feat.OfSkill(chosen_skill,2)] == 1){
-								Screen.WriteMapChar(3+4*(int)chosen_skill,1,new colorchar(Color.DarkRed,'c'));
-							}
-							else{
-								Screen.WriteMapChar(3+4*(int)chosen_skill,1,new colorchar(Color.Cyan,'c'));
-							}
-							if(feats[Feat.OfSkill(chosen_skill,3)] == 1){
-								Screen.WriteMapChar(3+4*(int)chosen_skill,32,new colorchar(Color.DarkRed,'d'));
-							}
-							else{
-								Screen.WriteMapChar(3+4*(int)chosen_skill,32,new colorchar(Color.Cyan,'d'));
-							}
-							Screen.WriteMapString(21,0,"--Type [a-d] to choose a feat---[?] for help----------------------");
-							Screen.WriteMapChar(21,8,new colorchar(Color.Cyan,'a'));
-							Screen.WriteMapChar(21,10,new colorchar(Color.Cyan,'d'));
-							Screen.WriteMapChar(21,33,new colorchar(Color.Cyan,'?'));
-							Screen.ResetColors();
-							B.DisplayNow("Choose a " + Skill.Name(chosen_skill) + " feat: ");
-							Screen.CursorVisible = true;
-							command = Input.ReadKey();
-							Screen.CursorVisible = false;
-							ch = command.GetCommandChar();
-							switch(ch){
-							case 'a':
-							case 'b':
-							case 'c':
-							case 'd':
-								{
-								FeatType feat = Feat.OfSkill(chosen_skill,((int)ch)-97);
-								if(!HasFeat(feat)){
-									feats_increased.Add(feat);
-									done2 = true;
-								}
-								break;
-								}
-							case '?':
-								Help.DisplayHelp(HelpTopic.Feats);
-								DisplayStats();
-								break;
-							case ' ':
-							case (char)27:
-								skills_increased.Remove(chosen_skill);
-								done2 = true;
-								break;
-							default:
-								break;
-							}
-						}
-					}
-					break;
-				case '?':
-					Help.DisplayHelp(HelpTopic.Feats);
-					DisplayStats();
-					break;
-				case (char)13:
-					if(skills_increased.Count == 3){
-						done = true;
-					}
-					break;
-				default:
-					break;
-				}
-			}
-			foreach(SkillType skill in skills_increased){
-				skills[skill]++;
-				if(Global.quickstartinfo != null){
-					Global.quickstartinfo.Add(skill.ToString());
-				}
-			}
-			foreach(FeatType feat in feats_increased){
-				feats[feat]--; //negative values are used until you've completely learned a feat
-				if(feats[feat] == -(Feat.MaxRank(feat))){
-					feats[feat] = 1;
-					learned.Add("You learn the " + Feat.Name(feat) + " feat. ");
-					if(feat == FeatType.DANGER_SENSE){
-						attrs[AttrType.DANGER_SENSE_ON]++;
-					}
-					if(feat == FeatType.DRIVE_BACK){
-						attrs[AttrType.DRIVE_BACK_ON]++;
-					}
-				}
-				if(Global.quickstartinfo != null){
-					Global.quickstartinfo.Add(feat.ToString());
-				}
-			}
-			if(skills_increased.Contains(SkillType.MAGIC)){
-				List<SpellType> unknown = new List<SpellType>();
-				List<colorstring> unknownstr = new List<colorstring>();
-				foreach(SpellType spell in Enum.GetValues(typeof(SpellType))){
-					if(!HasSpell(spell) && spell != SpellType.BLESS && spell != SpellType.MINOR_HEAL
-					&& spell != SpellType.HOLY_SHIELD && spell != SpellType.NO_SPELL && spell != SpellType.NUM_SPELLS){
-						unknown.Add(spell);
-						cstr cs1 = new cstr(Spell.Name(spell).PadRight(15) + Spell.Tier(spell).ToString().PadLeft(3),Color.Gray);
-						int failrate = (Spell.Tier(spell) - TotalSkill(SkillType.MAGIC)) * 5;
-						if(failrate < 0){
-							failrate = 0;
-						}
-						Color failcolor = Color.White;
-						if(failrate > 50){
-							failcolor = Color.DarkRed;
-						}
-						else{
-							if(failrate > 20){
-								failcolor = Color.Red;
-							}
-							else{
-								if(failrate > 0){
-									failcolor = Color.Yellow;
-								}
-							}
-						}
-						cstr cs2 = new cstr(failrate.ToString().PadLeft(9) + "%",failcolor);
-						cstr cs3 = new cstr(Spell.Description(spell).PadLeft(34),Color.Gray);
-						unknownstr.Add(new colorstring(cs1,cs2,cs3));
-					}
-				}
-				for(int i=unknown.Count+2;i<ROWS;++i){
-					Screen.WriteMapString(i,0,"".PadRight(COLS));
-				}
-				colorstring topborder = new colorstring("------------------Level---Fail rate--------Description------------",Color.Gray);
-				int selection = Select("Learn which spell? ",topborder,new colorstring("".PadRight(COLS,'-'),Color.Gray),unknownstr,false,true,false,true,HelpTopic.Spells);
-				spells[unknown[selection]] = 1;
-				learned.Add("You learn " + Spell.Name(unknown[selection]) + ". ");
-				if(Global.quickstartinfo != null){
-					Global.quickstartinfo.Add(unknown[selection].ToString());
-				}
-			}
-			return learned;
-		}*/
 		public bool CanSee(int r,int c){ return CanSee(M.tile[r,c]); }
 		public bool CanSee(PhysicalObject o){
 			if(o == this || p.Equals(o.p)){ //same object or same location

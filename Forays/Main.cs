@@ -79,10 +79,42 @@ namespace Forays{
 					Screen.GLMode = true;
 				}
 			}
+			if(!Screen.GLMode){
+				if(Global.LINUX){
+					Screen.CursorVisible = false;
+					Screen.SetCursorPosition(0,0); //todo: this should still work fine but it's worth a verification.
+					if(Console.BufferWidth < Global.SCREEN_W || Console.BufferHeight < Global.SCREEN_H){
+						Console.Write("Please resize your terminal to {0}x{1}, then press any key.",Global.SCREEN_W,Global.SCREEN_H);
+						Screen.SetCursorPosition(0,1);
+						Console.Write("         Current dimensions are {0}x{1}.".PadRight(57),Console.BufferWidth,Console.BufferHeight);
+						Input.ReadKey();
+						Screen.SetCursorPosition(0,0);
+						if(Console.BufferWidth < Global.SCREEN_W || Console.BufferHeight < Global.SCREEN_H){
+							Environment.Exit(0);
+						}
+					}
+					Screen.Blank();
+					Console.TreatControlCAsInput = true;
+				}
+				else{
+					if(Type.GetType("Mono.Runtime") != null){ // If you try to resize the Windows Command Prompt using Mono, it crashes, so just switch
+						Screen.GLMode = true; // back to GL mode in that case. (Fortunately, nobody uses Mono on Windows unless they're compiling a project in MD/XS.)
+					}
+					else{
+						Screen.CursorVisible = false;
+						Console.Title = "Forays into Norrendrin";
+						Console.BufferHeight = Global.SCREEN_H;
+						Console.SetWindowSize(Global.SCREEN_W,Global.SCREEN_H);
+						Console.TreatControlCAsInput = true;
+					}
+				}
+			}
 			if(Screen.GLMode){
 				ToolkitOptions.Default.EnableHighResolution = false;
-				gl = new GLGame(400,640,25,80,400,640,"Forays into Norrendrin");
-				GLGame.text_surface = new SpriteSurface(gl,25,80,16,8,0,0,"font8x16.bmp",1,128,0,0,1.0f,8.0f / 9.0f,
+				int height_px = Global.SCREEN_H * 16;
+				int width_px = Global.SCREEN_W * 8;
+				gl = new GLGame(height_px,width_px,Global.SCREEN_H,Global.SCREEN_W,height_px,width_px,"Forays into Norrendrin");
+				GLGame.text_surface = new SpriteSurface(gl,Global.SCREEN_H,Global.SCREEN_W,16,8,0,0,"font8x16.bmp",1,128,0,0,1.0f,8.0f / 9.0f,
 					GLWindow.GetBasicVertexShader(),GLWindow.GetBasicFontFragmentShader(),GLWindow.GetBasicFontVertexAttributeSizes(),
 					GLWindow.GetBasicFontDefaultVertexAttributes(),GLWindow.GetBasicFontVertexAttributes());
 				/*GLGame.graphics_surface = new SpriteSurface(gl,22,33,16,16,16*3,8*13,"sprites.png",64,64,17,0,1.0f,1.0f,GLWindow.GetBasicVertexShader(),
@@ -125,30 +157,9 @@ namespace Forays{
 				gl.Visible = true;
 				GLGame.Timer = new Stopwatch();
 				GLGame.Timer.Start();
+				Screen.CursorVisible = false;
 			}
-			Screen.CursorVisible = false;
-			if(!Screen.GLMode){
-				if(Global.LINUX){
-					Screen.SetCursorPosition(0,0); //todo: this should still work fine but it's worth a verification.
-					if(Console.BufferWidth < 80 || Console.BufferHeight < 25){
-						Console.Write("Please resize your terminal to 80x25, then press any key.");
-						Screen.SetCursorPosition(0,1);
-						Console.Write("         Current dimensions are {0}x{1}.".PadRight(57),Console.BufferWidth,Console.BufferHeight);
-						Input.ReadKey();
-						Screen.SetCursorPosition(0,0);
-						if(Console.BufferWidth < 80 || Console.BufferHeight < 25){
-							Environment.Exit(0);
-						}
-					}
-					Screen.Blank();
-				}
-				else{
-					Console.Title = "Forays into Norrendrin";
-					Console.BufferHeight = Global.SCREEN_H; //25
-				}
-				Console.TreatControlCAsInput = true;
-			}
-			for(int i=0;i<24;++i){
+			for(int i=0;i<24;++i){ //todo: update title screen!
 				Color color = Color.Yellow;
 				if(i==18){
 					color = Color.Green;
@@ -756,7 +767,7 @@ namespace Forays{
 						}
 						Actor.interrupted_path.row = b.ReadInt32();
 						Actor.interrupted_path.col = b.ReadInt32();
-						Actor.viewing_more_commands = b.ReadBoolean();
+						UI.viewing_more_commands = b.ReadBoolean();
 						game.M.feat_gained_this_level = b.ReadBoolean();
 						game.M.extra_danger = b.ReadInt32();
 						Map.shrine_locations = new pos[5];
@@ -810,22 +821,7 @@ namespace Forays{
 						game.M.UpdateDangerValues();
 					}
 					Game.NoClose = true;
-					MouseUI.PushButtonMap(MouseMode.Map);
-					MouseUI.CreateStatsButton(ConsoleKey.I,false,12,1);
-					MouseUI.CreateStatsButton(ConsoleKey.E,false,13,1);
-					MouseUI.CreateStatsButton(ConsoleKey.C,false,14,1);
-					MouseUI.CreateStatsButton(ConsoleKey.T,false,15,1);
-					MouseUI.CreateStatsButton(ConsoleKey.Tab,false,16,1);
-					MouseUI.CreateStatsButton(ConsoleKey.R,false,17,1);
-					MouseUI.CreateStatsButton(ConsoleKey.A,false,18,1);
-					MouseUI.CreateStatsButton(ConsoleKey.G,false,19,1);
-					MouseUI.CreateStatsButton(ConsoleKey.F,false,20,1);
-					MouseUI.CreateStatsButton(ConsoleKey.S,false,21,1);
-					MouseUI.CreateStatsButton(ConsoleKey.Z,false,22,1);
-					MouseUI.CreateStatsButton(ConsoleKey.X,false,23,1);
-					MouseUI.CreateStatsButton(ConsoleKey.V,false,24,1);
-					MouseUI.CreateStatsButton(ConsoleKey.E,false,7,2);
-					MouseUI.CreateMapButton(ConsoleKey.P,false,0,3);
+					UI.CreateDefaultStatsButtons();
 					try{
 						while(!Global.GAME_OVER){ game.Q.Pop(); }
 					}
@@ -923,55 +919,6 @@ namespace Forays{
 					Help.DisplayHelp();
 					break;
 				}
-				/*case 'c':
-				{
-					StreamReader file = new StreamReader("highscore.txt");
-					Screen.Blank();
-					Color primary = Color.Green;
-					Color recent = Color.Cyan;
-					Screen.WriteString(0,34,new cstr("HIGH SCORES",Color.Yellow));
-					Screen.WriteString(1,34,new cstr("-----------",Color.Cyan));
-					Screen.WriteString(2,21,new cstr("Character",primary));
-					Screen.WriteString(2,49,new cstr("Depth",primary));
-					bool written_recent = false;
-					string s = "";
-					while(s.Length < 2 || s.Substring(0,2) != "--"){
-						s = file.ReadLine();
-					}
-					int line = 3;
-					s = "!!";
-					while(s.Substring(0,2) != "--"){
-						s = file.ReadLine();
-						if(s.Substring(0,2) == "--"){
-							break;
-						}
-						if(line > 24){
-							continue;
-						}
-						string[] tokens = s.Split(' ');
-						int dlev = Convert.ToInt32(tokens[0]);
-						char winning = tokens[1][0];
-						string name_and_cause_of_death = s.Substring(tokens[0].Length + 3);
-						int idx = name_and_cause_of_death.LastIndexOf(" -- ");
-						string name = name_and_cause_of_death.Substring(0,idx);
-						string cause_of_death = name_and_cause_of_death.Substring(idx+4);
-						if(!written_recent && name == recentname && dlev == recentdepth && winning == recentwin && cause_of_death == recentcause){
-							Screen.WriteString(line,18,new cstr(name,recent));
-							written_recent = true;
-						}
-						else{
-							Screen.WriteString(line,18,new cstr(name,Color.White));
-						}
-						Screen.WriteString(line,50,new cstr(dlev.ToString().PadLeft(2),Color.White));
-						if(winning == 'W'){
-							Screen.WriteString(line,53,new cstr("W",Color.Yellow));
-						}
-						++line;
-					}
-					Input.ReadKey();
-					file.Close();
-					break;
-				}*/
 				case 'c':
 				{
 					MouseUI.PushButtonMap();
@@ -1045,7 +992,7 @@ namespace Forays{
 					bool written_recent = false;
 					int line = 3;
 					foreach(string s in scores){
-						if(line > 24){
+						if(line > 24){ //todo: screen_h?
 							continue;
 						}
 						string[] tokens = s.Split(' ');
@@ -1094,7 +1041,7 @@ namespace Forays{
 			game.player.attrs[AttrType.FROZEN] = 0; //...without borders
 			//game.M.Draw();
 			colorchar[,] mem = null;
-			game.player.DisplayStats(false);
+			UI.DisplayStats(false);
 			bool showed_IDed_tip = false;
 			if(Global.KILLED_BY != "giving up" && !Help.displayed[TutorialTopic.IdentifiedConsumables]){
 				if(game.player.inv.Where(item=>Item.identified[item.type] && item.Is(ConsumableType.HEALING,ConsumableType.TIME,ConsumableType.TELEPORTAL)).Count > 0){

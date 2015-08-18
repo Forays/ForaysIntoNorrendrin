@@ -3200,7 +3200,7 @@ compare this number to 1/2:  if less than 1/2, major.
 									description_on_right = true;
 									max_length = 29;
 								}
-								List<colorstring> desc = Actor.ItemDescriptionBox(M.tile[r,c].inv,true,false,max_length);
+								List<colorstring> desc = UI.ItemDescriptionBox(M.tile[r,c].inv,true,false,max_length);
 								if(description_on_right){
 									int start_c = COLS - desc[0].Length();
 									description_shown_last_time = true;

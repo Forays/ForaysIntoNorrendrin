@@ -9,7 +9,6 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Forays</RootNamespace>
     <AssemblyName>Forays</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <PublishUrl>publish\</PublishUrl>
@@ -86,10 +85,11 @@
     <Compile Include="Utility.cs" />
     <Compile Include="PosArray.cs" />
     <Compile Include="Input.cs" />
+    <Compile Include="UI.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
     <None Include="packages.config" />
+    <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="advanced_help.txt">

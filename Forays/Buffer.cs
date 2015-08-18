@@ -90,7 +90,7 @@ namespace Forays{
 		public void DisplayNow(string s){ DisplayNow(s,true); }
 		public void DisplayNow(string s,bool display_stats){
 			if(display_stats){
-				player.DisplayStats();
+				UI.DisplayStats();
 			}
 			Screen.CursorVisible = false;
 			List<string> strings = new List<string>();
@@ -359,7 +359,7 @@ namespace Forays{
 			MouseUI.PushButtonMap(MouseMode.YesNoPrompt);
 			MouseUI.CreateButton(ConsoleKey.Y,false,2,Global.MAP_OFFSET_COLS + s.Length + 1,1,2);
 			MouseUI.CreateButton(ConsoleKey.N,false,2,Global.MAP_OFFSET_COLS + s.Length + 4,1,2);
-			if(MouseUI.descend_hack && Actor.viewing_more_commands){
+			if(MouseUI.descend_hack && UI.viewing_more_commands){
 				MouseUI.CreateStatsButton(ConsoleKey.N,false,16,1);
 				MouseUI.descend_hack = false;
 			}

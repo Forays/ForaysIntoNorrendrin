@@ -245,7 +245,7 @@ namespace Forays{
 							else{
 								Item i = o as Item;
 								if(i != null){
-									desc_box = Actor.ItemDescriptionBox(i,true,true,max_length);
+									desc_box = UI.ItemDescriptionBox(i,true,true,max_length);
 								}
 							}
 							if(desc_box != null){

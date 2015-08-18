@@ -344,7 +344,7 @@ namespace Forays{
 			for(int i=boxheight-4;i>0;i-=2){
 				frames.Add(BoxAnimationFrame(i,FrameWidth(frames.Last().Count,frames.Last()[0].Length())));
 			}
-			Actor.player.DisplayStats(false);
+			UI.DisplayStats(false);
 			if(!no_displaynow_call){
 				Actor.B.DisplayNow();
 			}
@@ -386,7 +386,7 @@ namespace Forays{
 			}
 			Screen.WriteArray((Global.SCREEN_H - boxheight) / 2,x,memory);
 			if(topic != TutorialTopic.Feats){ //another exception
-				Actor.player.DisplayStats(true);
+				UI.DisplayStats(true);
 			}
 			MouseUI.PopButtonMap();
 			displayed[topic] = true;

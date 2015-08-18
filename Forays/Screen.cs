@@ -93,6 +93,9 @@ namespace Forays{
 		public colorstring(string s1,Color c1){
 			strings.Add(new cstr(s1,c1));
 		}
+		public colorstring(string s1,Color c1,Color bg1){
+			strings.Add(new cstr(s1,c1,bg1));
+		}
 		public colorstring(string s1,Color c1,string s2,Color c2){
 			strings.Add(new cstr(s1,c1));
 			strings.Add(new cstr(s2,c2));
@@ -522,6 +525,7 @@ namespace Forays{
 		}
 		public static void WriteString(int r,int c,string s){ WriteString(r,c,new cstr(Color.Gray,s)); }
 		public static void WriteString(int r,int c,string s,Color color){ WriteString(r,c,new cstr(s,color)); }
+		public static void WriteString(int r,int c,string s,Color color,Color bgcolor){ WriteString(r,c,new cstr(s,color,bgcolor)); }
 		public static void WriteString(int r,int c,cstr s){
 			if(Global.SCREEN_W - c > s.s.Length){
 				//s.s = s.s.Substring(0,; //don't move down to the next line

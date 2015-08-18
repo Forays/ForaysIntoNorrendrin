@@ -17,12 +17,12 @@ namespace Forays{
 		public const string VERSION = "version 0.8.X ";
 		public static bool LINUX = false;
 		public static bool GRAPHICAL = false;
-		public const int SCREEN_H = 25;
-		public const int SCREEN_W = 80;
+		public const int SCREEN_H = 28;
+		public const int SCREEN_W = 88;
 		public const int ROWS = 22;
 		public const int COLS = 66;
 		public const int MAP_OFFSET_ROWS = 3;
-		public const int MAP_OFFSET_COLS = 13;
+		public const int MAP_OFFSET_COLS = 21;
 		public const int MAX_LIGHT_RADIUS = 12; //the maximum POSSIBLE light radius. used in light calculations.
 		public const int MAX_INVENTORY_SIZE = 20;
 		public static bool GAME_OVER = false;
@@ -387,7 +387,7 @@ namespace Forays{
 			}
 			b.Write(Actor.interrupted_path.row);
 			b.Write(Actor.interrupted_path.col);
-			b.Write(Actor.viewing_more_commands);
+			b.Write(UI.viewing_more_commands);
 			b.Write(M.feat_gained_this_level);
 			b.Write(M.extra_danger);
 			for(int i=0;i<5;++i){
@@ -583,9 +583,10 @@ namespace Forays{
 		public static string PadToMapSize(this string s){
 			return s.PadRight(Global.COLS);
 		}
-		public static colorstring GetColorString(this string s){ return GetColorString(s,Color.Gray,Color.Cyan); }
-		public static colorstring GetColorString(this string s,Color text_color){ return GetColorString(s,text_color,Color.Cyan); }
-		public static colorstring GetColorString(this string s,Color text_color,Color key_color){
+		public static colorstring GetColorString(this string s){ return GetColorString(s,Color.Gray,Color.Cyan,Color.Black); }
+		public static colorstring GetColorString(this string s,Color text_color){ return GetColorString(s,text_color,Color.Cyan,Color.Black); }
+		public static colorstring GetColorString(this string s,Color text_color,Color key_color){ return GetColorString(s,text_color,key_color,Color.Black); }
+		public static colorstring GetColorString(this string s,Color text_color,Color key_color,Color bg_color){
 			if(s.Contains("[")){
 				string temp = s;
 				colorstring result = new colorstring();
@@ -593,35 +594,35 @@ namespace Forays{
 					int open = temp.IndexOf('[');
 					int close = temp.IndexOf(']');
 					if(close == -1){
-						result.strings.Add(new cstr(temp,text_color));
+						result.strings.Add(new cstr(temp,text_color,bg_color));
 						temp = "";
 					}
 					else{
 						int hyphen = temp.IndexOf('-');
 						if(hyphen != -1 && hyphen > open && hyphen < close){
-							result.strings.Add(new cstr(temp.Substring(0,open+1),text_color));
+							result.strings.Add(new cstr(temp.Substring(0,open+1),text_color,bg_color));
 							//result.strings.Add(new cstr(temp.Substring(open+1,(close-open)-1),Color.Cyan));
-							result.strings.Add(new cstr(temp.Substring(open+1,(hyphen-open)-1),key_color));
-							result.strings.Add(new cstr("-",text_color));
-							result.strings.Add(new cstr(temp.Substring(hyphen+1,(close-hyphen)-1),key_color));
-							result.strings.Add(new cstr("]",text_color));
+							result.strings.Add(new cstr(temp.Substring(open+1,(hyphen-open)-1),key_color,bg_color));
+							result.strings.Add(new cstr("-",text_color,bg_color));
+							result.strings.Add(new cstr(temp.Substring(hyphen+1,(close-hyphen)-1),key_color,bg_color));
+							result.strings.Add(new cstr("]",text_color,bg_color));
 							temp = temp.Substring(close+1);
 						}
 						else{
-							result.strings.Add(new cstr(temp.Substring(0,open+1),text_color));
-							result.strings.Add(new cstr(temp.Substring(open+1,(close-open)-1),key_color));
-							result.strings.Add(new cstr("]",text_color));
+							result.strings.Add(new cstr(temp.Substring(0,open+1),text_color,bg_color));
+							result.strings.Add(new cstr(temp.Substring(open+1,(close-open)-1),key_color,bg_color));
+							result.strings.Add(new cstr("]",text_color,bg_color));
 							temp = temp.Substring(close+1);
 						}
 					}
 				}
 				if(temp != ""){
-					result.strings.Add(new cstr(temp,text_color));
+					result.strings.Add(new cstr(temp,text_color,bg_color));
 				}
 				return result;
 			}
 			else{
-				return new colorstring(s,text_color);
+				return new colorstring(s,text_color,bg_color);
 			}
 		}
 		public static List<colorstring> GetColorStrings(this List<string> l){
