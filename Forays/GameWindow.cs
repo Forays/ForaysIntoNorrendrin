@@ -210,31 +210,25 @@ namespace Forays{
 				}
 				else{
 					if(MouseUI.Mode == MouseMode.Map){
-						int map_row = row - Global.MAP_OFFSET_ROWS;
-						int map_col = col - Global.MAP_OFFSET_COLS;
-						PhysicalObject o = null;
-						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
-							o = MouseUI.mouselook_objects[map_row,map_col];
-							if(MouseUI.VisiblePath && o == null){
+						if(!MouseUI.mouselook_objects.BoundsCheck(row,col)){
+							break;
+						}
+						PhysicalObject o = MouseUI.mouselook_objects[row,col];
+						if(MouseUI.VisiblePath && o == null){
+							int map_row = row - Global.MAP_OFFSET_ROWS;
+							int map_col = col - Global.MAP_OFFSET_COLS;
+							if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
 								o = Actor.M.tile[map_row,map_col];
 							}
 						}
-						if(MouseUI.mouselook_current_target != null && MouseUI.mouselook_current_target != o){
+						if(MouseUI.mouselook_current_target != null && (o == null || !o.p.Equals(MouseUI.mouselook_current_target.p))){
 							MouseUI.RemoveMouseover();
 						}
-						if(o != null && o != MouseUI.mouselook_current_target){
+						if(o != null && (MouseUI.mouselook_current_target == null || !o.p.Equals(MouseUI.mouselook_current_target.p))){
 							MouseUI.mouselook_current_target = o;
 							bool description_on_right = false;
-							/*int max_length = 29;
-							if(map_col - 6 < max_length){
-								max_length = map_col - 6;
-							}
-							if(max_length < 20){
-								description_on_right = true;
-								max_length = 29;
-							}*/
 							int max_length = MouseUI.MaxDescriptionBoxLength;
-							if(map_col <= 32){
+							if(o.col <= 32){
 								description_on_right = true;
 							}
 							List<colorstring> desc_box = null;
@@ -347,6 +341,9 @@ namespace Forays{
 				row = args.Y / cell_h;
 				col = args.X / cell_w;
 			}
+			if(!MouseUI.mouselook_objects.BoundsCheck(row,col)){
+				return;
+			}
 			Button b = MouseUI.GetButton(row,col);
 			if(!Input.KeyPressed){
 				Input.KeyPressed = true;
@@ -360,6 +357,10 @@ namespace Forays{
 					{
 						int map_row = row - Global.MAP_OFFSET_ROWS;
 						int map_col = col - Global.MAP_OFFSET_COLS;
+						if(MouseUI.mouselook_objects[row,col] != null){
+							map_row = MouseUI.mouselook_objects[row,col].row;
+							map_col = MouseUI.mouselook_objects[row,col].col;
+						}
 						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
 							if(map_row == Actor.player.row && map_col == Actor.player.col){
 								Input.LastKey = new ConsoleKeyInfo('5',ConsoleKey.NumPad5,false,false,false);
@@ -697,6 +698,8 @@ namespace Forays{
 				//return Color4.Yellow;
 			case Color.DarkerGray:
 				return new Color4(50,50,50,255);
+			case Color.DarkerRed:
+				return new Color4(80,0,0,255); //DarkRed is 139 red
 			case Color.Transparent:
 				return Color4.Transparent;
 			default:

@@ -462,6 +462,25 @@ namespace Forays{
 				}
 			}
 		}
+		public override List<colorstring> GetStatusBarInfo(){
+			List<colorstring> result = new List<colorstring>();
+			foreach(string s in Name(true).GetWordWrappedList(17,true)){
+				colorstring cs = new colorstring();
+				result.Add(cs);
+				if(result.Count == 1){
+					Color c = color;
+					if(!revealed_by_light && !tile().IsLit()){
+						c = Map.darkcolor;
+					}
+					cs.strings.Add(new cstr(symbol.ToString(),c));
+					cs.strings.Add(new cstr(": " + s,Color.Gray));
+				}
+				else{
+					cs.strings.Add(new cstr("   " + s,Color.Gray));
+				}
+			}
+			return result;
+		}
 		private string AddWandInfo(string s){
 			string result = s;
 			if(other_data != 0 && !identified[type] && unIDed_name[type].Contains("{tried}")){

@@ -359,7 +359,7 @@ namespace Forays{
 			MouseUI.PushButtonMap(MouseMode.YesNoPrompt);
 			MouseUI.CreateButton(ConsoleKey.Y,false,2,Global.MAP_OFFSET_COLS + s.Length + 1,1,2);
 			MouseUI.CreateButton(ConsoleKey.N,false,2,Global.MAP_OFFSET_COLS + s.Length + 4,1,2);
-			if(MouseUI.descend_hack && UI.viewing_more_commands){
+			if(MouseUI.descend_hack && UI.viewing_commands_idx == 0){ //todo hack fixme - this moved, so double check its new position.
 				MouseUI.CreateStatsButton(ConsoleKey.N,false,16,1);
 				MouseUI.descend_hack = false;
 			}

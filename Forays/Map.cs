@@ -451,7 +451,8 @@ namespace Forays{
 				Redraw(); //evidence of Select being called (& therefore, the map needing to be redrawn entirely) //todo! this breaks in console mode if you have the option on.
 			}
 			else{
-				MouseUI.mouselook_objects = new PhysicalObject[ROWS,COLS];
+				MouseUI.mouselook_objects = new PhysicalObject[Global.SCREEN_H,Global.SCREEN_W];
+				UI.sidebar_objects = new List<PhysicalObject>();
 				Screen.CursorVisible = false;
 				int i_start = 0;
 				int j_start = 0;
@@ -549,13 +550,15 @@ namespace Forays{
 						}
 					}
 				}*/
+				UI.SortSidebarObjects();
 				Screen.ResetColors();
 				Screen.NoGLUpdate = false;
 				Game.GLUpdate();
 			}
 		}
 		public void Redraw(){ //Redraw should be faster than Draw when most of the screen has changed.
-			MouseUI.mouselook_objects = new PhysicalObject[ROWS,COLS];
+			MouseUI.mouselook_objects = new PhysicalObject[Global.SCREEN_H,Global.SCREEN_W];
+			UI.sidebar_objects = new List<PhysicalObject>();
 			Screen.CursorVisible = false;
 			int i_start = 0;
 			int j_start = 0;
@@ -623,6 +626,7 @@ namespace Forays{
 				Screen.ResetColors();
 			}
 			Screen.NoGLUpdate = false;
+			UI.SortSidebarObjects();
 		}
 		public colorchar VisibleColorChar(int r,int c){
 			colorchar ch = Screen.BlankChar();
@@ -643,12 +647,17 @@ namespace Forays{
 						ch.color = darkcolor;
 					}
 					last_seen[r,c] = ch;
-					MouseUI.mouselook_objects[r,c] = tile[r,c].inv;
+					MouseUI.mouselook_objects[r+Global.MAP_OFFSET_ROWS,c+Global.MAP_OFFSET_COLS] = tile[r,c].inv;
+					UI.sidebar_objects.Add(tile[r,c].inv);
+					tile[r,c].UpdateStatusBarWithTile();
+					tile[r,c].UpdateStatusBarWithFeatures();
 				}
 				else{
 					if(tile[r,c].features.Count > 0){
 						ch = tile[r,c].FeatureVisual();
 						last_seen[r,c] = ch;
+						tile[r,c].UpdateStatusBarWithTile();
+						tile[r,c].UpdateStatusBarWithFeatures();
 					}
 					else{
 						ch.c = tile[r,c].symbol;
@@ -681,6 +690,7 @@ namespace Forays{
 						else{
 							last_seen[r,c] = ch;
 						}
+						tile[r,c].UpdateStatusBarWithTile();
 						if(player.HasFeat(FeatType.DANGER_SENSE) && danger_sensed != null
 						   && danger_sensed[r,c] && player.LightRadius() == 0
 						   && !wiz_lite && !tile[r,c].IsKnownTrap() && !tile[r,c].IsShrine()){
@@ -699,20 +709,20 @@ namespace Forays{
 					ch.c = actor[r,c].symbol;
 					ch.color = actor[r,c].color;
 					if(actor[r,c] != player){
-						MouseUI.mouselook_objects[r,c] = actor[r,c];
+						MouseUI.mouselook_objects[r+Global.MAP_OFFSET_ROWS,c+Global.MAP_OFFSET_COLS] = actor[r,c];
+						UI.sidebar_objects.Add(actor[r,c]);
 					}
-					if(actor[r,c] == player && player.HasFeat(FeatType.DANGER_SENSE)
-					&& danger_sensed != null && danger_sensed[r,c] && player.LightRadius() == 0
-					&& !wiz_lite){
-						if(tile[r,c].IsLit() && !player.HasAttr(AttrType.BLIND)){
-							ch.color = Color.Red;
+					if(actor[r,c] == player){
+						if(player.HasFeat(FeatType.DANGER_SENSE) && danger_sensed != null && danger_sensed[r,c]
+							&& player.LightRadius() == 0 && !wiz_lite){
+							if(tile[r,c].IsLit() && !player.HasAttr(AttrType.BLIND)){
+								ch.color = Color.Red;
+							}
+							else{
+								ch.color = Color.DarkRed;
+							}
 						}
 						else{
-							ch.color = Color.DarkRed;
-						}
-					}
-					else{
-						if(actor[r,c] == player){
 							if(!player.HasAttr(AttrType.BLIND)){
 								if(player.IsInvisibleHere()){
 									ch.color = Color.DarkGray;
@@ -734,7 +744,7 @@ namespace Forays{
 										ch.color = Color.DarkBlue;
 									}
 									else{
-										if(ch.color != Color.DarkGray){ //if it's dark gray at this point, it means you're invisible. hacky.
+										if(ch.color != Color.DarkGray){ //if it's dark gray at this point, it means you're invisible.
 											ch.color = darkcolor;
 										}
 									}
@@ -749,7 +759,8 @@ namespace Forays{
 					ch.c = actor[r,c].symbol;
 					ch.color = actor[r,c].color;
 					if(actor[r,c] != player){
-						MouseUI.mouselook_objects[r,c] = actor[r,c];
+						MouseUI.mouselook_objects[r+Global.MAP_OFFSET_ROWS,c+Global.MAP_OFFSET_COLS] = actor[r,c];
+						UI.sidebar_objects.Add(actor[r,c]);
 					}
 				}
 				else{

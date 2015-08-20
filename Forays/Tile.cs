@@ -611,6 +611,25 @@ namespace Forays{
 				return the_name;
 			}
 		}
+		public override List<colorstring> GetStatusBarInfo(){
+			List<colorstring> result = new List<colorstring>();
+			foreach(string s in Name(true).GetWordWrappedList(17,true)){
+				colorstring cs = new colorstring();
+				result.Add(cs);
+				if(result.Count == 1){
+					Color c = color;
+					if(!revealed_by_light && !IsLit()){
+						c = Map.darkcolor;
+					}
+					cs.strings.Add(new cstr(symbol.ToString(),c));
+					cs.strings.Add(new cstr(": " + s,Color.Gray));
+				}
+				else{
+					cs.strings.Add(new cstr("   " + s,Color.Gray));
+				}
+			}
+			return result;
+		}
 		public bool Is(TileType t){
 			if(type == t){
 				return true;
@@ -1844,6 +1863,23 @@ namespace Forays{
 				}
 				else{
 					TurnToFloor();
+				}
+			}
+		}
+		public bool AppearsOnStatusBar(){
+			return IsShrine() || IsKnownTrap() || Is(TileType.STAIRS,TileType.CHEST,TileType.FIRE_GEYSER,TileType.FOG_VENT,TileType.POISON_GAS_VENT,TileType.POOL_OF_RESTORATION,TileType.BLAST_FUNGUS,TileType.DEMONIC_IDOL);
+		}
+		public void UpdateStatusBarWithTile(){
+			if(AppearsOnStatusBar()){
+				UI.sidebar_objects.Add(this);
+			}
+		}
+		public void UpdateStatusBarWithFeatures(){
+			foreach(FeatureType ft in features){
+				if(ft == FeatureType.BONES || ft == FeatureType.GRENADE || ft == FeatureType.STABLE_TELEPORTAL || ft == FeatureType.TELEPORTAL || ft == FeatureType.TROLL_BLOODWITCH_CORPSE || ft == FeatureType.TROLL_CORPSE){
+					PhysicalObject o = new PhysicalObject(proto_feature[ft].name,proto_feature[ft].symbol,proto_feature[ft].color);
+					o.p = p;
+					UI.sidebar_objects.Add(o);
 				}
 			}
 		}

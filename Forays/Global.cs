@@ -387,7 +387,7 @@ namespace Forays{
 			}
 			b.Write(Actor.interrupted_path.row);
 			b.Write(Actor.interrupted_path.col);
-			b.Write(UI.viewing_more_commands);
+			b.Write(UI.viewing_commands_idx);
 			b.Write(M.feat_gained_this_level);
 			b.Write(M.extra_danger);
 			for(int i=0;i<5;++i){
@@ -542,18 +542,28 @@ namespace Forays{
 		}
 	}
 	public static class Extensions{
-		public static List<string> GetWordWrappedList(this string s,int max_length){ //max_length MUST be longer than any single word in the string
+		public static List<string> GetWordWrappedList(this string s,int max_length,bool match_length_exactly){ //max_length MUST be longer than any single word in the string
 			List<string> result = new List<string>();
 			while(s.Length > max_length){
 				for(int i=max_length;i>=0;--i){
 					if(s.Substring(i,1) == " "){
-						result.Add(s.Substring(0,i));
+						if(match_length_exactly){
+							result.Add(s.Substring(0,i).PadRight(max_length));
+						}
+						else{
+							result.Add(s.Substring(0,i));
+						}
 						s = s.Substring(i+1);
 						break;
 					}
 				}
 			}
-			result.Add(s);
+			if(match_length_exactly){
+				result.Add(s.PadRight(max_length));
+			}
+			else{
+				result.Add(s);
+			}
 			return result;
 		}
 		public static string ConcatenateListWithCommas(this List<string> ls){

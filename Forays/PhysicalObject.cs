@@ -59,13 +59,13 @@ namespace Forays{
 		public const int ROWS = Global.ROWS;
 		public const int COLS = Global.COLS;
 		public PhysicalObject(){
-			row=-1;
-			col=-1;
-			name="";
-			a_name="";
-			the_name="";
-			symbol='%';
-			color=Color.White;
+			row = -1;
+			col = -1;
+			name = "";
+			a_name = "";
+			the_name = "";
+			symbol = '%';
+			color = Color.White;
 			light_radius = 0;
 			sprite_offset = new pos(0,1);
 		}
@@ -81,7 +81,7 @@ namespace Forays{
 			name = new_name;
 			the_name = "the " + name;
 			a_name = "a " + name;
-			if(name=="you"){
+			if(name == "you"){ //todo: this is a one-off exception. Maybe move this out?
 				the_name = "you";
 				a_name = "you";
 			}
@@ -131,9 +131,24 @@ namespace Forays{
 				light_radius = to;
 			}
 		}
+		public virtual List<colorstring> GetStatusBarInfo(){
+			List<colorstring> result = new List<colorstring>();
+			foreach(string s in name.GetWordWrappedList(17,true)){
+				colorstring cs = new colorstring();
+				result.Add(cs);
+				if(result.Count == 1){
+					cs.strings.Add(new cstr(symbol.ToString(),color));
+					cs.strings.Add(new cstr(": " + s,Color.Gray));
+				}
+				else{
+					cs.strings.Add(new cstr("   " + s,Color.Gray));
+				}
+			}
+			return result;
+		}
 		public bool IsBurning(){
 			if(this is Actor){
-				return (this as Actor).HasAttr(AttrType.BURNING);
+				return (this as Actor).HasAttr(AttrType.BURNING); //todo: this can be fixed.
 			}
 			if(this is Tile){
 				return (this as Tile).features.Contains(FeatureType.FIRE);

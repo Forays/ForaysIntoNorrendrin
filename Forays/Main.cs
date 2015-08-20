@@ -767,7 +767,7 @@ namespace Forays{
 						}
 						Actor.interrupted_path.row = b.ReadInt32();
 						Actor.interrupted_path.col = b.ReadInt32();
-						UI.viewing_more_commands = b.ReadBoolean();
+						UI.viewing_commands_idx = b.ReadInt32();
 						game.M.feat_gained_this_level = b.ReadBoolean();
 						game.M.extra_danger = b.ReadInt32();
 						Map.shrine_locations = new pos[5];
@@ -825,7 +825,7 @@ namespace Forays{
 					try{
 						while(!Global.GAME_OVER){ game.Q.Pop(); }
 					}
-					catch(Exception e){
+					catch(RankException e){
 						StreamWriter fileout = new StreamWriter("error.txt",false);
 						fileout.WriteLine(e.Message);
 						fileout.WriteLine(e.StackTrace);

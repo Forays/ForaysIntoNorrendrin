@@ -684,6 +684,52 @@ namespace Forays{
 				}
 			}
 		}
+		public override List<colorstring> GetStatusBarInfo(){
+			if(type == ActorType.DREAM_WARRIOR_CLONE){
+				if(group != null && group.Count > 0){
+					foreach(Actor a in group){
+						if(a.type == ActorType.DREAM_WARRIOR){
+							return a.GetStatusBarInfo();
+						}
+					}
+				}
+			}
+			if(type == ActorType.DREAM_SPRITE_CLONE){
+				if(group != null && group.Count > 0){
+					foreach(Actor a in group){
+						if(a.type == ActorType.DREAM_SPRITE){
+							return a.GetStatusBarInfo();
+						}
+					}
+				}
+			}
+			List<colorstring> result = new List<colorstring>();
+			foreach(string s in name.GetWordWrappedList(17,true)){
+				colorstring cs = new colorstring();
+				result.Add(cs);
+				if(result.Count == 1){
+					cs.strings.Add(new cstr(symbol.ToString(),color));
+					cs.strings.Add(new cstr(": " + s,Color.Gray));
+				}
+				else{
+					cs.strings.Add(new cstr("   " + s,Color.Gray));
+				}
+			}
+			string hp = ("HP: " + curhp.ToString() + "  (" + AwarenessStatus() + ")").PadOuter(20);
+			int idx = Math.Max(0,20 * curhp / maxhp);
+			/*Color hpcolor = Color.DarkRed;
+			if(curhp * 3 >= maxhp * 2){
+				hpcolor = Color.DarkGreen;
+			}
+			else{
+				if(curhp * 3 >= maxhp){
+					hpcolor = Color.DarkYellow;
+				}
+			}
+			hpcolor = Color.DarkRed;*/
+			result.Add(new colorstring(new cstr(hp.Substring(0,idx),Color.Gray,Color.HealthBar),new cstr(hp.Substring(idx),Color.Gray)));
+			return result;
+		}
 		public void Move(int r,int c){ Move(r,c,true); }
 		public void Move(int r,int c,bool trigger_traps){
 			if(r>=0 && r<ROWS && c>=0 && c<COLS){
@@ -1315,6 +1361,32 @@ namespace Forays{
 			}
 			return result;
 		}
+		public string AwarenessStatus(){
+			if(type == ActorType.DREAM_WARRIOR_CLONE){
+				if(group != null && group.Count > 0){
+					foreach(Actor a in group){
+						if(a.type == ActorType.DREAM_WARRIOR){
+							return a.AwarenessStatus();
+						}
+					}
+				}
+			}
+			if(type == ActorType.DREAM_SPRITE_CLONE){
+				if(group != null && group.Count > 0){
+					foreach(Actor a in group){
+						if(a.type == ActorType.DREAM_SPRITE){
+							return a.AwarenessStatus();
+						}
+					}
+				}
+			}
+			if(player_visibility_duration < 0){
+				return "alerted";
+			}
+			else{
+				return "unaware";
+			}
+		}
 		public string WoundStatus(){
 			if(type == ActorType.DREAM_WARRIOR_CLONE){
 				if(group != null && group.Count > 0){
@@ -1334,10 +1406,7 @@ namespace Forays{
 					}
 				}
 			}
-			string awareness = ", unaware)";
-			if(player_visibility_duration < 0){
-				awareness = ", alerted)";
-			}
+			string awareness = ", " + AwarenessStatus() + ")";
 			int percentage = (curhp * 100) / maxhp;
 			if(percentage >= 100){
 				return "(unhurt" + awareness;
@@ -2023,12 +2092,12 @@ namespace Forays{
 			if(HasAttr(AttrType.SWITCHING_ARMOR)){
 				attrs[AttrType.SWITCHING_ARMOR]--;
 			}
-			UI.DisplayStats(true);
 			if(HasFeat(FeatType.DANGER_SENSE)){
 				M.UpdateDangerValues();
 			}
 			Screen.UpdateScreenCenterColumn(col);
 			M.Draw();
+			UI.DisplayStats(true);
 			if(HasAttr(AttrType.AUTOEXPLORE)){
 				if(path.Count == 0){ //todo: autoexplore could also track whether the current path is leading to an unexplored tile instead of to an item/shrine/etc.
 					if(!FindAutoexplorePath()){ // - in this case I could check that tile's neighbors each turn, and calculate a new path early if they've all been mapped now.
@@ -4219,27 +4288,31 @@ namespace Forays{
 			}
 			case 'v':
 			{
-				if(UI.viewing_more_commands){
-					UI.viewing_more_commands = false;
-					MouseUI.PopButtonMap();
-					UI.CreateDefaultStatsButtons();
-				}
-				else{
-					UI.viewing_more_commands = true;
-					MouseUI.PopButtonMap();
-					MouseUI.PushButtonMap(MouseMode.Map);
-					MouseUI.CreateStatsButton(ConsoleKey.O,false,12,1);
-					MouseUI.CreateStatsButton(ConsoleKey.W,false,13,1);
-					MouseUI.CreateStatsButton(ConsoleKey.X,true,14,1);
-					MouseUI.CreateStatsButton(ConsoleKey.OemPeriod,false,15,1);
-					MouseUI.CreateStatsButton(ConsoleKey.OemPeriod,true,16,1); //>
-					MouseUI.CreateStatsButton(ConsoleKey.M,false,17,1);
-					MouseUI.CreateStatsButton(ConsoleKey.Oem5,false,18,1); //backslash
-					MouseUI.CreateStatsButton(ConsoleKey.OemPlus,false,19,1); //=
-					MouseUI.CreateStatsButton(ConsoleKey.Q,false,20,1);
-					MouseUI.CreateStatsButton(ConsoleKey.V,false,24,1);
-					MouseUI.CreateStatsButton(ConsoleKey.E,false,7,2);
-					MouseUI.CreateMapButton(ConsoleKey.P,false,0,3);
+				UI.viewing_commands_idx = U.Modulo(UI.viewing_commands_idx + 1,3);
+				MouseUI.PopButtonMap();
+				switch(UI.viewing_commands_idx){
+				case 0:
+				UI.CreateDefaultStatsButtons();
+				break;
+				case 1:
+				MouseUI.PushButtonMap(MouseMode.Map);
+				MouseUI.CreateStatsButton(ConsoleKey.O,false,12,1);
+				MouseUI.CreateStatsButton(ConsoleKey.W,false,13,1);
+				MouseUI.CreateStatsButton(ConsoleKey.X,true,14,1);
+				MouseUI.CreateStatsButton(ConsoleKey.OemPeriod,false,15,1);
+				MouseUI.CreateStatsButton(ConsoleKey.OemPeriod,true,16,1); //>
+				MouseUI.CreateStatsButton(ConsoleKey.M,false,17,1);
+				MouseUI.CreateStatsButton(ConsoleKey.Oem5,false,18,1); //backslash
+				MouseUI.CreateStatsButton(ConsoleKey.OemPlus,false,19,1); //=
+				MouseUI.CreateStatsButton(ConsoleKey.Q,false,20,1);
+				MouseUI.CreateStatsButton(ConsoleKey.V,false,24,1);
+				MouseUI.CreateStatsButton(ConsoleKey.E,false,7,2);
+				MouseUI.CreateMapButton(ConsoleKey.P,false,0,3);
+				break;
+				case 2:
+				MouseUI.PushButtonMap(MouseMode.Map);
+				//todo
+				break;
 				}
 				Q0();
 				break;
@@ -15944,7 +16017,7 @@ namespace Forays{
 		}
 		public static List<colorstring> MonsterDescriptionBox(Actor a,bool mouselook,int max_string_length){
 			ActorType type = a.type;
-			List<string> text = MonsterDescriptionText(type).GetWordWrappedList(max_string_length);
+			List<string> text = MonsterDescriptionText(type).GetWordWrappedList(max_string_length,false);
 			Color box_edge_color = Color.Green;
 			Color box_corner_color = Color.Yellow;
 			Color text_color = Color.Gray;
