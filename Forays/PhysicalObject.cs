@@ -133,15 +133,19 @@ namespace Forays{
 		}
 		public virtual List<colorstring> GetStatusBarInfo(){
 			List<colorstring> result = new List<colorstring>();
+			Color text = Color.Gray;
+			if(p.Equals(UI.MapCursor)){
+				text = Colors.status_highlight;
+			}
 			foreach(string s in name.GetWordWrappedList(17,true)){
 				colorstring cs = new colorstring();
 				result.Add(cs);
 				if(result.Count == 1){
 					cs.strings.Add(new cstr(symbol.ToString(),color));
-					cs.strings.Add(new cstr(": " + s,Color.Gray));
+					cs.strings.Add(new cstr(": " + s,text));
 				}
 				else{
-					cs.strings.Add(new cstr("   " + s,Color.Gray));
+					cs.strings.Add(new cstr("   " + s,text));
 				}
 			}
 			return result;
@@ -3115,6 +3119,7 @@ compare this number to 1/2:  if less than 1/2, major.
 					c = player.target.col;
 				}
 			}
+			UI.MapCursor = new pos(r,c);
 			bool first_iteration = true;
 			bool done = false; //when done==true, we're ready to return 'result'
 			Tile tc = M.tile[r,c];
@@ -3580,8 +3585,8 @@ compare this number to 1/2:  if less than 1/2, major.
 			break;
 			default:
 			if(command.Key == ConsoleKey.F21){
-				r = MouseUI.LastRow - Global.MAP_OFFSET_ROWS;
-				c = MouseUI.LastCol - Global.MAP_OFFSET_COLS;
+				r = UI.MapCursor.row;
+				c = UI.MapCursor.col;
 			}
 			else{
 				if(jump_to_origin_on_mouse_leave_event && command.Key == ConsoleKey.F22){
@@ -3606,6 +3611,7 @@ compare this number to 1/2:  if less than 1/2, major.
 			if(c > maxcol){
 				c = maxcol;
 			}
+			UI.MapCursor = new pos(r,c);
 			return result;
 		}
 		public static void Targeting_RemoveLine(Tile tc,bool done,List<Tile> line,colorchar[,] mem,int radius){

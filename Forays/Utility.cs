@@ -9,7 +9,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using PosArrays;
-//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v10)
+//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v11)
 namespace Utilities{
 	public class Dict<TKey,TValue>{ //a Dictionary that returns the default value for keys that haven't been added
 		public Dictionary<TKey,TValue> d;
@@ -1276,7 +1276,7 @@ namespace Utilities{
 		public static bool PercentChance(int x){
 			return r.Next(1,101) <= x;
 		}
-		public static int Choose(params int[] choices){
+		public static T Choose<T>(params T[] choices){
 			int len = choices.Length;
 			if(len == 0){
 				throw new ArgumentException("The Choose method requires at least one argument.");

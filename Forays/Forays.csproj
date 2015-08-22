@@ -87,6 +87,7 @@
     <Compile Include="Input.cs" />
     <Compile Include="UI.cs" />
     <Compile Include="MouseUI.cs" />
+    <Compile Include="Color.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

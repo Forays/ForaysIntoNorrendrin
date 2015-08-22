@@ -17,7 +17,6 @@ using Utilities;
 using PosArrays;
 using GLDrawing;
 namespace Forays{
-	public enum Color{Black,White,Gray,Red,Green,Blue,Yellow,Magenta,Cyan,DarkGray,DarkRed,DarkGreen,DarkBlue,DarkYellow,DarkMagenta,DarkCyan,RandomFire,RandomIce,RandomLightning,RandomBreached,RandomExplosion,RandomGlowingFungus,RandomTorch,RandomDoom,RandomConfusion,RandomDark,RandomBright,RandomRGB,RandomDRGB,RandomRGBW,RandomCMY,RandomDCMY,RandomCMYW,RandomRainbow,RandomAny,OutOfSight,TerrainDarkGray,DarkerGray,HealthBar,DarkerRed,Transparent}; //transparent is a special exception. it only works in GL mode.
 	public struct colorchar{
 		public Color color;
 		public Color bgcolor;
@@ -348,8 +347,8 @@ namespace Forays{
 			color_info[1] = new float[4 * num_positions];
 			for(int i=0;i<num_positions;++i){
 				colorchar cch = memory[row,col];
-				Color4 color = GLGame.ConvertColor(cch.color);
-				Color4 bgcolor = GLGame.ConvertColor(cch.bgcolor);
+				Color4 color = Colors.ConvertColor(cch.color);
+				Color4 bgcolor = Colors.ConvertColor(cch.bgcolor);
 				sprite_rows[i] = 0;
 				sprite_cols[i] = (int)cch.c;
 				int idx4 = i * 4;
@@ -374,8 +373,8 @@ namespace Forays{
 		public static void UpdateGLBuffer(int row,int col){
 			colorchar cch = memory[row,col];
 			Game.gl.UpdateVertexArray(row,col,GLGame.text_surface,0,(int)cch.c,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
-			/*Color4 color = GLGame.ConvertColor(memory[row,col].color);
-			Color4 bgcolor = GLGame.ConvertColor(memory[row,col].bgcolor);
+			/*Color4 color = Colors.ConvertColor(memory[row,col].color);
+			Color4 bgcolor = Colors.ConvertColor(memory[row,col].bgcolor);
 			float[][] color_info = new float[2][];
 			color_info[0] = new float[4];
 			color_info[1] = new float[4];
@@ -391,7 +390,7 @@ namespace Forays{
 		}
 		public static void UpdateCursor(bool make_visible){
 			if(make_visible && (!Global.GRAPHICAL || MouseUI.Mode != MouseMode.Map)){
-				float[] color_values = GLGame.ConvertColor(Color.Gray).GetFloatValues();
+				float[] color_values = Colors.ConvertColor(Color.Gray).GetFloatValues();
 				SpriteSurface s = GLGame.cursor_surface;
 				s.Disabled = false;
 				s.PixelHeightOffset = cursor_top * GLGame.text_surface.TileHeight + GLGame.text_surface.TileHeight * 7 / 8;
@@ -421,8 +420,8 @@ namespace Forays{
 				int row = (n + start_col) / Global.SCREEN_W + start_row; //screen coords
 				int col = (n + start_col) % Global.SCREEN_W;
 				colorchar cch = (row >= start_row && row <= end_row && col >= start_col && col <= end_col)? array[row-start_row,col-start_col] : memory[row,col];
-				Color4 color = GLGame.ConvertColor(cch.color);
-				Color4 bgcolor = GLGame.ConvertColor(cch.bgcolor);
+				Color4 color = Colors.ConvertColor(cch.color);
+				Color4 bgcolor = Colors.ConvertColor(cch.bgcolor);
 				//sprite_rows[n] = 0;
 				sprite_cols[n] = (int)cch.c;
 				int idx4 = n * 4;
@@ -454,8 +453,8 @@ namespace Forays{
 		}
 		public static void WriteChar(int r,int c,colorchar ch){
 			if(!memory[r,c].Equals(ch)){
-				ch.color = ResolveColor(ch.color);
-				ch.bgcolor = ResolveColor(ch.bgcolor);
+				ch.color = Colors.ResolveColor(ch.color);
+				ch.bgcolor = Colors.ResolveColor(ch.bgcolor);
 				if(GLMode){
 					memory[r,c] = ch;
 					if(!NoGLUpdate){
@@ -465,11 +464,11 @@ namespace Forays{
 				else{
 					if(!memory[r,c].Equals(ch)){ //check for equality again now that the color has been resolved - still cheaper than actually writing to console
 						memory[r,c] = ch;
-						ConsoleColor co = GetColor(ch.color);
+						ConsoleColor co = Colors.GetColor(ch.color);
 						if(co != ForegroundColor){
 							ForegroundColor = co;
 						}
-						co = GetColor(ch.bgcolor);
+						co = Colors.GetColor(ch.bgcolor);
 						if(co != Console.BackgroundColor || Global.LINUX){//voodoo here. not sure why this is needed. (possible Mono bug)
 							BackgroundColor = co;
 						}
@@ -487,18 +486,18 @@ namespace Forays{
 					//WriteChar(i+r,j+c,array[i,j]);
 					colorchar ch = array[i,j];
 					if(!memory[r+i,c+j].Equals(ch)){
-						ch.color = ResolveColor(ch.color);
-						ch.bgcolor = ResolveColor(ch.bgcolor);
+						ch.color = Colors.ResolveColor(ch.color);
+						ch.bgcolor = Colors.ResolveColor(ch.bgcolor);
 						//memory[r+i,c+j] = ch;
 						array[i,j] = ch;
 						if(!GLMode){
 							if(!memory[r+i,c+j].Equals(ch)){ //check again to avoid writing to console when possible
 								memory[r+i,c+j] = ch;
-								ConsoleColor co = GetColor(ch.color);
+								ConsoleColor co = Colors.GetColor(ch.color);
 								if(co != ForegroundColor){
 									ForegroundColor = co;
 								}
-								co = GetColor(ch.bgcolor);
+								co = Colors.GetColor(ch.bgcolor);
 								if(co != Console.BackgroundColor || Global.LINUX){//voodoo here. not sure why this is needed. (possible Mono bug)
 									BackgroundColor = co;
 								}
@@ -534,17 +533,17 @@ namespace Forays{
 				s.s = s.s.Substring(0,Global.SCREEN_W - c);
 			}
 			if(s.s.Length > 0){
-				s.color = ResolveColor(s.color);
-				s.bgcolor = ResolveColor(s.bgcolor);
+				s.color = Colors.ResolveColor(s.color);
+				s.bgcolor = Colors.ResolveColor(s.bgcolor);
 				colorchar cch;
 				cch.color = s.color;
 				cch.bgcolor = s.bgcolor;
 				if(!GLMode){
-					ConsoleColor co = GetColor(s.color);
+					ConsoleColor co = Colors.GetColor(s.color);
 					if(ForegroundColor != co){
 						ForegroundColor = co;
 					}
-					co = GetColor(s.bgcolor);
+					co = Colors.GetColor(s.bgcolor);
 					if(BackgroundColor != co){
 						BackgroundColor = co;
 					}
@@ -677,17 +676,17 @@ namespace Forays{
 					if(s.s.Length + pos > Global.SCREEN_W){
 						s.s = s.s.Substring(0,Global.SCREEN_W - pos);
 					}
-					s.color = ResolveColor(s.color);
-					s.bgcolor = ResolveColor(s.bgcolor);
+					s.color = Colors.ResolveColor(s.color);
+					s.bgcolor = Colors.ResolveColor(s.bgcolor);
 					colorchar cch;
 					cch.color = s.color;
 					cch.bgcolor = s.bgcolor;
 					if(!GLMode){
-						ConsoleColor co = GetColor(s.color);
+						ConsoleColor co = Colors.GetColor(s.color);
 						if(ForegroundColor != co){
 							ForegroundColor = co;
 						}
-						co = GetColor(s.bgcolor);
+						co = Colors.GetColor(s.bgcolor);
 						if(BackgroundColor != co){
 							BackgroundColor = co;
 						}
@@ -853,17 +852,17 @@ namespace Forays{
 			if(s.s.Length > 0){
 				r += Global.MAP_OFFSET_ROWS;
 				c += Global.MAP_OFFSET_COLS;
-				s.color = ResolveColor(s.color);
-				s.bgcolor = ResolveColor(s.bgcolor);
+				s.color = Colors.ResolveColor(s.color);
+				s.bgcolor = Colors.ResolveColor(s.bgcolor);
 				colorchar cch;
 				cch.color = s.color;
 				cch.bgcolor = s.bgcolor;
 				if(!GLMode){
-					ConsoleColor co = GetColor(s.color);
+					ConsoleColor co = Colors.GetColor(s.color);
 					if(ForegroundColor != co){
 						ForegroundColor = co;
 					}
-					co = GetColor(s.bgcolor);
+					co = Colors.GetColor(s.bgcolor);
 					if(BackgroundColor != co){
 						BackgroundColor = co;
 					}
@@ -937,17 +936,17 @@ namespace Forays{
 					if(cpos-Global.MAP_OFFSET_COLS + s.s.Length > Global.COLS){
 						s.s = s.s.Substring(0,Global.COLS-(cpos-Global.MAP_OFFSET_COLS));
 					}
-					s.color = ResolveColor(s.color);
-					s.bgcolor = ResolveColor(s.bgcolor);
+					s.color = Colors.ResolveColor(s.color);
+					s.bgcolor = Colors.ResolveColor(s.bgcolor);
 					colorchar cch;
 					cch.color = s.color;
 					cch.bgcolor = s.bgcolor;
 					if(!GLMode){
-						ConsoleColor co = GetColor(s.color);
+						ConsoleColor co = Colors.GetColor(s.color);
 						if(ForegroundColor != co){
 							ForegroundColor = co;
 						}
-						co = GetColor(s.bgcolor);
+						co = Colors.GetColor(s.bgcolor);
 						if(BackgroundColor != co){
 							BackgroundColor = co;
 						}
@@ -1039,17 +1038,17 @@ namespace Forays{
 			}
 			if(s.s.Length > 0){
 				//++r;
-				s.color = ResolveColor(s.color);
-				s.bgcolor = ResolveColor(s.bgcolor);
+				s.color = Colors.ResolveColor(s.color);
+				s.bgcolor = Colors.ResolveColor(s.bgcolor);
 				colorchar cch;
 				cch.color = s.color;
 				cch.bgcolor = s.bgcolor;
 				if(!GLMode){
-					ConsoleColor co = GetColor(s.color);
+					ConsoleColor co = Colors.GetColor(s.color);
 					if(ForegroundColor != co){
 						ForegroundColor = co;
 					}
-					co = GetColor(s.bgcolor);
+					co = Colors.GetColor(s.bgcolor);
 					if(BackgroundColor != co){
 						BackgroundColor = co;
 					}
@@ -1122,7 +1121,7 @@ namespace Forays{
 				current_c = col;
 				for(int j=col;j<col+width;++j){
 					colorchar ch = array[i,j];
-					if(Screen.ResolveColor(ch.color) != s.color){
+					if(Colors.ResolveColor(ch.color) != s.color){
 						if(s.s.Length > 0){
 							Screen.WriteMapString(i,current_c,s);
 							s.s = "";
@@ -1367,364 +1366,6 @@ namespace Forays{
 				}
 			}
 			ResetColors();
-		}
-		public static ConsoleColor GetColor(Color c){
-			switch(c){
-			case Color.Black:
-				return ConsoleColor.Black;
-			case Color.White:
-				return ConsoleColor.White;
-			case Color.Gray:
-				return ConsoleColor.Gray;
-			case Color.Red:
-				return ConsoleColor.Red;
-			case Color.Green:
-				return ConsoleColor.Green;
-			case Color.Blue:
-				return ConsoleColor.Blue;
-			case Color.Yellow:
-				return ConsoleColor.Yellow;
-			case Color.Magenta:
-				return ConsoleColor.Magenta;
-			case Color.Cyan:
-				return ConsoleColor.Cyan;
-			case Color.DarkGray:
-				return ConsoleColor.DarkGray;
-			case Color.DarkRed:
-				return ConsoleColor.DarkRed;
-			case Color.DarkGreen:
-				return ConsoleColor.DarkGreen;
-			case Color.DarkBlue:
-				return ConsoleColor.DarkBlue;
-			case Color.DarkYellow:
-				return ConsoleColor.DarkYellow;
-			case Color.DarkMagenta:
-				return ConsoleColor.DarkMagenta;
-			case Color.DarkCyan:
-				return ConsoleColor.DarkCyan;
-			case Color.RandomFire:
-			case Color.RandomIce:
-			case Color.RandomLightning:
-			case Color.RandomBreached:
-			case Color.RandomExplosion:
-			case Color.RandomGlowingFungus:
-			case Color.RandomTorch:
-			case Color.RandomDoom:
-			case Color.RandomConfusion:
-			case Color.RandomDark:
-			case Color.RandomBright:
-			case Color.RandomRGB:
-			case Color.RandomDRGB:
-			case Color.RandomRGBW:
-			case Color.RandomCMY:
-			case Color.RandomDCMY:
-			case Color.RandomCMYW:
-			case Color.RandomRainbow:
-			case Color.RandomAny:
-			case Color.OutOfSight:
-			case Color.TerrainDarkGray:
-			case Color.HealthBar:
-				return GetColor(ResolveColor(c));
-			default:
-				return ConsoleColor.Black;
-			}
-		}
-		public static Color ResolveColor(Color c){
-			switch(c){
-			case Color.RandomFire:
-				switch(R.Roll(1,3)){
-				case 1:
-					return Color.Red;
-				case 2:
-					return Color.DarkRed;
-				case 3:
-					return Color.Yellow;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomIce:
-				switch(R.Roll(1,4)){
-				case 1:
-					return Color.White;
-				case 2:
-					return Color.Cyan;
-				case 3:
-					return Color.Blue;
-				case 4:
-					return Color.DarkBlue;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomLightning:
-				switch(R.Roll(1,4)){
-				case 1:
-					return Color.White;
-				case 2:
-					return Color.Yellow;
-				case 3:
-					return Color.Yellow;
-				case 4:
-					return Color.DarkYellow;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomBreached:
-			{
-				if(R.OneIn(4)){
-					return Color.DarkGreen;
-				}
-				return Color.Green;
-			}
-			case Color.RandomExplosion:
-				if(R.OneIn(4)){
-					return Color.Red;
-				}
-				return Color.DarkRed;
-			case Color.RandomGlowingFungus:
-				if(R.OneIn(35)){
-					return Color.DarkCyan;
-				}
-				return Color.Cyan;
-			case Color.RandomTorch:
-				if(R.OneIn(8)){
-					if(R.CoinFlip()){
-						return Color.White;
-					}
-					else{
-						return Color.Red;
-					}
-				}
-				return Color.Yellow;
-			case Color.RandomDoom:
-				switch(R.Roll(4)){
-				case 1:
-				case 2:
-					return Color.DarkGray;
-				case 3:
-					return Color.DarkRed;
-				case 4:
-				default:
-					return Color.DarkMagenta;
-				}
-			case Color.RandomConfusion:
-				if(R.OneIn(16)){
-					switch(R.Roll(6)){
-					case 1:
-						return Color.Red;
-					case 2:
-						return Color.Green;
-					case 3:
-						return Color.Blue;
-					case 4:
-						return Color.Cyan;
-					case 5:
-						return Color.Yellow;
-					case 6:
-						return Color.White;
-					}
-				}
-				return Color.Magenta;
-			case Color.RandomDark:
-				switch(R.Roll(7)){
-				case 1:
-					return Color.DarkBlue;
-				case 2:
-					return Color.DarkCyan;
-				case 3:
-					return Color.DarkGray;
-				case 4:
-					return Color.DarkGreen;
-				case 5:
-					return Color.DarkMagenta;
-				case 6:
-					return Color.DarkRed;
-				case 7:
-					return Color.DarkYellow;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomBright:
-				switch(R.Roll(8)){
-				case 1:
-					return Color.Blue;
-				case 2:
-					return Color.Cyan;
-				case 3:
-					return Color.Gray;
-				case 4:
-					return Color.Green;
-				case 5:
-					return Color.Magenta;
-				case 6:
-					return Color.Red;
-				case 7:
-					return Color.Yellow;
-				case 8:
-					return Color.White;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomRGB:
-				switch(R.Roll(1,3)){
-				case 1:
-					return Color.Red;
-				case 2:
-					return Color.Green;
-				case 3:
-					return Color.Blue;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomDRGB:
-				switch(R.Roll(1,3)){
-				case 1:
-					return Color.DarkRed;
-				case 2:
-					return Color.DarkGreen;
-				case 3:
-					return Color.DarkBlue;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomRGBW:
-				switch(R.Roll(4)){
-				case 1:
-					return Color.Red;
-				case 2:
-					return Color.Green;
-				case 3:
-					return Color.Blue;
-				case 4:
-				default:
-					return Color.White;
-				}
-			case Color.RandomCMY:
-				switch(R.Roll(1,3)){
-				case 1:
-					return Color.Cyan;
-				case 2:
-					return Color.Magenta;
-				case 3:
-					return Color.Yellow;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomDCMY:
-				switch(R.Roll(1,3)){
-				case 1:
-					return Color.DarkCyan;
-				case 2:
-					return Color.DarkMagenta;
-				case 3:
-					return Color.DarkYellow;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomCMYW:
-				switch(R.Roll(4)){
-				case 1:
-					return Color.Cyan;
-				case 2:
-					return Color.Magenta;
-				case 3:
-					return Color.Yellow;
-				case 4:
-				default:
-					return Color.White;
-				}
-			case Color.RandomRainbow:
-				switch(R.Roll(12)){
-				case 1:
-					return Color.Red;
-				case 2:
-					return Color.Green;
-				case 3:
-					return Color.Blue;
-				case 4:
-					return Color.DarkRed;
-				case 5:
-					return Color.DarkGreen;
-				case 6:
-					return Color.DarkBlue;
-				case 7:
-					return Color.Cyan;
-				case 8:
-					return Color.Magenta;
-				case 9:
-					return Color.Yellow;
-				case 10:
-					return Color.DarkCyan;
-				case 11:
-					return Color.DarkMagenta;
-				case 12:
-					return Color.DarkYellow;
-				default:
-					return Color.Black;
-				}
-			case Color.RandomAny:
-				switch(R.Roll(15)){
-				case 1:
-					return Color.DarkBlue;
-				case 2:
-					return Color.DarkCyan;
-				case 3:
-					return Color.DarkGray;
-				case 4:
-					return Color.DarkGreen;
-				case 5:
-					return Color.DarkMagenta;
-				case 6:
-					return Color.DarkRed;
-				case 7:
-					return Color.DarkYellow;
-				case 8:
-					return Color.Blue;
-				case 9:
-					return Color.Cyan;
-				case 10:
-					return Color.Gray;
-				case 11:
-					return Color.Green;
-				case 12:
-					return Color.Magenta;
-				case 13:
-					return Color.Red;
-				case 14:
-					return Color.Yellow;
-				case 15:
-					return Color.White;
-				default:
-					return Color.Black;
-				}
-			case Color.OutOfSight:
-			if(Global.Option(OptionType.DARK_GRAY_UNSEEN)){
-				if(Screen.GLMode){
-					return Color.DarkerGray;
-				}
-				else{
-					return Color.DarkGray;
-				}
-			}
-			else{
-				return Color.DarkBlue;
-			}
-			case Color.TerrainDarkGray:
-			if(Screen.GLMode || !Global.Option(OptionType.DARK_GRAY_UNSEEN)){
-				return Color.DarkGray;
-			}
-			else{
-				return Color.Gray;
-			}
-			case Color.HealthBar:
-			if(Screen.GLMode){
-				return Color.DarkerRed;
-			}
-			else{
-				return Color.DarkRed;
-			}
-			default:
-				return c;
-			}
 		}
 	}
 }

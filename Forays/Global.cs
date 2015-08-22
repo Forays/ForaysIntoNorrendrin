@@ -23,6 +23,7 @@ namespace Forays{
 		public const int COLS = 66;
 		public const int MAP_OFFSET_ROWS = 3;
 		public const int MAP_OFFSET_COLS = 21;
+		public const int STATUS_WIDTH = 20;
 		public const int MAX_LIGHT_RADIUS = 12; //the maximum POSSIBLE light radius. used in light calculations.
 		public const int MAX_INVENTORY_SIZE = 20;
 		public static bool GAME_OVER = false;
@@ -756,7 +757,7 @@ namespace Forays{
 			return result;
 		}*/
 		public static float[] GetFloatValues(this Color color){
-			Color4 c = GLGame.ConvertColor(color);
+			Color4 c = Colors.ConvertColor(color);
 			return new float[]{c.R,c.G,c.B,c.A};
 		}
 		public static float[] GetFloatValues(this Color4 c){

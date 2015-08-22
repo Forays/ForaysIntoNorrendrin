@@ -42,8 +42,6 @@ namespace Forays{
 		public static PhysicalObject mouselook_current_target = null;
 		public static Rectangle mouselook_current_desc_area = Rectangle.Empty;
 		public static List<pos> mouse_path = null;
-		public static int LastRow = -1;
-		public static int LastCol = -1;
 		public static bool fire_arrow_hack = false; //hack, used to allow double-clicking [s]hoot to fire arrows.
 		public static bool descend_hack = false; //hack, used to make double-clicking Descend [>] cancel the action.
 		public static Button GetButton(int row,int col){

@@ -139,9 +139,45 @@ namespace Forays{
 					}
 				}
 				else{
-					if(!Input.KeyPressed && (row != MouseUI.LastRow || col != MouseUI.LastCol) && !KeyIsDown(Key.LControl) && !KeyIsDown(Key.RControl)){
-						MouseUI.LastRow = row;
-						MouseUI.LastCol = col;
+					if(!Input.KeyPressed){
+						if(!MouseUI.mouselook_objects.BoundsCheck(row,col)){
+							//UI.MapCursor = new pos(-1,-1);
+							Input.KeyPressed = true;
+							ConsoleKey key = ConsoleKey.F22;
+							Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+						}
+						else{
+							if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
+								if(map_row != UI.MapCursor.row || map_col != UI.MapCursor.col){
+									UI.MapCursor = new pos(map_row,map_col);
+									Input.KeyPressed = true;
+									ConsoleKey key = ConsoleKey.F21;
+									Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+								}
+							}
+							else{
+								PhysicalObject o = MouseUI.mouselook_objects[row,col];
+								if(o != null){
+									if(!o.p.Equals(UI.MapCursor)){
+										UI.SetMapCursor(o.p,map_col < 0);
+										Input.KeyPressed = true;
+										ConsoleKey key = ConsoleKey.F21;
+										Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+									}
+								}
+								else{ // off the map, and not hovering over a status bar object
+									if(map_row != UI.MapCursor.row || map_col != UI.MapCursor.col){
+										//UI.MapCursor = new pos(map_row,map_col);
+										Input.KeyPressed = true;
+										ConsoleKey key = ConsoleKey.F22;
+										Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+									}
+								}
+							}
+						}
+					}
+					/*if(!Input.KeyPressed && (map_row != UI.MapCursor.row || map_col != UI.MapCursor.col) && !KeyIsDown(Key.LControl) && !KeyIsDown(Key.RControl)){
+						UI.MapCursor = new pos(map_row,map_col);
 						Input.KeyPressed = true;
 						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
 							ConsoleKey key = ConsoleKey.F21;
@@ -151,7 +187,7 @@ namespace Forays{
 							ConsoleKey key = ConsoleKey.F22;
 							Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
 						}
-					}
+					}*/
 				}
 				break;
 			}
@@ -200,23 +236,17 @@ namespace Forays{
 						}
 					}
 					Screen.UpdateGLBuffer(b.row,b.col,array);
-					/*for(int i=b.row;i<b.row+b.height;++i){
-						for(int j=b.col;j<b.col+b.width;++j){
-							colorchar cch = Screen.Char(i,j);
-							cch.bgcolor = Color.Blue;
-							UpdateVertexArray(i,j,cch.c,ConvertColor(cch.color),ConvertColor(cch.bgcolor));
-						}
-					}*/
 				}
 				else{
 					if(MouseUI.Mode == MouseMode.Map){
 						if(!MouseUI.mouselook_objects.BoundsCheck(row,col)){
+							UI.MapCursor = new pos(-1,-1);
 							break;
 						}
 						PhysicalObject o = MouseUI.mouselook_objects[row,col];
+						int map_row = row - Global.MAP_OFFSET_ROWS;
+						int map_col = col - Global.MAP_OFFSET_COLS;
 						if(MouseUI.VisiblePath && o == null){
-							int map_row = row - Global.MAP_OFFSET_ROWS;
-							int map_col = col - Global.MAP_OFFSET_COLS;
 							if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
 								o = Actor.M.tile[map_row,map_col];
 							}
@@ -224,92 +254,101 @@ namespace Forays{
 						if(MouseUI.mouselook_current_target != null && (o == null || !o.p.Equals(MouseUI.mouselook_current_target.p))){
 							MouseUI.RemoveMouseover();
 						}
-						if(o != null && (MouseUI.mouselook_current_target == null || !o.p.Equals(MouseUI.mouselook_current_target.p))){
-							MouseUI.mouselook_current_target = o;
-							bool description_on_right = false;
-							int max_length = MouseUI.MaxDescriptionBoxLength;
-							if(o.col <= 32){
-								description_on_right = true;
-							}
-							List<colorstring> desc_box = null;
-							Actor a = o as Actor;
-							if(a != null){
-								desc_box = Actor.MonsterDescriptionBox(a,true,max_length);
-							}
-							else{
-								Item i = o as Item;
-								if(i != null){
-									desc_box = UI.ItemDescriptionBox(i,true,true,max_length);
+						if(o == null){
+							UI.MapCursor = new pos(-1,-1);
+						}
+						else{
+							if(MouseUI.mouselook_current_target == null || !o.p.Equals(MouseUI.mouselook_current_target.p)){
+								UI.SetMapCursor(o.p,map_col < 0);
+								MouseUI.mouselook_current_target = o;
+								bool description_on_right = false;
+								int max_length = MouseUI.MaxDescriptionBoxLength;
+								if(o.col <= 32){
+									description_on_right = true;
 								}
-							}
-							if(desc_box != null){
-								int h = desc_box.Count;
-								int w = desc_box[0].Length();
-								MouseUI.mouselook_current_desc_area = new System.Drawing.Rectangle(description_on_right? Global.COLS - w : 0,0,w,h);
-								int player_r = Actor.player.row;
-								int player_c = Actor.player.col;
-								colorchar[,] array = new colorchar[h,w];
-								if(description_on_right){
-									for(int i=0;i<h;++i){
-										for(int j=0;j<w;++j){
-											array[i,j] = desc_box[i][j];
-											if(i == player_r && j + Global.COLS - w == player_c){
-												Screen.CursorVisible = false;
-												player_r = -1; //to prevent further attempts to set CV to false
-											}
-										}
-									}
-									Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS + Global.COLS - w,array);
+								List<colorstring> desc_box = null;
+								Actor a = o as Actor;
+								if(a != null){
+									desc_box = Actor.MonsterDescriptionBox(a,true,max_length);
 								}
 								else{
-									for(int i=0;i<h;++i){
-										for(int j=0;j<w;++j){
-											array[i,j] = desc_box[i][j];
-											if(i == player_r && j == player_c){
-												Screen.CursorVisible = false;
-												player_r = -1;
+									Item i = o as Item;
+									if(i != null){
+										desc_box = UI.ItemDescriptionBox(i,true,true,max_length);
+									}
+								}
+								if(desc_box != null){
+									int h = desc_box.Count;
+									int w = desc_box[0].Length();
+									MouseUI.mouselook_current_desc_area = new System.Drawing.Rectangle(description_on_right? Global.COLS - w : 0,0,w,h);
+									int player_r = Actor.player.row;
+									int player_c = Actor.player.col;
+									colorchar[,] array = new colorchar[h,w];
+									if(description_on_right){
+										for(int i=0;i<h;++i){
+											for(int j=0;j<w;++j){
+												array[i,j] = desc_box[i][j];
+												if(i == player_r && j + Global.COLS - w == player_c){
+													Screen.CursorVisible = false;
+													player_r = -1; //to prevent further attempts to set CV to false
+												}
+											}
+										}
+										Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS + Global.COLS - w,array);
+									}
+									else{
+										for(int i=0;i<h;++i){
+											for(int j=0;j<w;++j){
+												array[i,j] = desc_box[i][j];
+												if(i == player_r && j == player_c){
+													Screen.CursorVisible = false;
+													player_r = -1;
+												}
+											}
+										}
+										Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,array);
+									}
+								}
+								if(MouseUI.VisiblePath){
+									if(o != Actor.player && o.p.Equals(Actor.player.p)){
+										MouseUI.mouse_path = new List<pos>{o.p};
+									}
+									else{
+										MouseUI.mouse_path = Actor.player.GetPlayerTravelPath(o.p);
+										if(MouseUI.mouse_path.Count == 0){
+											foreach(Tile t in Actor.M.TilesByDistance(o.row,o.col,true,true)){
+												if(t.passable){
+													MouseUI.mouse_path = Actor.player.GetPlayerTravelPath(t.p);
+													break;
+												}
 											}
 										}
 									}
-									Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,array);
-								}
-							}
-							if(MouseUI.VisiblePath){
-								MouseUI.mouse_path = Actor.player.GetPlayerTravelPath(o.p);
-								//MouseUI.mouse_path = Actor.player.GetPath(o.row,o.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
-								if(MouseUI.mouse_path.Count == 0){
-									foreach(Tile t in Actor.M.TilesByDistance(o.row,o.col,true,true)){
-										if(t.passable){
-											MouseUI.mouse_path = Actor.player.GetPlayerTravelPath(t.p);
-											//MouseUI.mouse_path = Actor.player.GetPath(t.row,t.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
-											break;
+									pos box_start = new pos(0,0);
+									int box_h = -1;
+									int box_w = -1;
+									if(desc_box != null){
+										box_h = desc_box.Count;
+										box_w = desc_box[0].Length();
+										if(description_on_right){
+											box_start = new pos(0,Global.COLS - box_w);
 										}
 									}
-								}
-								pos box_start = new pos(0,0);
-								int box_h = -1;
-								int box_w = -1;
-								if(desc_box != null){
-									box_h = desc_box.Count;
-									box_w = desc_box[0].Length();
-									if(description_on_right){
-										box_start = new pos(0,Global.COLS - box_w);
+									foreach(pos p in MouseUI.mouse_path){
+										if(desc_box != null && p.row < box_start.row + box_h && p.row >= box_start.row && p.col < box_start.col + box_w && p.col >= box_start.col){
+											continue;
+										}
+										colorchar cch = Screen.MapChar(p.row,p.col);
+										cch.bgcolor = Color.DarkGreen;
+										if(cch.color == Color.DarkGreen){
+											cch.color = Color.Black;
+										}
+										//Game.gl.UpdateVertexArray(p.row+Global.MAP_OFFSET_ROWS,p.col+Global.MAP_OFFSET_COLS,text_surface,0,(int)cch.c);
+										Game.gl.UpdateVertexArray(p.row+Global.MAP_OFFSET_ROWS,p.col+Global.MAP_OFFSET_COLS,text_surface,0,(int)cch.c,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
 									}
-								}
-								foreach(pos p in MouseUI.mouse_path){
-									if(desc_box != null && p.row < box_start.row + box_h && p.row >= box_start.row && p.col < box_start.col + box_w && p.col >= box_start.col){
-										continue;
+									if(MouseUI.mouse_path != null && MouseUI.mouse_path.Count == 0){
+										MouseUI.mouse_path = null;
 									}
-									colorchar cch = Screen.MapChar(p.row,p.col);
-									cch.bgcolor = Color.DarkGreen;
-									if(cch.color == Color.DarkGreen){
-										cch.color = Color.Black;
-									}
-									//Game.gl.UpdateVertexArray(p.row+Global.MAP_OFFSET_ROWS,p.col+Global.MAP_OFFSET_COLS,text_surface,0,(int)cch.c);
-									Game.gl.UpdateVertexArray(p.row+Global.MAP_OFFSET_ROWS,p.col+Global.MAP_OFFSET_COLS,text_surface,0,(int)cch.c,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
-								}
-								if(MouseUI.mouse_path != null && MouseUI.mouse_path.Count == 0){
-									MouseUI.mouse_path = null;
 								}
 							}
 						}
@@ -358,7 +397,7 @@ namespace Forays{
 						int map_row = row - Global.MAP_OFFSET_ROWS;
 						int map_col = col - Global.MAP_OFFSET_COLS;
 						if(MouseUI.mouselook_objects[row,col] != null){
-							map_row = MouseUI.mouselook_objects[row,col].row;
+							map_row = MouseUI.mouselook_objects[row,col].row; //todo change
 							map_col = MouseUI.mouselook_objects[row,col].col;
 						}
 						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
@@ -466,7 +505,12 @@ namespace Forays{
 							Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
 						}
 						else{
-							Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+							if(MouseUI.mouselook_objects.BoundsCheck(row,col) && MouseUI.mouselook_objects[row,col] != null){
+								Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+							}
+							else{
+								Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+							}
 						}
 						break;
 					}
@@ -657,53 +701,6 @@ namespace Forays{
 					}
 					GL.UnmapBuffer(BufferTarget.ArrayBuffer);
 				}
-			}
-		}
-		public static Color4 ConvertColor(Color c){
-			switch(c){
-			case Color.Black:
-				return Color4.Black;
-			case Color.Blue:
-				return new Color4(20,20,255,255);
-				//return Color4.Blue;
-			case Color.Cyan:
-				return Color4.Cyan;
-			case Color.DarkBlue:
-				return new Color4(10,10,149,255);
-				//return Color4.DarkBlue;
-			case Color.DarkCyan:
-				return Color4.DarkCyan;
-			case Color.DarkGray:
-				return Color4.DimGray;
-			case Color.DarkGreen:
-				return Color4.DarkGreen;
-			case Color.DarkMagenta:
-				return Color4.DarkMagenta;
-			case Color.DarkRed:
-				return Color4.DarkRed;
-			case Color.DarkYellow:
-				return Color4.DarkGoldenrod;
-			case Color.Gray:
-				return Color4.LightGray;
-			case Color.Green:
-				return Color4.Lime;
-			case Color.Magenta:
-				return Color4.Magenta;
-			case Color.Red:
-				return Color4.Red;
-			case Color.White:
-				return Color4.White;
-			case Color.Yellow:
-				return new Color4(255,248,0,255);
-				//return Color4.Yellow;
-			case Color.DarkerGray:
-				return new Color4(50,50,50,255);
-			case Color.DarkerRed:
-				return new Color4(80,0,0,255); //DarkRed is 139 red
-			case Color.Transparent:
-				return Color4.Transparent;
-			default:
-				return Color4.Black;
 			}
 		}
 		public static string GetParticleFragmentShader(){

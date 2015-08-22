@@ -704,15 +704,19 @@ namespace Forays{
 				}
 			}
 			List<colorstring> result = new List<colorstring>();
+			Color text = Color.Gray;
+			if(p.Equals(UI.MapCursor)){
+				text = Colors.status_highlight;
+			}
 			foreach(string s in name.GetWordWrappedList(17,true)){
 				colorstring cs = new colorstring();
 				result.Add(cs);
 				if(result.Count == 1){
 					cs.strings.Add(new cstr(symbol.ToString(),color));
-					cs.strings.Add(new cstr(": " + s,Color.Gray));
+					cs.strings.Add(new cstr(": " + s,text));
 				}
 				else{
-					cs.strings.Add(new cstr("   " + s,Color.Gray));
+					cs.strings.Add(new cstr("   " + s,text));
 				}
 			}
 			string hp = ("HP: " + curhp.ToString() + "  (" + AwarenessStatus() + ")").PadOuter(20);
@@ -727,7 +731,7 @@ namespace Forays{
 				}
 			}
 			hpcolor = Color.DarkRed;*/
-			result.Add(new colorstring(new cstr(hp.Substring(0,idx),Color.Gray,Color.HealthBar),new cstr(hp.Substring(idx),Color.Gray)));
+			result.Add(new colorstring(new cstr(hp.Substring(0,idx),text,Color.HealthBar),new cstr(hp.Substring(idx),text)));
 			return result;
 		}
 		public void Move(int r,int c){ Move(r,c,true); }
@@ -2096,6 +2100,7 @@ namespace Forays{
 				M.UpdateDangerValues();
 			}
 			Screen.UpdateScreenCenterColumn(col);
+			UI.MapCursor = new pos(-1,-1);
 			M.Draw();
 			UI.DisplayStats(true);
 			if(HasAttr(AttrType.AUTOEXPLORE)){
@@ -4292,9 +4297,11 @@ namespace Forays{
 				MouseUI.PopButtonMap();
 				switch(UI.viewing_commands_idx){
 				case 0:
+				UI.status_row_cutoff = Global.SCREEN_H - 9;
 				UI.CreateDefaultStatsButtons();
 				break;
 				case 1:
+				UI.status_row_cutoff = Global.SCREEN_H - 9;
 				MouseUI.PushButtonMap(MouseMode.Map);
 				MouseUI.CreateStatsButton(ConsoleKey.O,false,12,1);
 				MouseUI.CreateStatsButton(ConsoleKey.W,false,13,1);
@@ -4310,6 +4317,7 @@ namespace Forays{
 				MouseUI.CreateMapButton(ConsoleKey.P,false,0,3);
 				break;
 				case 2:
+				UI.status_row_cutoff = Global.SCREEN_H - 2;
 				MouseUI.PushButtonMap(MouseMode.Map);
 				//todo
 				break;
@@ -4500,7 +4508,7 @@ namespace Forays{
 								for(int i=0;i<16;++i){
 									for(int j=0;j<16;++j){
 										if(bmp.GetPixel(ch_offset + j,i).ToArgb() == System.Drawing.Color.Black.ToArgb()){
-											System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(GLGame.ConvertColor(Screen.ResolveColor(cch.color)).ToArgb());
+											System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(Colors.ConvertColor(Colors.ResolveColor(cch.color)).ToArgb());
 											result.SetPixel(pos_col * 16 + j,pos_row * 16 + i,pixel_color);
 										}
 										else{
@@ -4526,7 +4534,7 @@ namespace Forays{
 								for(int i=0;i<16;++i){
 									for(int j=0;j<16;++j){
 										if(bmp.GetPixel(ch_offset + j,i).ToArgb() == System.Drawing.Color.Black.ToArgb()){
-											System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(GLGame.ConvertColor(Screen.ResolveColor(cch.color)).ToArgb());
+											System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(Colors.ConvertColor(Colors.ResolveColor(cch.color)).ToArgb());
 											result.SetPixel(pos_col * 16 + j,pos_row * 16 + i,pixel_color);
 											result.SetPixel(pos_col * 16 + j + 16,pos_row * 16 + i,pixel_color);
 										}
@@ -4547,7 +4555,7 @@ namespace Forays{
 							for(int i=0;i<16;++i){
 								for(int j=0;j<16;++j){
 									if(bmp.GetPixel(ch_offset + j,i).ToArgb() == System.Drawing.Color.Black.ToArgb()){
-										System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(GLGame.ConvertColor(Screen.ResolveColor(cch.color)).ToArgb());
+										System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(Colors.ConvertColor(Colors.ResolveColor(cch.color)).ToArgb());
 										result.SetPixel(pos_col * 16 + j,pos_row * 16 + i,pixel_color);
 										result.SetPixel(pos_col * 16 + j + 16,pos_row * 16 + i,pixel_color);
 									}
@@ -4572,7 +4580,7 @@ namespace Forays{
 								for(int i=0;i<16;++i){
 									for(int j=0;j<16;++j){
 										if(bmp.GetPixel(ch_offset + j,i).ToArgb() == System.Drawing.Color.Black.ToArgb()){
-											System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(GLGame.ConvertColor(Screen.ResolveColor(cch.color)).ToArgb());
+											System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(Colors.ConvertColor(Colors.ResolveColor(cch.color)).ToArgb());
 											result.SetPixel(pos_col * 16 + j,pos_row * 16 + i,pixel_color);
 											result.SetPixel(pos_col * 16 + j + 16,pos_row * 16 + i,pixel_color);
 										}
@@ -4600,7 +4608,7 @@ namespace Forays{
 							for(int i=0;i<16;++i){
 								for(int j=0;j<16;++j){
 									if(bmp.GetPixel(ch_offset + j,i).ToArgb() == System.Drawing.Color.Black.ToArgb()){
-										System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(GLGame.ConvertColor(Screen.ResolveColor(cch.color)).ToArgb());
+										System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(Colors.ConvertColor(Colors.ResolveColor(cch.color)).ToArgb());
 										result.SetPixel(pos_col * 16 + j,pos_row * 16 + i,pixel_color);
 									}
 									else{
@@ -4625,7 +4633,7 @@ namespace Forays{
 							for(int i=0;i<16;++i){
 								for(int j=0;j<16;++j){
 									if(bmp.GetPixel(ch_offset + j,i).ToArgb() == System.Drawing.Color.Black.ToArgb()){
-										System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(GLGame.ConvertColor(Screen.ResolveColor(cch.color)).ToArgb());
+										System.Drawing.Color pixel_color = System.Drawing.Color.FromArgb(Colors.ConvertColor(Colors.ResolveColor(cch.color)).ToArgb());
 										result.SetPixel(tilepos.row * 16 + j,tilepos.col * 16 + i,pixel_color);
 									}
 									else{

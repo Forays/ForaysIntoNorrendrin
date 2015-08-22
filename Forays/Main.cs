@@ -825,7 +825,7 @@ namespace Forays{
 					try{
 						while(!Global.GAME_OVER){ game.Q.Pop(); }
 					}
-					catch(RankException e){
+					catch(Exception e){
 						StreamWriter fileout = new StreamWriter("error.txt",false);
 						fileout.WriteLine(e.Message);
 						fileout.WriteLine(e.StackTrace);

@@ -464,19 +464,23 @@ namespace Forays{
 		}
 		public override List<colorstring> GetStatusBarInfo(){
 			List<colorstring> result = new List<colorstring>();
+			Color text = Color.Gray;
+			if(p.Equals(UI.MapCursor)){
+				text = Colors.status_highlight;
+			}
 			foreach(string s in Name(true).GetWordWrappedList(17,true)){
 				colorstring cs = new colorstring();
 				result.Add(cs);
 				if(result.Count == 1){
 					Color c = color;
 					if(!revealed_by_light && !tile().IsLit()){
-						c = Map.darkcolor;
+						c = Colors.darkcolor;
 					}
 					cs.strings.Add(new cstr(symbol.ToString(),c));
-					cs.strings.Add(new cstr(": " + s,Color.Gray));
+					cs.strings.Add(new cstr(": " + s,text));
 				}
 				else{
-					cs.strings.Add(new cstr("   " + s,Color.Gray));
+					cs.strings.Add(new cstr("   " + s,text));
 				}
 			}
 			return result;

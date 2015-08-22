@@ -76,8 +76,6 @@ namespace Forays{
 		public int extra_danger = 0; //used to eventually spawn more threatening wandering monsters
 		public static pos[] shrine_locations;
 
-		public static Color darkcolor = Color.DarkCyan;
-		public static Color unseencolor = Color.OutOfSight;
 		private const int ROWS = Global.ROWS;
 		private const int COLS = Global.COLS;
 		public static Actor player;
@@ -550,7 +548,7 @@ namespace Forays{
 						}
 					}
 				}*/
-				UI.SortSidebarObjects();
+				UI.SortStatusBarObjects();
 				Screen.ResetColors();
 				Screen.NoGLUpdate = false;
 				Game.GLUpdate();
@@ -602,7 +600,7 @@ namespace Forays{
 					c = j_start;
 					for(int j=j_start;j<col_limit;++j){
 						colorchar ch = VisibleColorChar(i,j);
-						ch.color = Screen.ResolveColor(ch.color);
+						ch.color = Colors.ResolveColor(ch.color);
 						if(ch.color != s.color){ //ignores background color, assumes black
 							if(s.s.Length > 0){
 								Screen.WriteMapString(r,c,s);
@@ -626,7 +624,7 @@ namespace Forays{
 				Screen.ResetColors();
 			}
 			Screen.NoGLUpdate = false;
-			UI.SortSidebarObjects();
+			UI.SortStatusBarObjects();
 		}
 		public colorchar VisibleColorChar(int r,int c){
 			colorchar ch = Screen.BlankChar();
@@ -644,7 +642,7 @@ namespace Forays{
 					ch.c = tile[r,c].inv.symbol;
 					ch.color = tile[r,c].inv.color;
 					if(!tile[r,c].inv.revealed_by_light && !tile[r,c].IsLit()){
-						ch.color = darkcolor;
+						ch.color = Colors.darkcolor;
 					}
 					last_seen[r,c] = ch;
 					MouseUI.mouselook_objects[r+Global.MAP_OFFSET_ROWS,c+Global.MAP_OFFSET_COLS] = tile[r,c].inv;
@@ -679,12 +677,12 @@ namespace Forays{
 						}
 						if(!tile[r,c].revealed_by_light && !tile[r,c].IsLit()){
 							if(tile[r,c].IsKnownTrap() || tile[r,c].IsShrine() || tile[r,c].Is(TileType.RUINED_SHRINE)){
-								ch.color = darkcolor;
+								ch.color = Colors.darkcolor;
 								last_seen[r,c] = ch;
 							}
 							else{
 								last_seen[r,c] = ch;
-								ch.color = darkcolor;
+								ch.color = Colors.darkcolor;
 							}
 						}
 						else{
@@ -745,7 +743,7 @@ namespace Forays{
 									}
 									else{
 										if(ch.color != Color.DarkGray){ //if it's dark gray at this point, it means you're invisible.
-											ch.color = darkcolor;
+											ch.color = Colors.darkcolor;
 										}
 									}
 								}
@@ -766,7 +764,7 @@ namespace Forays{
 				else{
 					if(tile[r,c].seen){
 						ch.c = last_seen[r,c].c;
-						ch.color = unseencolor;
+						ch.color = Colors.unseencolor;
 					}
 				}
 			}
