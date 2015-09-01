@@ -7,6 +7,7 @@ namespace Forays{
 	public static class UI{
 		public static Actor player{get{ return Actor.player; } }
 		public static Map M{get{ return Actor.M; } }
+		public static Queue Q{get{ return Actor.Q; } }
 
 		public static bool status_hover = false;
 		private static pos internal_map_cursor = new pos(-1,-1);
@@ -35,46 +36,29 @@ namespace Forays{
 
 		public static List<PhysicalObject> sidebar_objects = new List<PhysicalObject>();
 
-		public static List<colorstring> ItemDescriptionBox(Item item,bool lookmode,bool mouselook,int max_string_length){
-			List<string> text = item.Description().GetWordWrappedList(max_string_length,false);
-			Color box_edge_color = Color.DarkGreen;
-			Color box_corner_color = Color.Green;
-			Color text_color = Color.Gray;
-			int widest = 31; // length of "[Press any other key to cancel]"
-			if(lookmode){
-				widest = 20; // length of "[=] Hide description"
-			}
-			foreach(string s in text){
-				if(s.Length > widest){
-					widest = s.Length;
-				}
-			}
-			if((!lookmode || mouselook) && item.Name(true).Length > widest){
-				widest = item.Name(true).Length;
-			}
-			widest += 2; //one space on each side
-			List<colorstring> box = new List<colorstring>();
-			box.Add(new colorstring("+",box_corner_color,"".PadRight(widest,'-'),box_edge_color,"+",box_corner_color));
-			if(!lookmode || mouselook){
-				box.Add(new colorstring("|",box_edge_color) + item.Name(true).PadOuter(widest).GetColorString(Color.White) + new colorstring("|",box_edge_color));
-				box.Add(new colorstring("|",box_edge_color,"".PadRight(widest),Color.Gray,"|",box_edge_color));
-			}
-			foreach(string s in text){
-				box.Add(new colorstring("|",box_edge_color) + s.PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
-			}
-			if(!mouselook){
-				box.Add(new colorstring("|",box_edge_color,"".PadRight(widest),Color.Gray,"|",box_edge_color));
-				if(lookmode){
-					box.Add(new colorstring("|",box_edge_color) + "[=] Hide description".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
-				}
-				else{
-					box.Add(new colorstring("|",box_edge_color) + "[a]pply  [f]ling  [d]rop".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
-					//box.Add(new colorstring("|",box_edge_color) + "[Press any other key to cancel]".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
-				}
-			}
-			box.Add(new colorstring("+",box_corner_color,"".PadRight(widest,'-'),box_edge_color,"+",box_corner_color));
-			return box;
-		}
+		public static readonly AttrType[] displayed_statuses = new AttrType[]{AttrType.LIFESPAN,
+			
+			AttrType.BURNING,AttrType.POISONED,AttrType.ACIDIFIED,AttrType.BLEEDING, //damage over time
+
+			AttrType.VULNERABLE,AttrType.SUSCEPTIBLE_TO_CRITS,AttrType.SWITCHING_ARMOR,AttrType.CHILLED, //extra damage opportunities
+
+			AttrType.PARALYZED,AttrType.ASLEEP,AttrType.STUNNED,AttrType.BLIND,AttrType.CONFUSED,AttrType.ENRAGED,AttrType.SLOWED,AttrType.AMNESIA_STUN,
+			AttrType.DIM_VISION,AttrType.IMMOBILE,AttrType.AGGRAVATING,AttrType.POPPY_COUNTER,AttrType.GRABBED,AttrType.GRABBING, //'typical' statuses
+
+			AttrType.TELEPORTING,AttrType.SLIMED,AttrType.OIL_COVERED,AttrType.SHINING,AttrType.ROOTS,AttrType.PSEUDO_VAMPIRIC,AttrType.STONEFORM,
+			AttrType.SILENCED,AttrType.SILENCE_AURA,AttrType.FROZEN, //'neutral' statuses
+
+			AttrType.INVULNERABLE,AttrType.MECHANICAL_SHIELD,AttrType.SHIELDED,AttrType.REGENERATING,AttrType.BANDAGED,AttrType.RESTING, //shields and healing
+
+			AttrType.INVISIBLE,AttrType.SHADOW_CLOAK, //visibility modifiers
+
+			AttrType.FLYING,AttrType.FLYING_LEAP,AttrType.VIGOR,AttrType.BLOOD_BOILED, //movement
+
+			AttrType.SHADOWSIGHT,AttrType.MYSTIC_MIND,AttrType.DETECTING_MOVEMENT,AttrType.DETECTING_MONSTERS, //detection and senses
+
+			AttrType.BRUTISH_STRENGTH,AttrType.RADIANT_HALO,AttrType.EMPOWERED_SPELLS,AttrType.CONVICTION, //other positive effects
+			};
+
 		public static void DisplayStats(){ DisplayStats(false); }
 		public static void DisplayStats(bool cyan_letters){
 			bool buttons = MouseUI.AutomaticButtonsFromStrings;
@@ -83,64 +67,69 @@ namespace Forays{
 			int row = 0;
 			if(!viewing_map_shrine_info){ //todo: make this shrine stuff a separate method or something.
 				string s = ("Health: " + player.curhp.ToString()).PadOuter(Global.STATUS_WIDTH);
-				int idx = Math.Max(0,Global.STATUS_WIDTH * (player.curhp + 4) / player.maxhp);
-				/*Color hpcolor = Color.DarkRed;
-				if(player.curhp * 3 >= player.maxhp * 2){
-					hpcolor = Color.DarkGreen;
-				}
-				else{
-					if(player.curhp * 3 >= player.maxhp){
-						hpcolor = Color.DarkYellow;
-					}
-				}
-				hpcolor = Color.DarkRed;*/
-				Screen.WriteString(row,0,new colorstring(new cstr(s.Substring(0,idx),Color.Gray,Color.DarkRed),new cstr(s.Substring(idx),Color.Gray,Color.Black)));
-				++row;
+				int idx = GetStatusBarIndex(player.curhp,player.maxhp);
+				StatusWriteString(ref row,new colorstring(new cstr(s.SafeSubstring(0,idx),Color.Gray,Color.DarkRed),new cstr(s.SafeSubstring(idx),Color.Gray,Color.Black)));
 				if(player.maxmp > 0){
 					s = ("Mana: " + player.curmp.ToString()).PadOuter(Global.STATUS_WIDTH);
-					idx = Math.Max(0,Global.STATUS_WIDTH * (player.curmp) / player.maxmp);
-					Screen.WriteString(row,0,new colorstring(new cstr(s.Substring(0,idx),Color.Gray,Color.DarkCyan),new cstr(s.Substring(idx),Color.Gray,Color.Black)));
-					++row;
+					idx = GetStatusBarIndex(player.curmp,player.maxmp);
+					StatusWriteString(ref row,new colorstring(new cstr(s.SafeSubstring(0,idx),Color.Gray,Color.DarkCyan),new cstr(s.SafeSubstring(idx),Color.Gray,Color.Black)));
 				}
 				if(player.exhaustion > 0){
 					s = ("Exhaustion: " + player.exhaustion.ToString() + "%").PadOuter(Global.STATUS_WIDTH);
-					idx = Math.Max(0,Global.STATUS_WIDTH * (player.exhaustion) / 100);
-					Screen.WriteString(row,0,new colorstring(new cstr(s.Substring(0,idx),Color.Gray,Color.DarkYellow),new cstr(s.Substring(idx),Color.Gray,Color.Black)));
-					++row;
+					idx = GetStatusBarIndex(player.exhaustion,100);
+					StatusWriteString(ref row,new colorstring(new cstr(s.SafeSubstring(0,idx),Color.Gray,Color.DarkYellow),new cstr(s.SafeSubstring(idx),Color.Gray,Color.Black)));
 				}
-				cstr cs = player.EquippedWeapon.StatsName();
-				cs.s = ("-- " + cs.s + " --").PadOuter(Global.STATUS_WIDTH);
-				Screen.WriteString(row,0,cs);
-				colorstring statuses = new colorstring();
+				Dictionary<AttrType,Event> events = Q.StatusEvents.ContainsKey(player)? Q.StatusEvents[player] : null;
+				foreach(AttrType attr in displayed_statuses){
+					if(player.HasAttr(attr) && !attr.StatusIsHidden(player)){
+						int value = 1;
+						int max = 1; // If no other data is found, a full bar (1/1) will be shown.
+						if(!attr.StatusByStrength(player,(events != null && events.ContainsKey(attr))? events[attr] : null,ref value,ref max)){
+							if(events != null && events.ContainsKey(attr)){
+								Event e = events[attr];
+								value = e.delay + e.time_created + 100 - Q.turn;
+								max = e.delay;
+							}
+						}
+						int attr_idx = UI.GetStatusBarIndex(value,max);
+						string attr_name = attr.StatusName(player).PadOuter(Global.STATUS_WIDTH);
+						StatusWriteString(ref row,new colorstring(new cstr(attr_name.SafeSubstring(0,attr_idx),Color.Gray,Color.DarkMagenta),new cstr(attr_name.SafeSubstring(attr_idx),Color.Gray)));
+					}
+				}
+				if(player.tile().Is(FeatureType.WEB) && !player.HasAttr(AttrType.BURNING,AttrType.SLIMED,AttrType.OIL_COVERED)){
+					StatusWriteString(ref row,new colorstring("Webbed".PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkMagenta));
+				}
+				if(player.IsSilencedHere() && !player.HasAttr(AttrType.SILENCED,AttrType.SILENCE_AURA)){
+					StatusWriteString(ref row,new colorstring(AttrType.SILENCED.StatusName(player).PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkMagenta));
+				}
+				equipment_row = row;
+				StatusWriteString(ref row,player.EquippedWeapon.StatusName());
 				for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
 					if(player.EquippedWeapon.status[(EquipmentStatus)i]){
-						statuses.strings.Add(new cstr("*",Weapon.StatusColor((EquipmentStatus)i))); //todo check all this --v--^
-						if(player.EquippedWeapon.StatsName().s.Length + statuses.Length() >= 19){
-							break;
-						}
+						StatusWriteString(ref row,new colorstring(Weapon.StatusName((EquipmentStatus)i).PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkBlue));
 					}
 				}
-				Screen.WriteString(row,player.EquippedWeapon.StatsName().s.Length + 1,statuses);
-				++row;
-				cs = player.EquippedArmor.StatsName();
-				cs.s = ("-- " + cs.s + " --").PadOuter(Global.STATUS_WIDTH);
-				Screen.WriteString(row,0,cs);
-				statuses = new colorstring();
+				StatusWriteString(ref row,player.EquippedArmor.StatusName());
 				for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
 					if(player.EquippedArmor.status[(EquipmentStatus)i]){
-						statuses.strings.Add(new cstr("*",Weapon.StatusColor((EquipmentStatus)i)));
-						if(player.EquippedArmor.StatsName().s.Length + statuses.Length() >= 19){
-							break;
-						}
+						StatusWriteString(ref row,new colorstring(Weapon.StatusName((EquipmentStatus)i).PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkBlue));
 					}
 				}
-				Screen.WriteString(row,player.EquippedArmor.StatsName().s.Length + 1,statuses);
-				++row;
-				Screen.WriteString(row,0,("Depth: " + M.current_level.ToString()).PadOuter(Global.STATUS_WIDTH));
-				++row;
-				Screen.WriteString(row,0,"".PadRight(Global.STATUS_WIDTH));
-				++row;
+				depth_row = row;
+				StatusWriteString(ref row,("Depth: " + M.current_level.ToString()).PadOuter(Global.STATUS_WIDTH));
+				if(M.wiz_dark || M.wiz_lite){
+					Event e = Q.LightingEvent;
+					if(e != null){
+						int value = e.delay + e.time_created + 100 - Q.turn;
+						int max = e.delay;
+						int e_idx = UI.GetStatusBarIndex(value,max);
+						string e_name = (M.wiz_dark? "Darkness" : "Sunlight").PadOuter(Global.STATUS_WIDTH);
+						StatusWriteString(ref row,new colorstring(new cstr(e_name.SafeSubstring(0,e_idx),Color.Gray,Color.DarkBlue),new cstr(e_name.SafeSubstring(e_idx),Color.Gray)));
+					}
+				}
+				StatusWriteString(ref row,"".PadRight(Global.STATUS_WIDTH));
 				status_row_start = row;
+				MouseUI.CreatePlayerStatsButtons();
 				DisplayStatusBarObjects();
 			}
 			else{ //todo fix this:
@@ -239,13 +228,22 @@ namespace Forays{
 			Screen.ResetColors();
 			MouseUI.AutomaticButtonsFromStrings = buttons;
 		}
+		public static void StatusWriteString(ref int row,colorstring s){
+			if(row >= status_row_cutoff){
+				return;
+			}
+			Screen.WriteString(row,0,s);
+			++row;
+		}
 		public static int status_row_start = 5;
+		public static int equipment_row = 1;
+		public static int depth_row = 3;
 		public static int status_row_cutoff = Global.SCREEN_H - 9;
 		public static void DisplayStatusBarObjects(){
 			int row = status_row_start;
 			List<PhysicalObject> objs = null;
 			List<List<colorstring>> names = null;
-			List<PhysicalObject> extra_objs = null; // objects under MapCursor that'll have to be displayed.
+			List<PhysicalObject> extra_objs = null; // objects under MapCursor that should be displayed but weren't visible on the first pass.
 			bool extras_found = false;
 			do{
 				row = status_row_start;
@@ -320,23 +318,134 @@ namespace Forays{
 				++row;
 			}
 		}
-		public static void CreateDefaultStatsButtons(){
-			MouseUI.PushButtonMap(MouseMode.Map);
-			MouseUI.CreateStatsButton(ConsoleKey.I,false,12,1);
-			MouseUI.CreateStatsButton(ConsoleKey.E,false,13,1);
-			MouseUI.CreateStatsButton(ConsoleKey.C,false,14,1);
-			MouseUI.CreateStatsButton(ConsoleKey.T,false,15,1);
-			MouseUI.CreateStatsButton(ConsoleKey.Tab,false,16,1);
-			MouseUI.CreateStatsButton(ConsoleKey.R,false,17,1);
-			MouseUI.CreateStatsButton(ConsoleKey.A,false,18,1);
-			MouseUI.CreateStatsButton(ConsoleKey.G,false,19,1);
-			MouseUI.CreateStatsButton(ConsoleKey.F,false,20,1);
-			MouseUI.CreateStatsButton(ConsoleKey.S,false,21,1);
-			MouseUI.CreateStatsButton(ConsoleKey.Z,false,22,1);
-			MouseUI.CreateStatsButton(ConsoleKey.X,false,23,1);
-			MouseUI.CreateStatsButton(ConsoleKey.V,false,24,1);
-			MouseUI.CreateStatsButton(ConsoleKey.E,false,7,2);
-			MouseUI.CreateMapButton(ConsoleKey.P,false,0,3);
+		public static int GetStatusBarIndex(int value,int max){
+			if(max == 0) return 0;
+			int adjustment = Math.Max(0,max - Global.STATUS_WIDTH); // The adjustment prevents bars from looking empty until they're at 0.
+			int result = (Global.STATUS_WIDTH*value + adjustment) / max;
+			if(result < 0) return 0;
+			if(result > Global.STATUS_WIDTH) return Global.STATUS_WIDTH;
+			return result;
+		}
+		public static string StatusName(this AttrType attr,Actor a){
+			switch(attr){
+			case AttrType.ROOTS:
+			return "Rooted";
+			case AttrType.BLIND:
+			return "Blinded";
+			case AttrType.SUSCEPTIBLE_TO_CRITS:
+			return "Off-balance";
+			case AttrType.PSEUDO_VAMPIRIC:
+			return "Vampiric";
+			case AttrType.BLOOD_BOILED:
+			return "Boiling blood"; //"Blood-boiled", hmm.
+			case AttrType.VIGOR:
+			return "Hasted";
+			case AttrType.AMNESIA_STUN:
+			return "Amnesiac";
+			case AttrType.DIM_VISION:
+			return "Dimmed vision";
+			case AttrType.SHADOW_CLOAK:
+			return "Shadow cloaked";
+			case AttrType.EMPOWERED_SPELLS:
+			return "Empowered magic";
+			case AttrType.POPPY_COUNTER:
+			return "Breathing poppies";
+			case AttrType.REGENERATING:
+			if(a != null && a.attrs[attr] > 1){
+				return "Regenerating " + a.attrs[attr].ToString();
+			}
+			break;
+			case AttrType.CHILLED:
+			if(a != null && a.attrs[attr] > 1){
+				return "Chilled " + a.attrs[attr].ToString();
+			}
+			break;
+			case AttrType.DETECTING_MONSTERS:
+			if(a != null && a.type == ActorType.ROBED_ZEALOT){
+				return "Praying";
+			}
+			break;
+			//case AttrType.IMMOBILE:
+			//return "Immobilized";
+			}
+			return attr.ToString().ToLower().Capitalize().Replace('_',' ');
+		}
+		public static bool StatusIsHidden(this AttrType attr,Actor a){
+			switch(attr){
+			case AttrType.FLYING:
+			return a.HasAttr(AttrType.FLYING_LEAP,AttrType.PSEUDO_VAMPIRIC,AttrType.DESCENDING);
+			case AttrType.IMMUNE_BURNING:
+			return a.HasAttr(AttrType.STONEFORM);
+			case AttrType.NONLIVING:
+			return a.HasAttr(AttrType.STONEFORM);
+			case AttrType.IMMOBILE:
+			//return a.HasAttr(AttrType.ROOTS) || Actor.Prototype(a.type).HasAttr(AttrType.IMMOBILE);
+			return a.HasAttr(AttrType.ROOTS);
+			case AttrType.SILENCED:
+			return a.HasAttr(AttrType.SILENCE_AURA);
+			case AttrType.DETECTING_MONSTERS:
+			return a.HasAttr(AttrType.MYSTIC_MIND);
+			case AttrType.MENTAL_IMMUNITY:
+			return a.HasAttr(AttrType.MYSTIC_MIND);
+			default:
+			return false;
+			}
+		}
+		public static bool StatusByStrength(this AttrType attr,Actor a,Event e,ref int value,ref int max){
+			switch(attr){
+			case AttrType.FROZEN:
+			max = 35;
+			break;
+			case AttrType.POPPY_COUNTER:
+			max = 4;
+			break;
+			case AttrType.RESTING:
+			max = 10;
+			break;
+			case AttrType.BLIND:
+			if(a.type == ActorType.DARKNESS_DWELLER && e != null && e.delay == 100){
+				value = 8 - a.attrs[AttrType.COOLDOWN_1];
+				max = 7;
+				return true;
+			}
+			else{
+				return false;
+			}
+			case AttrType.LIFESPAN:
+			max = Actor.Prototype(a.type).attrs[AttrType.LIFESPAN];
+			break;
+			case AttrType.AMNESIA_STUN:
+			max = 6;
+			break;
+			case AttrType.BLEEDING:
+			max = 25;
+			break;
+			case AttrType.BANDAGED:
+			max = 20;
+			break;
+			case AttrType.ASLEEP:
+			max = 5;
+			break;
+			case AttrType.FLYING_LEAP:
+			if(e != null){
+				value = e.delay + e.time_created + 50 - Q.turn;
+				max = e.delay - 50;
+				return true;
+			}
+			break;
+			case AttrType.DETECTING_MONSTERS:
+			if(a != null && a.type == ActorType.ROBED_ZEALOT){
+				max = 4;
+			}
+			else{
+				return false;
+			}
+			break;
+			default:
+			return false;
+			}
+			value = a.attrs[attr];
+			return true;
 		}
 		public static void SortStatusBarObjects(){ SortStatusBarObjects(sidebar_objects); }
 		private static void SortStatusBarObjects(List<PhysicalObject> l){
@@ -352,7 +461,12 @@ namespace Forays{
 				}
 				else{
 					if(o1 is Actor){
-						n1 = 0;
+						if(!player.CanSee(M.tile[o1.p])){
+							n1 = 8;
+						}
+						else{
+							n1 = 0;
+						}
 					}
 					else{
 						if(o1 is Tile){
@@ -366,7 +480,12 @@ namespace Forays{
 				}
 				else{
 					if(o2 is Actor){
-						n2 = 0;
+						if(!player.CanSee(M.tile[o2.p])){
+							n2 = 8;
+						}
+						else{
+							n2 = 0;
+						}
 					}
 					else{
 						if(o2 is Tile){
@@ -384,6 +503,46 @@ namespace Forays{
 				}
 				return result;
 			});
+		}
+		public static List<colorstring> ItemDescriptionBox(Item item,bool lookmode,bool mouselook,int max_string_length){
+			List<string> text = item.Description().GetWordWrappedList(max_string_length,false);
+			Color box_edge_color = Color.DarkGreen;
+			Color box_corner_color = Color.Green;
+			Color text_color = Color.Gray;
+			int widest = 31; // length of "[Press any other key to cancel]"
+			if(lookmode){
+				widest = 20; // length of "[=] Hide description"
+			}
+			foreach(string s in text){
+				if(s.Length > widest){
+					widest = s.Length;
+				}
+			}
+			if((!lookmode || mouselook) && item.Name(true).Length > widest){
+				widest = item.Name(true).Length;
+			}
+			widest += 2; //one space on each side
+			List<colorstring> box = new List<colorstring>();
+			box.Add(new colorstring("+",box_corner_color,"".PadRight(widest,'-'),box_edge_color,"+",box_corner_color));
+			if(!lookmode || mouselook){
+				box.Add(new colorstring("|",box_edge_color) + item.Name(true).PadOuter(widest).GetColorString(Color.White) + new colorstring("|",box_edge_color));
+				box.Add(new colorstring("|",box_edge_color,"".PadRight(widest),Color.Gray,"|",box_edge_color));
+			}
+			foreach(string s in text){
+				box.Add(new colorstring("|",box_edge_color) + s.PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
+			}
+			if(!mouselook){
+				box.Add(new colorstring("|",box_edge_color,"".PadRight(widest),Color.Gray,"|",box_edge_color));
+				if(lookmode){
+					box.Add(new colorstring("|",box_edge_color) + "[=] Hide description".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
+				}
+				else{
+					box.Add(new colorstring("|",box_edge_color) + "[a]pply  [f]ling  [d]rop".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
+					//box.Add(new colorstring("|",box_edge_color) + "[Press any other key to cancel]".PadOuter(widest).GetColorString(text_color) + new colorstring("|",box_edge_color));
+				}
+			}
+			box.Add(new colorstring("+",box_corner_color,"".PadRight(widest,'-'),box_edge_color,"+",box_corner_color));
+			return box;
 		}
 	}
 }

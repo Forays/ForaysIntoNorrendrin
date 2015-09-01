@@ -1857,6 +1857,7 @@ namespace Forays{
 							B.Add("You find " + Item.Prototype(i.type).AName() + ". ");
 							if(no_room){
 								B.Add("Your pack is too full to pick it up. ");
+								i.ignored = true;
 							}
 						}
 					}

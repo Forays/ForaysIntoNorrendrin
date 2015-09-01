@@ -124,6 +124,7 @@ namespace Forays{
 		public static List<Actor> tiebreakers = null; //a list of all actors on this level. used to determine sub-turn order of events
 		public static Dict<ActorType,List<AttackInfo>> attack = new Dict<ActorType,List<AttackInfo>>();
 		public static pos interrupted_path = new pos(-1,-1);
+		public static bool grab_item_at_end_of_path = false; //used for autoexplore and clicking on items.
 
 		private static Dict<ActorType,Actor> proto = new Dict<ActorType, Actor>();
 		public static Actor Prototype(ActorType type){ return proto[type]; }
@@ -308,6 +309,7 @@ namespace Forays{
 			DefineAttack(ActorType.MUD_ELEMENTAL,100,2,AttackEffect.BLIND,"& hits *");
 
 			Define(ActorType.MUD_TENTACLE,"mud tentacle",'~',Color.DarkYellow,1,100,0,AttrType.NONLIVING,AttrType.BLINDSIGHT,AttrType.IMMOBILE,AttrType.MINDLESS);
+			Prototype(ActorType.MUD_TENTACLE).attrs[AttrType.LIFESPAN] = 20;
 			DefineAttack(ActorType.MUD_TENTACLE,100,1,AttackEffect.NO_CRIT,"& hits *",AttackEffect.GRAB); //this attack has a special hack - it deals 1 damage, not 1d6
 
 			Define(ActorType.FLAMETONGUE_TOAD,"flametongue toad",'t',Color.Red,30,100,0,AttrType.MEDIUM_GROUP,AttrType.IMMUNE_FIRE,AttrType.IMMUNE_BURNING,AttrType.LOW_LIGHT_VISION);
@@ -404,6 +406,7 @@ namespace Forays{
 			DefineAttack(ActorType.GHOST,100,2,AttackEffect.INFLICT_VULNERABILITY,"& touches *");
 
 			Define(ActorType.BLADE,"blade",')',Color.White,5,0,0,AttrType.NONLIVING,AttrType.BLINDSIGHT,AttrType.IMMUNE_BURNING,AttrType.MINDLESS,AttrType.FLYING,AttrType.SMALL,AttrType.AGGRESSIVE); //speed is set after creation
+			Prototype(ActorType.BLADE).attrs[AttrType.LIFESPAN] = 20;
 			DefineAttack(ActorType.BLADE,100,2,AttackEffect.NO_CRIT,"& slices *");
 
 			Define(ActorType.MINOR_DEMON,"minor demon",'d',Color.DarkGray,45,100,0,AttrType.HUMANOID_INTELLIGENCE,AttrType.MEDIUM_HUMANOID,AttrType.RESIST_NECK_SNAP,AttrType.KEEN_SENSES,AttrType.LOW_LIGHT_VISION,AttrType.IMMUNE_FIRE,AttrType.IMMUNE_BURNING);
@@ -685,11 +688,18 @@ namespace Forays{
 			}
 		}
 		public override List<colorstring> GetStatusBarInfo(){
+			string s_name = name;
+			int s_curhp = curhp;
+			int s_maxhp = maxhp;
+			string s_aware = AwarenessStatus();
 			if(type == ActorType.DREAM_WARRIOR_CLONE){
 				if(group != null && group.Count > 0){
 					foreach(Actor a in group){
 						if(a.type == ActorType.DREAM_WARRIOR){
-							return a.GetStatusBarInfo();
+							s_name = a.name;
+							s_curhp = a.curhp;
+							s_maxhp = a.maxhp;
+							s_aware = a.AwarenessStatus();
 						}
 					}
 				}
@@ -698,7 +708,10 @@ namespace Forays{
 				if(group != null && group.Count > 0){
 					foreach(Actor a in group){
 						if(a.type == ActorType.DREAM_SPRITE){
-							return a.GetStatusBarInfo();
+							s_name = a.name;
+							s_curhp = a.curhp;
+							s_maxhp = a.maxhp;
+							s_aware = a.AwarenessStatus();
 						}
 					}
 				}
@@ -708,7 +721,7 @@ namespace Forays{
 			if(p.Equals(UI.MapCursor)){
 				text = Colors.status_highlight;
 			}
-			foreach(string s in name.GetWordWrappedList(17,true)){
+			foreach(string s in s_name.Capitalize().GetWordWrappedList(Global.STATUS_WIDTH - 3,true)){
 				colorstring cs = new colorstring();
 				result.Add(cs);
 				if(result.Count == 1){
@@ -719,19 +732,34 @@ namespace Forays{
 					cs.strings.Add(new cstr("   " + s,text));
 				}
 			}
-			string hp = ("HP: " + curhp.ToString() + "  (" + AwarenessStatus() + ")").PadOuter(20);
-			int idx = Math.Max(0,20 * curhp / maxhp);
-			/*Color hpcolor = Color.DarkRed;
-			if(curhp * 3 >= maxhp * 2){
-				hpcolor = Color.DarkGreen;
-			}
-			else{
-				if(curhp * 3 >= maxhp){
-					hpcolor = Color.DarkYellow;
+			string hp = ("HP: " + s_curhp.ToString() + "  (" + s_aware + ")").PadOuter(Global.STATUS_WIDTH);
+			int idx = UI.GetStatusBarIndex(s_curhp,s_maxhp);
+			result.Add(new colorstring(new cstr(hp.SafeSubstring(0,idx),text,Color.HealthBar),new cstr(hp.SafeSubstring(idx),text)));
+			Dictionary<AttrType,Event> events = Q.StatusEvents.ContainsKey(this)? Q.StatusEvents[this] : null;
+			foreach(AttrType attr in UI.displayed_statuses){
+				if(HasAttr(attr) && !attr.StatusIsHidden(this)){
+					int value = 1;
+					int max = 1; // If no other data is found, a full bar (1/1) will be shown.
+					if(!attr.StatusByStrength(this,(events != null && events.ContainsKey(attr))? events[attr] : null,ref value,ref max)){
+						if(events != null && events.ContainsKey(attr)){
+							Event e = events[attr];
+							value = e.delay + e.time_created + 100 - Q.turn;
+							max = e.delay;
+						}
+					}
+					int attr_idx = UI.GetStatusBarIndex(value,max);
+					string attr_name = attr.StatusName(this).PadOuter(Global.STATUS_WIDTH);
+					result.Add(new colorstring(new cstr(attr_name.SafeSubstring(0,attr_idx),text,Color.StatusEffectBar),new cstr(attr_name.SafeSubstring(attr_idx),text)));
 				}
 			}
-			hpcolor = Color.DarkRed;*/
-			result.Add(new colorstring(new cstr(hp.Substring(0,idx),text,Color.HealthBar),new cstr(hp.Substring(idx),text)));
+			if(p.BoundsCheck(M.tile)){ //in rare cases, the sidebar could be updated while a burrowing enemy is still present. this prevents a crash in that situation.
+				if(tile().Is(FeatureType.WEB) && !HasAttr(AttrType.BURNING,AttrType.SLIMED,AttrType.OIL_COVERED)){
+					result.Add(new colorstring("Webbed".PadOuter(Global.STATUS_WIDTH),text,Color.StatusEffectBar));
+				}
+				if(IsSilencedHere() && !HasAttr(AttrType.SILENCED,AttrType.SILENCE_AURA)){
+					result.Add(new colorstring(AttrType.SILENCED.StatusName(this).PadOuter(Global.STATUS_WIDTH),text,Color.StatusEffectBar));
+				}
+			}
 			return result;
 		}
 		public void Move(int r,int c){ Move(r,c,true); }
@@ -789,9 +817,9 @@ namespace Forays{
 					M.actor[r,c] = this;
 					if(row>=0 && row<ROWS && col>=0 && col<COLS){
 						M.actor[row,col] = null;
-						if(this == player && M.tile[row,col].inv != null && !HasAttr(AttrType.TURN_INTO_CORPSE)){
+						/*if(this == player && M.tile[row,col].inv != null && !HasAttr(AttrType.TURN_INTO_CORPSE)){
 							M.tile[row,col].inv.ignored = true;
-						}
+						}*/
 					}
 					row = r;
 					col = c;
@@ -829,11 +857,11 @@ namespace Forays{
 							other_torch = true;
 							a.UpdateRadius(a.LightRadius(),0);
 						}
-						if(row>=0 && row<ROWS && col>=0 && col<COLS){
+						/*if(row>=0 && row<ROWS && col>=0 && col<COLS){
 							if(this == player && M.tile[row,col].inv != null){
 								M.tile[row,col].inv.ignored = true;
 							}
-						}
+						}*/
 						M.actor[r,c] = this;
 						M.actor[row,col] = a;
 						a.row = row;
@@ -1469,7 +1497,14 @@ namespace Forays{
 				attrs[AttrType.FROZEN] = 35;
 				attrs[AttrType.SLIMED] = 0;
 				attrs[AttrType.OIL_COVERED] = 0;
-				attrs[AttrType.GRABBED] = 0;
+				if(HasAttr(AttrType.GRABBED)){ //This could also freeze whatever is grabbing, too.
+					foreach(Actor a in ActorsAtDistance(1)){
+						if(a.HasAttr(AttrType.GRABBING) && a.attrs[AttrType.GRABBING] == a.DirectionOf(this)){
+							a.attrs[AttrType.GRABBING] = 0;
+						}
+					}
+					attrs[AttrType.GRABBED] = 0;
+				}
 				B.Add(YouAre() + " encased in ice. ",this);
 				if(this == player){
 					Help.TutorialTip(TutorialTopic.Frozen);
@@ -1815,9 +1850,9 @@ namespace Forays{
 					if(curhp > maxhp){
 						curhp = maxhp;
 					}
-					if(player.HasLOS(this)){
-						B.Add(You("regenerate") + ". ",this);
-					}
+					/*if(player.HasLOS(this)){
+						B.Add(You("regenerate") + ". ",this == player,this);
+					}*/
 					if(type == ActorType.TROLL_BLOODWITCH){
 						List<pos> cells = new List<pos>();
 						List<colorchar> cch = new List<colorchar>();
@@ -1998,11 +2033,11 @@ namespace Forays{
 					B.Add("The light weakens " + the_name + ". ",this);
 				}
 				if(type == ActorType.PLAYER){
-					RefreshDuration(AttrType.VULNERABLE,R.Between(5,9) * 100,"You shake off the memory of the harsh light. ");
+					RefreshDuration(AttrType.VULNERABLE,R.Between(8,9) * 100,"You shake off the memory of the harsh light. ");
 					Help.TutorialTip(TutorialTopic.Vulnerable);
 				}
 				else{
-					RefreshDuration(AttrType.VULNERABLE,R.Between(5,9)*100);
+					RefreshDuration(AttrType.VULNERABLE,R.Between(8,9)*100);
 				}
 			}
 			if(HasAttr(AttrType.DESCENDING) && time_of_last_action < Q.turn){
@@ -2100,10 +2135,10 @@ namespace Forays{
 				M.UpdateDangerValues();
 			}
 			Screen.UpdateScreenCenterColumn(col);
-			UI.MapCursor = new pos(-1,-1);
 			M.Draw();
+			UI.MapCursor = new pos(-1,-1);
 			UI.DisplayStats(true);
-			if(HasAttr(AttrType.AUTOEXPLORE)){
+			if(HasAttr(AttrType.AUTOEXPLORE) && !grab_item_at_end_of_path){
 				if(path.Count == 0){ //todo: autoexplore could also track whether the current path is leading to an unexplored tile instead of to an item/shrine/etc.
 					if(!FindAutoexplorePath()){ // - in this case I could check that tile's neighbors each turn, and calculate a new path early if they've all been mapped now.
 						B.Add("You don't see a path for further exploration. ");
@@ -2130,13 +2165,25 @@ namespace Forays{
 				EnragedMove();
 				return;
 			}
-			if(Global.Option(OptionType.AUTOPICKUP) && ((tile().inv != null && !tile().inv.ignored && InventoryCount() < Global.MAX_INVENTORY_SIZE) || tile().type == TileType.CHEST)){
+			bool pick_up = false;
+			if(tile().inv != null || tile().type == TileType.CHEST){
+				if(grab_item_at_end_of_path && path.Count == 0){
+					pick_up = true;
+				}
+				if((Global.Option(OptionType.AUTOPICKUP) && InventoryCount() < Global.MAX_INVENTORY_SIZE && (tile().type == TileType.CHEST || !tile().inv.ignored))){
+					pick_up = true;
+				}
+			}
+			if(pick_up){
 				if(!NextStepIsDangerous(tile())){
 					if(StunnedThisTurn()){
 						return;
 					}
 					if(tile().type == TileType.CHEST){
 						tile().OpenChest();
+						if(tile().type != TileType.CHEST){
+							grab_item_at_end_of_path = false;
+						}
 						Q1();
 					}
 					else{
@@ -2153,15 +2200,24 @@ namespace Forays{
 							Q1();
 						}
 						else{
-							int space_left = Global.MAX_INVENTORY_SIZE - InventoryCount();
 							Item i = tile().inv;
-							Item newitem = new Item(i,row,col);
-							newitem.quantity = space_left;
-							i.quantity -= space_left;
-							B.Add("You pick up " + newitem.TheName() + ", but have no room for the other " + i.quantity.ToString() + ". ");
-							GetItem(newitem);
-							Q1();
+							int space_left = Global.MAX_INVENTORY_SIZE - InventoryCount();
+							if(space_left <= 0){
+								B.Add("You have no room for " + i.TheName() + ". ");
+								i.ignored = true;
+								Q0();
+							}
+							else{
+								Item newitem = new Item(i,row,col);
+								newitem.quantity = space_left;
+								i.quantity -= space_left;
+								B.Add("You pick up " + newitem.TheName() + ", but have no room for the other " + i.quantity.ToString() + ". ");
+								i.ignored = true;
+								GetItem(newitem);
+								Q1();
+							}
 						}
+						grab_item_at_end_of_path = false;
 					}
 					return;
 				}
@@ -2419,7 +2475,7 @@ namespace Forays{
 					}
 					else{
 						attrs[AttrType.RESTING]++;
-						B.Add("You rest... ");
+						B.Add("You rest... ",true);
 						Q1();
 						return;
 					}
@@ -2861,7 +2917,7 @@ namespace Forays{
 								break;
 							}
 							attrs[AttrType.RESTING] = 1;
-							B.Add("You rest... ");
+							B.Add("You rest... ",true);
 							Q1();
 						}
 						else{
@@ -3038,6 +3094,9 @@ namespace Forays{
 				if(FrozenThisTurn()){
 					break;
 				}
+				if((tile().inv != null && !tile().inv.ignored) || (tile().Is(TileType.CHEST) && (tile().inv == null || !tile().inv.ignored))){
+					goto case 'g';
+				}
 				if(!FindAutoexplorePath()){
 					B.Add("You don't see a path for further exploration. ");
 					Q0();
@@ -3089,7 +3148,6 @@ namespace Forays{
 				}
 				break;
 			case 'g':
-			case ';':
 			{
 				if(FrozenThisTurn()){
 					break;
@@ -3263,6 +3321,7 @@ namespace Forays{
 							i.quantity -= space_left;
 							newitem.revealed_by_light = true;
 							B.Add("You pick up " + newitem.TheName() + ", but have no room for the other " + i.quantity.ToString() + ". ");
+							i.ignored = true;
 							GetItem(newitem);
 							Q1();
 						}
@@ -3270,6 +3329,7 @@ namespace Forays{
 					else{
 						tile().inv.revealed_by_light = true;
 						B.Add("Your pack is too full to pick up " + tile().inv.TheName() + ". ");
+						tile().inv.ignored = true;
 						Q0();
 					}
 				}
@@ -4295,33 +4355,8 @@ namespace Forays{
 			{
 				UI.viewing_commands_idx = U.Modulo(UI.viewing_commands_idx + 1,3);
 				MouseUI.PopButtonMap();
-				switch(UI.viewing_commands_idx){
-				case 0:
-				UI.status_row_cutoff = Global.SCREEN_H - 9;
-				UI.CreateDefaultStatsButtons();
-				break;
-				case 1:
-				UI.status_row_cutoff = Global.SCREEN_H - 9;
 				MouseUI.PushButtonMap(MouseMode.Map);
-				MouseUI.CreateStatsButton(ConsoleKey.O,false,12,1);
-				MouseUI.CreateStatsButton(ConsoleKey.W,false,13,1);
-				MouseUI.CreateStatsButton(ConsoleKey.X,true,14,1);
-				MouseUI.CreateStatsButton(ConsoleKey.OemPeriod,false,15,1);
-				MouseUI.CreateStatsButton(ConsoleKey.OemPeriod,true,16,1); //>
-				MouseUI.CreateStatsButton(ConsoleKey.M,false,17,1);
-				MouseUI.CreateStatsButton(ConsoleKey.Oem5,false,18,1); //backslash
-				MouseUI.CreateStatsButton(ConsoleKey.OemPlus,false,19,1); //=
-				MouseUI.CreateStatsButton(ConsoleKey.Q,false,20,1);
-				MouseUI.CreateStatsButton(ConsoleKey.V,false,24,1);
-				MouseUI.CreateStatsButton(ConsoleKey.E,false,7,2);
-				MouseUI.CreateMapButton(ConsoleKey.P,false,0,3);
-				break;
-				case 2:
-				UI.status_row_cutoff = Global.SCREEN_H - 2;
-				MouseUI.PushButtonMap(MouseMode.Map);
-				//todo
-				break;
-				}
+				MouseUI.CreateStatsButtons();
 				Q0();
 				break;
 			}
@@ -4647,7 +4682,7 @@ namespace Forays{
 						maxmp = 99;
 						curmp = maxmp;
 						skills[SkillType.MAGIC] = 10;
-						foreach(SpellType sp in new List<SpellType>{SpellType.TELEKINESIS,SpellType.COLLAPSE,SpellType.FORCE_PALM,SpellType.GREASE,SpellType.AMNESIA}){
+						foreach(SpellType sp in new List<SpellType>{SpellType.TELEKINESIS,SpellType.COLLAPSE,SpellType.FORCE_PALM,SpellType.GREASE,SpellType.AMNESIA,SpellType.FLYING_LEAP}){
 							GainSpell(sp);
 							spells_in_order.Add(sp);
 						}
@@ -4708,7 +4743,7 @@ namespace Forays{
 								t.AddOpaqueFeature(FeatureType.FOG);
 							}
 						}*/
-						Actor a = M.SpawnMob(ActorType.LONE_WOLF);
+						Actor a = M.SpawnMob(ActorType.STALKING_WEBSTRIDER);
 						/*foreach(Actor a in M.AllActors()){
 							if(a.type == ActorType.WARG){
 								a.attrs[AttrType.WANDERING] = 1;
@@ -5312,7 +5347,7 @@ namespace Forays{
 							}
 						}*/
 						if(tile().inv == null){
-							tile().inv = Item.Create(ConsumableType.TELEPORTAL,row,col);
+							tile().inv = Item.Create(ConsumableType.REGENERATION,row,col);
 							//TileInDirection(8).inv = Item.Create(ConsumableType.FLAMES,-1,-1);
 							B.Add("You feel something roll beneath your feet. ");
 							//magic_trinkets.Add(MagicTrinketType.PENDANT_OF_LIFE);
@@ -5595,10 +5630,17 @@ namespace Forays{
 						if(t.Is(FeatureType.FORASECT_EGG) && !HasAttr(AttrType.FLYING)){
 							B.Add("You crush the forasect egg. ");
 							t.RemoveFeature(FeatureType.FORASECT_EGG);
+							int nearby_forasects = 0;
 							foreach(Actor a in t.ActorsWithinDistance(12)){
 								if(a.type == ActorType.FORASECT){
 									a.FindPath(t);
+									if(!CanSee(a)){
+										++nearby_forasects;
+									}
 								}
+							}
+							if(nearby_forasects > 0 && !IsSilencedHere()){
+								B.Add("You hear angry clicking sounds nearby. ");
 							}
 						}
 						if(t.type == TileType.STAIRS){
@@ -5623,7 +5665,12 @@ namespace Forays{
 							Help.TutorialTip(TutorialTopic.Shrines);
 						}
 						if(t.Is(TileType.CHEST)){
-							B.Add("There is a chest here - press g to open it. ");
+							if(grab_item_at_end_of_path){
+								B.Add("There is a chest here. ",true);
+							}
+							else{
+								B.Add("There is a chest here - press g to open it. ");
+							}
 						}
 						if(t.Is(TileType.POOL_OF_RESTORATION)){
 							B.Add("There is a pool of restoration here. ");
@@ -5650,10 +5697,10 @@ namespace Forays{
 						if(t.inv != null){
 							t.inv.revealed_by_light = true;
 							if(t.inv.quantity > 1){
-								B.Add("There are " + t.inv.AName() + " here. ");
+								B.Add("There are " + t.inv.AName() + " here. ",grab_item_at_end_of_path);
 							}
 							else{
-								B.Add("There is " + t.inv.AName() + " here. ");
+								B.Add("There is " + t.inv.AName() + " here. ",grab_item_at_end_of_path);
 							}
 							//B.Add("You see " + t.inv.AName() + ". ");
 						}
@@ -6385,22 +6432,6 @@ namespace Forays{
 					}
 				}
 			}
-			/*if(Is(ActorType.DARKNESS_DWELLER)){ //this is checked before & after the dweller moves, but the duration is only updated after.
-				if((tile().IsLit() && tile().light_value > 0) || M.wiz_lite){
-					RefreshDuration(AttrType.BLIND,100,the_name + " is no longer blinded. ",this);
-				}
-				if(false && !HasAttr(AttrType.COOLDOWN_2)){
-					if((tile().IsLit() && tile().light_value > 0) || M.wiz_lite){ //light_value check prevents glowing fungus from blinding them
-						if(player.HasLOS(this)){
-							B.Add(the_name + " is blinded by the light! ",this);
-						}
-						//attrs[AttrType.BLIND]++;
-						attrs[AttrType.COOLDOWN_2] = 5;
-						RefreshDuration(AttrType.BLIND,R.Between(5,6)*100,the_name + " is no longer blinded. ",this);
-						//Q.Add(new Event(this,(R.Roll(2)+4)*100,AttrType.BLIND,the_name + " is no longer blinded. ",this));
-					}
-				}
-			}*/
 			if(type == ActorType.MARBLE_HORROR && tile().IsLit()){
 				B.Add("The marble horror reverts to its statue form. ",this);
 				type = ActorType.MARBLE_HORROR_STATUE;
@@ -6497,33 +6528,6 @@ namespace Forays{
 					}
 				}
 			}
-			/*if(Is(ActorType.DARKNESS_DWELLER)){
-				if((tile().IsLit() && tile().light_value > 0) || M.wiz_lite){ //light_value check prevents glowing fungus from blinding them
-					RefreshDuration(AttrType.BLIND,100,the_name + " is no longer blinded. ",this);
-				}/*
-				/*if(HasAttr(AttrType.COOLDOWN_2)){
-					if((tile().IsLit() && tile().light_value > 0) || M.wiz_lite){ //light_value check prevents glowing fungus from blinding them
-						attrs[AttrType.COOLDOWN_2] = 5;
-					}
-					else{
-						attrs[AttrType.COOLDOWN_2]--;
-						if(!HasAttr(AttrType.COOLDOWN_2)){
-							B.Add(Your() + " eyes adjust to the darkness. ",this);
-						}
-					}
-				}
-				else{
-					if((tile().IsLit() && tile().light_value > 0) || M.wiz_lite){ //light_value check prevents glowing fungus from blinding them
-						if(player.HasLOS(this)){
-							B.Add(the_name + " is blinded by the light! ",this);
-						}
-						//attrs[AttrType.BLIND]++;
-						attrs[AttrType.COOLDOWN_2] = 5;
-						//Q.Add(new Event(this,(R.Roll(2)+4)*100,AttrType.BLIND,the_name + " is no longer blinded. ",this));
-						RefreshDuration(AttrType.BLIND,R.Between(5,6)*100,the_name + " is no longer blinded. ",this);
-					}
-				}*/
-			//}
 			if(type == ActorType.SHADOW){
 				CalculateDimming();
 			}
@@ -8221,7 +8225,6 @@ namespace Forays{
 						if(t.p.BoundsCheck(M.tile,false) && t.type == TileType.WALL && t.actor() == null){
 							Create(ActorType.MUD_TENTACLE,t.row,t.col,TiebreakerAssignment.InsertAfterCurrent);
 							M.actor[t.p].player_visibility_duration = -1;
-							M.actor[t.p].attrs[AttrType.LIFESPAN] = 20;
 						}
 					}
 					if(count >= 2){
@@ -13036,6 +13039,12 @@ namespace Forays{
 					if(player.HasAttr(AttrType.CONVICTION)){
 						player.attrs[AttrType.KILLSTREAK]++;
 					}
+					if(HasAttr(AttrType.GRABBING)){
+						Actor grabbed = ActorInDirection(attrs[AttrType.GRABBING]);
+						if(grabbed != null && grabbed.HasAttr(AttrType.GRABBED)){
+							grabbed.attrs[AttrType.GRABBED]--;
+						}
+					}
 					if(HasAttr(AttrType.HUMANOID_INTELLIGENCE) || type == ActorType.ZOMBIE){
 						if(R.OneIn(3) && !HasAttr(AttrType.NO_ITEM)){
 							tile().GetItem(Item.Create(Item.RandomItem(),-1,-1));
@@ -13709,8 +13718,9 @@ namespace Forays{
 				break;
 			case SpellType.FLYING_LEAP:
 				B.Add(You("cast") + " flying leap. ",this);
-				RefreshDuration(AttrType.FLYING_LEAP,299);
-				RefreshDuration(AttrType.FLYING,299);
+				RefreshDuration(AttrType.FLYING_LEAP,250);
+				RefreshDuration(AttrType.FLYING,250);
+				attrs[AttrType.DESCENDING] = 0;
 				B.Add(You("move") + " quickly through the air. ",this);
 				if(this == player){
 					Help.TutorialTip(TutorialTopic.IncreasedSpeed);
@@ -14309,7 +14319,7 @@ namespace Forays{
 							a.player_visibility_duration = 0;
 							a.target = null;
 							a.target_location = null;
-							a.attrs[AttrType.AMNESIA_STUN] = R.Between(7,8);
+							a.attrs[AttrType.AMNESIA_STUN] = 7;
 						}
 					}
 					else{
@@ -14737,11 +14747,10 @@ namespace Forays{
 			}
 		}
 		public void Interrupt(){
-			if(HasAttr(AttrType.RESTING)){
-				attrs[AttrType.RESTING] = 0;
-			}
+			attrs[AttrType.RESTING] = 0;
 			attrs[AttrType.RUNNING] = 0;
 			attrs[AttrType.WAITING] = 0;
+			grab_item_at_end_of_path = false;
 			if(path != null && path.Count > 0){
 				if(this == player && !HasAttr(AttrType.AUTOEXPLORE)){
 					path.StopAtUnseenTerrain();
@@ -15207,7 +15216,7 @@ namespace Forays{
 					MouseUI.CreateButton(key,false,line+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,1,32);
 				}
 				else{
-					MouseUI.CreateMapButton(key,false,line+Global.MAP_OFFSET_ROWS,1);
+					MouseUI.CreateMapButton(key,false,line,1);
 				}
 				++line;
 			}
@@ -15222,7 +15231,7 @@ namespace Forays{
 					MouseUI.CreateButton(key,false,line+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,1,32);
 				}
 				else{
-					MouseUI.CreateMapButton(key,false,line+Global.MAP_OFFSET_ROWS,1);
+					MouseUI.CreateMapButton(key,false,line,1);
 				}
 				++line;
 			}
@@ -15395,7 +15404,7 @@ namespace Forays{
 					else{
 						Screen.WriteMapString(ROWS-1,0,"[Enter] to confirm-----".PadLeft(43,'-'));
 						Screen.WriteMapString(ROWS-1,21,new cstr(Color.Magenta,"Enter"));
-						MouseUI.CreateMapButton(ConsoleKey.Enter,false,Global.MAP_OFFSET_ROWS+ROWS-1,1);
+						MouseUI.CreateMapButton(ConsoleKey.Enter,false,ROWS-1,1);
 					}
 				}
 				Screen.ResetColors();
@@ -15575,7 +15584,7 @@ namespace Forays{
 				bool done = false;
 				MouseUI.PushButtonMap();
 				for(int i=0;i<4;++i){
-					MouseUI.CreateMapButton((ConsoleKey)(ConsoleKey.A + i),false,Global.MAP_OFFSET_ROWS + 1 + i*5,5);
+					MouseUI.CreateMapButton((ConsoleKey)(ConsoleKey.A + i),false,1 + i*5,5);
 				}
 				MouseUI.CreateButton(ConsoleKey.Oem2,true,Global.MAP_OFFSET_ROWS + ROWS-1,45,1,12);
 				while(!done){
@@ -15643,18 +15652,18 @@ namespace Forays{
 						if(feat_chosen == ft){
 							feat_chosen = FeatType.NO_FEAT;
 							MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS + 1 + i*5,60);
-							MouseUI.CreateMapButton((ConsoleKey)(ConsoleKey.A + i),false,Global.MAP_OFFSET_ROWS + 1 + i*5,5);
+							MouseUI.CreateMapButton((ConsoleKey)(ConsoleKey.A + i),false,1 + i*5,5);
 						}
 						else{
 							if(!HasFeat(ft)){
 								if(feat_chosen != FeatType.NO_FEAT){
 									int num = (int)feat_chosen % 4;
 									MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS + 1 + num*5,60);
-									MouseUI.CreateMapButton((ConsoleKey)(ConsoleKey.A + num),false,Global.MAP_OFFSET_ROWS + 1 + num*5,5);
+									MouseUI.CreateMapButton((ConsoleKey)(ConsoleKey.A + num),false,1 + num*5,5);
 								}
 								feat_chosen = ft;
 								MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS + 1 + i*5,60);
-								MouseUI.CreateMapButton(ConsoleKey.Enter,false,Global.MAP_OFFSET_ROWS + 1 + i*5,5);
+								MouseUI.CreateMapButton(ConsoleKey.Enter,false,1 + i*5,5);
 							}
 						}
 						break;
@@ -16216,13 +16225,12 @@ namespace Forays{
 				if(M.tile[x].inv != null && !M.tile[x].inv.ignored){
 					return true;
 				}
-				if(M.tile[x].Is(TileType.CHEST) && M.tile[x].direction_exited == 0){
+				if(M.tile[x].Is(TileType.CHEST) && (M.tile[x].inv == null || !M.tile[x].inv.ignored)){
 					return true;
 				}
 				if(M.tile[x].IsShrine() && M.tile[x].direction_exited == 0){
 					return true;
 				}
-				//(M.tile[x].passable || M.tile[x].Is(TileType.RUBBLE) || (HasAttr(AttrType.HUMANOID_INTELLIGENCE) && M.tile[x].Is(TileType.DOOR_C)))){
 				if(M.tile[x].seen && !M.tile[x].BlocksConnectivityOfMap(false)){
 					foreach(Tile neighbor in M.tile[x].TilesAtDistance(1)){
 						if(!neighbor.seen){
@@ -16255,7 +16263,12 @@ namespace Forays{
 					current_position = valid.Random();
 					new_path.Add(current_position);
 					if(is_target(current_position)){
-					//if(dijkstra[current_position] == 0){
+						if(M.tile[current_position].inv != null && !M.tile[current_position].inv.ignored){
+							grab_item_at_end_of_path = true;
+						}
+						if(M.tile[current_position].Is(TileType.CHEST)){
+							grab_item_at_end_of_path = true;
+						}
 						path = new_path;
 						if(this == player){
 							interrupted_path = new pos(-1,-1);
@@ -16527,6 +16540,7 @@ namespace Forays{
 					break;
 					}
 				}
+				UI.MapCursor = new pos(r,c);
 			}
 			Targeting_RemoveLine(nearest,done,line,mem,0);
 			MouseUI.PopButtonMap();

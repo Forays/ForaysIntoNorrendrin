@@ -28,6 +28,48 @@ namespace Forays{
 				}*/
 			}
 		}
+
+		private Dictionary<Actor,Dictionary<AttrType,Event>> cached_status = null;
+		public Dictionary<Actor,Dictionary<AttrType,Event>> StatusEvents{
+			get{
+				if(cached_status == null){
+					cached_status = new Dictionary<Actor,Dictionary<AttrType,Event>>();
+					foreach(Event e in list){
+						if(!e.dead && e.type == EventType.REMOVE_ATTR && e.target != null){
+							Actor a = e.target as Actor;
+							if(!cached_status.ContainsKey(a)){
+								cached_status.Add(a,new Dictionary<AttrType,Event>());
+							}
+							if(cached_status[a].ContainsKey(e.attr)){
+								if(e.TimeToExecute() > cached_status[a][e.attr].TimeToExecute()){
+									cached_status[a][e.attr] = e;
+								}
+							}
+							else{
+								cached_status[a].Add(e.attr,e);
+							}
+						}
+					}
+				}
+				return cached_status;
+			}
+		}
+
+		private Event cached_lighting = null;
+		public Event LightingEvent{
+			get{
+				if(cached_lighting == null){
+					foreach(Event e in list){
+						if(!e.dead && e.type == EventType.NORMAL_LIGHTING){
+							cached_lighting = e;
+							break;
+						}
+					}
+				}
+				return cached_lighting;
+			}
+		}
+
 		public static Buffer B;
 		public Queue(Game g){
 			list = new LinkedList<Event>();
@@ -39,7 +81,7 @@ namespace Forays{
 				list.AddFirst(e); //this means that creating 0-delay events can put them in the wrong order. this hasn't been a problem yet.
 			}
 			else{
-				if(list.First==null){
+				if(list.First == null){
 					list.AddFirst(e);
 				}
 				else{
@@ -69,12 +111,10 @@ namespace Forays{
 		public void Pop(){
 			current_event = list.First.Value;
 			turn = current_event.TimeToExecute();
+			cached_status = null;
+			cached_lighting = null;
 			current_event.Execute();
 			list.Remove(current_event);
-			/*turn = list.First.Value.TimeToExecute();
-			Event e = list.First.Value;
-			e.Execute();
-			list.Remove(e);*/
 		}
 		public void ResetForNewLevel(){
 			LinkedList<Event> newlist = new LinkedList<Event>();
@@ -448,7 +488,7 @@ namespace Forays{
 			}
 		}
 		public void Kill(PhysicalObject target_,AttrType attr_){
-			if(target==target_ && type==EventType.REMOVE_ATTR && attr==attr_){
+			if(target == target_ && type == EventType.REMOVE_ATTR && attr == attr_){
 				target = null;
 				if(msg_objs != null){
 					msg_objs.Clear();
@@ -501,7 +541,7 @@ namespace Forays{
 					if(attr == AttrType.TELEPORTING){
 						temp.attrs[attr] = 0;
 					}
-					if(attr==AttrType.CONVICTION){
+					if(attr == AttrType.CONVICTION){
 						if(temp.HasAttr(AttrType.IN_COMBAT)){
 							temp.attrs[AttrType.CONVICTION] += value; //whoops, undo that
 						}
@@ -514,7 +554,7 @@ namespace Forays{
 							temp.attrs[AttrType.KILLSTREAK] = 0;
 						}
 					}
-					if(attr==AttrType.COOLDOWN_1 && temp.type == ActorType.BERSERKER){
+					if(attr == AttrType.COOLDOWN_1 && temp.type == ActorType.BERSERKER){
 						B.Add(temp.Your() + " rage diminishes. ",temp);
 						B.Add(temp.the_name + " dies. ",temp);
 						temp.Kill();
@@ -1840,7 +1880,7 @@ namespace Forays{
 								if(a.attrs[AttrType.POPPY_COUNTER] < 4){
 									a.GainAttrRefreshDuration(AttrType.POPPY_COUNTER,200);
 									if(a == player && a.attrs[AttrType.POPPY_COUNTER] == 1){
-										B.Add("You breathe in the overwhelming scent of the poppies. ");
+										B.Add("You breathe in the overwhelming scent of the poppies. "); //todo: this was set to "no interrupt" before. why?
 									}
 								}
 								else{

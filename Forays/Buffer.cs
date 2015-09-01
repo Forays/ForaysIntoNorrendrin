@@ -18,6 +18,7 @@ namespace Forays{
 		private string[] log;
 		private int num_messages;
 		private int position;
+		private bool interrupt; // Ongoing actions by the player are interrupted unless every added message is flagged as "no interrupt".
 
 		public static Map M;
 		public static Actor player;
@@ -34,7 +35,8 @@ namespace Forays{
 			M = g.M;
 			player = g.player;
 		}
-		public void Add(string s,params PhysicalObject[] objs){ //if there's at least one object, the player must be able to
+		public void Add(string s,params PhysicalObject[] objs){ Add(s,false,objs); }
+		public void Add(string s,bool no_interrupt,params PhysicalObject[] objs){ //if there's at least one object, the player must be able to
 			bool add = false;
 			if(objs != null && objs.Length > 0){ //see at least one of them. if not, no message is added. 
 				foreach(PhysicalObject obj in objs){
@@ -52,6 +54,9 @@ namespace Forays{
 					char[] c = s.ToCharArray();
 					c[0] = Char.ToUpper(s[0]);
 					s = new string(c);
+				}
+				if(!no_interrupt){
+					interrupt = true;
 				}
 				AddToStr(s);
 			}
@@ -202,13 +207,17 @@ namespace Forays{
 					idx = str.Count - 1;
 				}
 			}
-			foreach(string s in str){
+			if(interrupt && !player.HasAttr(AttrType.RESTING)){
+				player.Interrupt();
+			}
+			interrupt = false;
+			/*foreach(string s in str){
 				if(s != "You regenerate. " && s != "You rest... " && s != "You breathe in the overwhelming scent of the poppies. " && s != ""){ //eventually this will become a list of ignored strings
 					if(!player.HasAttr(AttrType.RESTING)){
 						player.Interrupt();
 					}
 				}
-			}
+			}*/
 			bool repeated_message = false;
 			foreach(string s in str){
 				if(s != ""){

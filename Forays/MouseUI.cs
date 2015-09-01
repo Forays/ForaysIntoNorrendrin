@@ -97,7 +97,7 @@ namespace Forays{
 		}
 		public static void CreateMapButton(ConsoleKey key_,bool shifted,int row,int height){
 			Button[,] buttons = ButtonMap;
-			//row += Global.MAP_OFFSET_ROWS;
+			row += Global.MAP_OFFSET_ROWS;
 			int col = Global.MAP_OFFSET_COLS;
 			int width = Global.COLS;
 			if(buttons[row,col] == null){ //if there's already a button there, do nothing.
@@ -111,11 +111,10 @@ namespace Forays{
 		}
 		public static void CreateStatsButton(ConsoleKey key_,bool shifted,int row,int height){
 			Button[,] buttons = ButtonMap;
-			int width = 12; //todo
 			if(buttons[row,0] == null){ //if there's already a button there, do nothing.
-				Button b = new Button(key_,false,false,shifted,row,0,height,width);
+				Button b = new Button(key_,false,false,shifted,row,0,height,Global.STATUS_WIDTH);
 				for(int i=row;i<row+height;++i){
-					for(int j=0;j<width;++j){
+					for(int j=0;j<Global.STATUS_WIDTH;++j){
 						buttons[i,j] = b;
 					}
 				}
@@ -177,6 +176,102 @@ namespace Forays{
 					Game.gl.UpdateVertexArray(i+Global.MAP_OFFSET_ROWS,j+Global.MAP_OFFSET_COLS,GLGame.text_surface,0,(int)cch.c,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
 				}
 				mouse_path = null;
+			}
+		}
+		public static void CreateStatsButtons(){
+			switch(UI.viewing_commands_idx){
+			case 0:
+			UI.status_row_cutoff = Global.SCREEN_H - 9;
+			CreateStatsButton(ConsoleKey.Tab,false,Global.SCREEN_H-8,1); //look
+			CreateStatsButton(ConsoleKey.A,false,Global.SCREEN_H-7,1); //apply
+			CreateStatsButton(ConsoleKey.G,false,Global.SCREEN_H-6,1); //get
+			CreateStatsButton(ConsoleKey.F,false,Global.SCREEN_H-5,1); //fling
+			CreateStatsButton(ConsoleKey.OemPeriod,false,Global.SCREEN_H-4,1); //wait [.]
+			CreateStatsButton(ConsoleKey.X,true,Global.SCREEN_H-3,1); //travel
+			CreateStatsButton(ConsoleKey.OemPeriod,true,Global.SCREEN_H-2,1); //descend [>]
+			CreateStatsButton(ConsoleKey.V,false,Global.SCREEN_H-1,1); //view more
+			break;
+			case 1:
+			UI.status_row_cutoff = Global.SCREEN_H - 9;
+			CreateStatsButton(ConsoleKey.W,false,Global.SCREEN_H-8,1); //walk
+			CreateStatsButton(ConsoleKey.O,false,Global.SCREEN_H-7,1); //operate
+			CreateStatsButton(ConsoleKey.Oem5,false,Global.SCREEN_H-6,1); //known items [\]
+			CreateStatsButton(ConsoleKey.P,false,Global.SCREEN_H-5,1); //previous messages
+			CreateStatsButton(ConsoleKey.Oem2,true,Global.SCREEN_H-4,1); //help [?]
+			CreateStatsButton(ConsoleKey.OemPlus,false,Global.SCREEN_H-3,1); //options [=]
+			CreateStatsButton(ConsoleKey.Q,false,Global.SCREEN_H-2,1); //quit
+			CreateStatsButton(ConsoleKey.V,false,Global.SCREEN_H-1,1); //view more
+			break;
+			case 2:
+			UI.status_row_cutoff = Global.SCREEN_H - 2;
+			CreateStatsButton(ConsoleKey.V,false,Global.SCREEN_H-1,1); //view more
+			break;
+			}
+
+			CreateMapButton(ConsoleKey.P,false,-3,3);
+			CreatePlayerStatsButtons();
+			CreateButton(ConsoleKey.X,false,Global.SCREEN_H-2,Global.MAP_OFFSET_COLS,1,9); //explore
+			CreateButton(ConsoleKey.T,false,Global.SCREEN_H-2,Global.MAP_OFFSET_COLS+14,1,7); //torch
+			CreateButton(ConsoleKey.S,false,Global.SCREEN_H-2,Global.MAP_OFFSET_COLS+26,1,11); //shoot bow
+			CreateButton(ConsoleKey.R,false,Global.SCREEN_H-2,Global.MAP_OFFSET_COLS+41,1,6); //rest
+			CreateButton(ConsoleKey.Z,false,Global.SCREEN_H-2,Global.MAP_OFFSET_COLS+52,1,14); //cast spell
+			CreateButton(ConsoleKey.I,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS,1,11); //inventory
+			CreateButton(ConsoleKey.E,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+14,1,11); //equipment
+			CreateButton(ConsoleKey.C,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+26,1,11); //character
+			CreateButton(ConsoleKey.M,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+41,1,5); //map
+			if(Screen.GLMode){
+				CreateButton(ConsoleKey.F21,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+60,1,6); //menu
+			}
+		}
+		public static void CreatePlayerStatsButtons(){
+			if(Mode != MouseMode.Map) return;
+			ConsoleKey[] keys = new ConsoleKey[]{ConsoleKey.C,ConsoleKey.E,ConsoleKey.M};
+			int[] rows = new int[]{0,UI.equipment_row,UI.depth_row};
+			int[] heights = new int[]{UI.equipment_row,UI.depth_row - UI.equipment_row,UI.status_row_start - UI.depth_row - 1};
+			if(MouseUI.GetButton(0,0) == null){ // if there's no button here, assume that there are no buttons in this area at all.
+				for(int n=0;n<3;++n){
+					if(rows[n] + heights[n] > UI.status_row_cutoff){
+						return;
+					}
+					CreateStatsButton(keys[n],false,rows[n],heights[n]);
+				}
+			}
+			else{
+				bool all_found = false;
+				for(int n=0;n<3;++n){
+					if(heights[n] <= 0 || rows[n] + heights[n] > UI.status_row_cutoff){
+						break;
+					}
+					Button b = MouseUI.GetButton(rows[n],0);
+					if(b != null && b.key == keys[n] && b.row == rows[n] && b.height == heights[n]){ //perfect match, keep it there.
+						if(b.key == ConsoleKey.M){
+							all_found = true;
+						}
+					}
+					else{
+						for(int i=rows[n];i<rows[n]+heights[n];++i){
+							Button b2 = MouseUI.GetButton(i,0);
+							if(b2 != null){
+								if(b2.key == ConsoleKey.M){
+									all_found = true;
+								}
+								MouseUI.RemoveButton(b2);
+							}
+						}
+						CreateStatsButton(keys[n],false,rows[n],heights[n]);
+					}
+				}
+				if(!all_found){
+					for(int i=rows[2]+heights[2];i<=UI.status_row_cutoff;++i){ //gotta continue downward until all the previous
+						Button b = MouseUI.GetButton(i,0); // buttons have been accounted for.
+						if(b != null){
+							MouseUI.RemoveButton(b);
+							if(b.key == ConsoleKey.M){
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 	}

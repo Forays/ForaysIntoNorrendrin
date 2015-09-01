@@ -168,6 +168,9 @@ namespace Forays{
 						i.UpdateRadius(0,i.light_radius);
 					}
 					M.tile[r,c].inv = i;
+					if(type == ConsumableType.BLAST_FUNGUS){
+						i.ignored = true;
+					}
 				}
 				else{
 					if(M.tile[r,c].inv.type == type){
@@ -845,7 +848,7 @@ namespace Forays{
 			{
 				B.Add(user.You("transform") + " into a being of animated stone. ",user);
 				int duration = R.Roll(2,20) + 20;
-				List<AttrType> attributes = new List<AttrType>{AttrType.REGENERATING,AttrType.BRUTISH_STRENGTH,AttrType.VIGOR,AttrType.SILENCE_AURA,AttrType.SHADOW_CLOAK,AttrType.CAN_DODGE,AttrType.MENTAL_IMMUNITY,AttrType.DETECTING_MONSTERS};
+				List<AttrType> attributes = new List<AttrType>{AttrType.REGENERATING,AttrType.BRUTISH_STRENGTH,AttrType.VIGOR,AttrType.SILENCE_AURA,AttrType.SHADOW_CLOAK,AttrType.CAN_DODGE,AttrType.MENTAL_IMMUNITY,AttrType.DETECTING_MONSTERS,AttrType.MYSTIC_MIND};
 				foreach(AttrType at in attributes){ //in the rare case where a monster drinks this potion, it can lose these natural statuses permanently. this might eventually be fixed.
 					if(user.HasAttr(at)){
 						user.attrs[at] = 0;
@@ -866,7 +869,7 @@ namespace Forays{
 						case AttrType.SHADOW_CLOAK:
 							B.Add(user.YouAre() + " no longer cloaked. ",user);
 							break;
-						case AttrType.MENTAL_IMMUNITY:
+						case AttrType.MYSTIC_MIND:
 							B.Add(user.Your() + " consciousness returns to normal. ",user);
 							break;
 						}
@@ -911,7 +914,9 @@ namespace Forays{
 				Q.Add(new Event(user,duration*100,AttrType.IMMUNE_BURNING));
 				user.attrs[AttrType.DAMAGE_RESISTANCE]++;
 				Q.Add(new Event(user,duration*100,AttrType.DAMAGE_RESISTANCE));
-				user.RefreshDuration(AttrType.NONLIVING,duration*100,user.Your() + " rocky form reverts to flesh. ",user);
+				user.attrs[AttrType.NONLIVING]++;
+				Q.Add(new Event(user,duration*100,AttrType.NONLIVING));
+				user.RefreshDuration(AttrType.STONEFORM,duration*100,user.Your() + " rocky form reverts to flesh. ",user);
 				if(user == player){
 					Help.TutorialTip(TutorialTopic.Stoneform);
 				}
@@ -924,6 +929,7 @@ namespace Forays{
 				int duration = R.Roll(2,20) + 20;
 				user.RefreshDuration(AttrType.LIGHT_SENSITIVE,duration*100);
 				user.RefreshDuration(AttrType.FLYING,duration*100);
+				user.attrs[AttrType.DESCENDING] = 0;
 				user.RefreshDuration(AttrType.PSEUDO_VAMPIRIC,duration*100,user.YouAre() + " no longer vampiric. ",user);
 				if(user == player){
 					Help.TutorialTip(TutorialTopic.Vampirism);
@@ -1030,7 +1036,8 @@ namespace Forays{
 				user.RefreshDuration(AttrType.STUNNED,0);
 				user.RefreshDuration(AttrType.ENRAGED,0);
 				user.RefreshDuration(AttrType.MENTAL_IMMUNITY,duration*100);
-				user.RefreshDuration(AttrType.DETECTING_MONSTERS,duration*100,user.Your() + " consciousness returns to normal. ",user);
+				user.RefreshDuration(AttrType.DETECTING_MONSTERS,duration*100);
+				user.RefreshDuration(AttrType.MYSTIC_MIND,duration*100,user.Your() + " consciousness returns to normal. ",user);
 				if(user == player){
 					Help.TutorialTip(TutorialTopic.MysticMind);
 				}
@@ -1869,7 +1876,6 @@ namespace Forays{
 						Actor a = Actor.Create(ActorType.BLADE,t2.row,t2.col);
 						if(a != null){
 							a.speed = 50;
-							a.attrs[AttrType.LIFESPAN] = 20;
 						}
 					}
 				});
@@ -2525,6 +2531,7 @@ namespace Forays{
 			type = type_;
 			enchantment = enchantment_;
 		}
+		public bool IsEnchanted(){ return enchantment != EnchantmentType.NO_ENCHANTMENT; }
 		public bool IsEdged(){
 			if(type == WeaponType.SWORD || type == WeaponType.DAGGER){
 				return true;
@@ -2607,7 +2614,16 @@ namespace Forays{
 			}
 			return NameWithoutEnchantment() + ench;
 		}
-		public cstr StatsName(){
+		public colorstring StatusName(){
+			if(IsEnchanted()){
+				colorstring cs = new colorstring("+",EnchantmentColor());
+				return new colorstring("-- ",cs,NameWithoutEnchantment().Capitalize(),cs," --").PadOuter(Global.STATUS_WIDTH);
+			}
+			else{
+				return new colorstring(("-- " + NameWithoutEnchantment().Capitalize() + " --").PadOuter(Global.STATUS_WIDTH),Color.Gray);
+			}
+		}
+		/*public cstr StatsName(){
 			cstr cs;
 			cs.bgcolor = Color.Black;
 			cs.color = Color.Gray;
@@ -2636,7 +2652,7 @@ namespace Forays{
 			}
 			cs.color = EnchantmentColor();
 			return cs;
-		}
+		}*/
 		public Color EnchantmentColor(){
 			switch(enchantment){
 			case EnchantmentType.ECHOES:
@@ -2716,7 +2732,7 @@ namespace Forays{
 			case EquipmentStatus.WORN_OUT:
 				return "Worn out";
 			case EquipmentStatus.POISONED:
-				return "Poisoned";
+				return "Poison-covered";
 			case EquipmentStatus.LOW_ON_ARROWS:
 				return "Low on arrows";
 			case EquipmentStatus.ALMOST_OUT_OF_ARROWS:
@@ -2730,8 +2746,7 @@ namespace Forays{
 			}
 		}
 		public colorstring EquipmentScreenName(){
-			colorstring result = new colorstring(StatsName());
-			result.strings[0] = new cstr(NameWithEnchantment().Substring(0,1).ToUpper() + NameWithEnchantment().Substring(1) + " ",result.strings[0].color);
+			colorstring result = new colorstring(NameWithEnchantment().Capitalize() + " ",EnchantmentColor());
 			for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
 				if(status[(EquipmentStatus)i]){
 					result.strings.Add(new cstr("*",StatusColor((EquipmentStatus)i)));
@@ -2755,7 +2770,7 @@ namespace Forays{
 									"     twice as likely to score a critical hit, stunning the foe."};
 			case WeaponType.STAFF:
 				return new string[]{"Staff -- Always hits against a foe that just moved, in",
-									"  addition to swapping places. Critical hits will trip the foe."};
+									"   addition to swapping places. Critical hits will trip the foe."};
 			case WeaponType.BOW:
 				return new string[]{"Bow -- A ranged weapon, less accurate than melee.",
 									"        Critical hits will immobilize the target briefly."};
@@ -2781,7 +2796,7 @@ namespace Forays{
 		public static string StatusDescription(EquipmentStatus status){
 			switch(status){
 			case EquipmentStatus.POISONED: //weapon-only statuses
-				return "    Poisoned -- Poisons the target, and might poison you too.";
+				return " Poison-covered -- Poisons the target, and might poison you too.";
 			case EquipmentStatus.MERCIFUL:
 				return " Merciful -- Unable to take the last bit of health from an enemy.";
 			case EquipmentStatus.POSSESSED:
@@ -2829,6 +2844,7 @@ namespace Forays{
 			type = type_;
 			enchantment = enchantment_;
 		}
+		public bool IsEnchanted(){ return enchantment != EnchantmentType.NO_ENCHANTMENT; }
 		public int Protection(){
 			if(status[EquipmentStatus.DAMAGED]){
 				return 0;
@@ -2891,6 +2907,15 @@ namespace Forays{
 				break;
 			}*/
 			return NameWithoutEnchantment() + ench;
+		}
+		public colorstring StatusName(){
+			if(IsEnchanted()){
+				colorstring cs = new colorstring("+",EnchantmentColor());
+				return new colorstring("-- ",cs,NameWithoutEnchantment().Capitalize(),cs," --").PadOuter(Global.STATUS_WIDTH);
+			}
+			else{
+				return new colorstring(("-- " + NameWithoutEnchantment().Capitalize() + " --").PadOuter(Global.STATUS_WIDTH),Color.Gray);
+			}
 		}
 		public cstr StatsName(){
 			cstr cs;

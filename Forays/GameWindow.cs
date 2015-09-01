@@ -396,13 +396,35 @@ namespace Forays{
 					{
 						int map_row = row - Global.MAP_OFFSET_ROWS;
 						int map_col = col - Global.MAP_OFFSET_COLS;
+						bool status_click = false;
 						if(MouseUI.mouselook_objects[row,col] != null){
-							map_row = MouseUI.mouselook_objects[row,col].row; //todo change
+							if(map_col < 0){
+								status_click = true;
+							}
+							map_row = MouseUI.mouselook_objects[row,col].row;
 							map_col = MouseUI.mouselook_objects[row,col].col;
 						}
 						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
 							if(map_row == Actor.player.row && map_col == Actor.player.col){
-								Input.LastKey = new ConsoleKeyInfo('5',ConsoleKey.NumPad5,false,false,false);
+								bool done = false;
+								if(status_click){
+									done = true;
+									Tile t = Actor.M.tile[map_row,map_col];
+									if(t.inv != null || t.Is(TileType.CHEST) || t.IsShrine()){
+										Input.LastKey = new ConsoleKeyInfo('g',ConsoleKey.G,false,false,false);
+									}
+									else{
+										if(t.Is(TileType.STAIRS)){
+											Input.LastKey = new ConsoleKeyInfo('>',ConsoleKey.OemPeriod,true,false,false);
+										}
+										else{
+											done = false;
+										}
+									}
+								}
+								if(!done){
+									Input.LastKey = new ConsoleKeyInfo('5',ConsoleKey.NumPad5,false,false,false);
+								}
 							}
 							else{
 								if(KeyIsDown(Key.LControl) || KeyIsDown(Key.RControl) || (Math.Abs(map_row-Actor.player.row) <= 1 && Math.Abs(map_col-Actor.player.col) <= 1)){
@@ -430,7 +452,6 @@ namespace Forays{
 								else{
 									Tile nearest = Actor.M.tile[map_row,map_col];
 									Actor.player.path = Actor.player.GetPlayerTravelPath(nearest.p);
-									//Actor.player.path = Actor.player.GetPath(nearest.row,nearest.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
 									if(Actor.player.path.Count > 0){
 										Actor.player.path.StopAtBlockingTerrain();
 										if(Actor.player.path.Count > 0){
@@ -438,6 +459,9 @@ namespace Forays{
 											ConsoleKey path_key = (ConsoleKey)(ConsoleKey.NumPad0 + Actor.player.DirectionOf(Actor.player.path[0]));
 											Input.LastKey = new ConsoleKeyInfo(Input.GetChar(path_key,false),path_key,false,false,false);
 											Actor.player.path.RemoveAt(0);
+											if(nearest.inv != null || nearest.Is(TileType.CHEST)){
+												Actor.grab_item_at_end_of_path = true;
+											}
 										}
 										else{
 											Input.LastKey = new ConsoleKeyInfo(' ',ConsoleKey.Spacebar,false,false,false);
@@ -466,6 +490,9 @@ namespace Forays{
 											ConsoleKey path_key = (ConsoleKey)(ConsoleKey.NumPad0 + Actor.player.DirectionOf(Actor.player.path[0]));
 											Input.LastKey = new ConsoleKeyInfo(Input.GetChar(path_key,false),path_key,false,false,false);
 											Actor.player.path.RemoveAt(0);
+											if(nearest.inv != null || nearest.Is(TileType.CHEST)){
+												Actor.grab_item_at_end_of_path = true;
+											}
 										}
 										else{
 											Input.LastKey = new ConsoleKeyInfo(' ',ConsoleKey.Spacebar,false,false,false);

@@ -42,10 +42,13 @@ namespace Forays{
 			c = c_;
 		}
 	}
-	public struct cstr{
+	public struct cstr{ //todo: change this to a class eventually
 		public Color color;
 		public Color bgcolor;
 		public string s;
+		public static implicit operator cstr(string s){
+			return new cstr(s,Color.Gray);
+		}
 		public static implicit operator colorstring(cstr c){
 			return new colorstring(c);
 		}
@@ -69,6 +72,9 @@ namespace Forays{
 			bgcolor = bgcolor_;
 			s = s_;
 		}
+		public static colorstring operator +(cstr one,cstr two){
+			return new colorstring(one,two);
+		}
 	}
 	public class colorstring{
 		public List<cstr> strings = new List<cstr>();
@@ -88,6 +94,18 @@ namespace Forays{
 				}
 				return new colorchar(strings[cstr_idx].s[index],strings[cstr_idx].color,strings[cstr_idx].bgcolor);
 			}
+		}
+		public static implicit operator colorstring(string s){ return new colorstring(s); }
+		public colorstring(colorstring other){
+			foreach(cstr cs in other.strings){
+				strings.Add(cs);
+			}
+		}
+		public colorstring(cstr cs){
+			strings.Add(cs);
+		}
+		public colorstring(string s){
+			strings.Add(new cstr(s,Color.Gray));
 		}
 		public colorstring(string s1,Color c1){
 			strings.Add(new cstr(s1,c1));
@@ -125,12 +143,53 @@ namespace Forays{
 			strings.Add(new cstr(s5,c5));
 			strings.Add(new cstr(s6,c6));
 		}
-		public colorstring(params cstr[] cstrs){
-			if(cstrs != null && cstrs.Length > 0){ //todo: why the check for length > 0?
-				foreach(cstr cs in cstrs){
-					strings.Add(cs);
+		public colorstring(params object[] objs){
+			if(objs != null){
+				foreach(object o in objs){
+					if(o is string){
+						strings.Add(new cstr(o as string,Color.Gray));
+					}
+					else{
+						if(o is cstr){
+							strings.Add((cstr)o);
+						}
+						else{
+							if(o is colorstring){
+								foreach(cstr cs in (o as colorstring).strings){
+									strings.Add(cs);
+								}
+							}
+							else{
+								throw new ArgumentException("Arguments must be string, cstr, or colorstring.");
+							}
+						}
+					}
 				}
 			}
+		}
+		public colorstring PadLeft(int totalWidth){
+			return PadLeft(totalWidth,new colorchar(' ',Color.Gray,Color.Black));
+		}
+		public colorstring PadLeft(int totalWidth,colorchar paddingChar){
+			int diff = totalWidth - Length();
+			if(diff <= 0) return new colorstring(this);
+			return new cstr("".PadRight(diff,paddingChar.c),paddingChar.color,paddingChar.bgcolor) + this;
+		}
+		public colorstring PadRight(int totalWidth){
+			return PadRight(totalWidth,new colorchar(' ',Color.Gray,Color.Black));
+		}
+		public colorstring PadRight(int totalWidth,colorchar paddingChar){
+			int diff = totalWidth - Length();
+			if(diff <= 0) return new colorstring(this);
+			return this + new cstr("".PadRight(diff,paddingChar.c),paddingChar.color,paddingChar.bgcolor);
+		}
+		public colorstring PadOuter(int totalWidth){
+			return PadOuter(totalWidth,new colorchar(' ',Color.Gray,Color.Black));
+		}
+		public colorstring PadOuter(int totalWidth,colorchar paddingChar){
+			int diff = totalWidth - Length();
+			if(diff <= 0) return new colorstring(this);
+			return new cstr("".PadRight(diff/2,paddingChar.c),paddingChar.color,paddingChar.bgcolor) + this + new cstr("".PadRight((diff+1)/2,paddingChar.c),paddingChar.color,paddingChar.bgcolor);
 		}
 		public static colorstring operator +(colorstring one,colorstring two){
 			colorstring result = new colorstring();
@@ -140,6 +199,31 @@ namespace Forays{
 			foreach(cstr s in two.strings){
 				result.strings.Add(s);
 			}
+			return result;
+		}
+		public static colorstring operator +(cstr one,colorstring two){ //todo: whoops, forgot colorchar in this section.
+			colorstring result = new colorstring();
+			result.strings.Add(one);
+			foreach(cstr s in two.strings){
+				result.strings.Add(s);
+			}
+			return result;
+		}
+		public static colorstring operator +(colorstring one,cstr two){
+			colorstring result = new colorstring();
+			foreach(cstr s in one.strings){
+				result.strings.Add(s);
+			}
+			result.strings.Add(two);
+			return result;
+		}
+		public static colorstring operator +(string one,colorstring two){ return new cstr(one,Color.Gray) + two; }
+		public static colorstring operator +(colorstring one,string two){
+			colorstring result = new colorstring();
+			foreach(cstr s in one.strings){
+				result.strings.Add(s);
+			}
+			result.strings.Add(new cstr(two,Color.Gray));
 			return result;
 		}
 	}
@@ -919,7 +1003,7 @@ namespace Forays{
 							key = (ConsoleKey)(ConsoleKey.A + ((int)s.s[idx+1] - (int)'a'));
 							break;
 						}
-						MouseUI.CreateMapButton(key,shifted,r,1);
+						MouseUI.CreateMapButton(key,shifted,r-Global.MAP_OFFSET_ROWS,1);
 					}
 				}
 			}
@@ -1006,7 +1090,7 @@ namespace Forays{
 							key = (ConsoleKey)(ConsoleKey.A + ((int)cs[idx+1].c - (int)'a'));
 							break;
 						}
-						MouseUI.CreateMapButton(key,shifted,r,1);
+						MouseUI.CreateMapButton(key,shifted,r-Global.MAP_OFFSET_ROWS,1);
 					}
 				}
 				/*if(cpos-Global.MAP_OFFSET_COLS < Global.COLS){

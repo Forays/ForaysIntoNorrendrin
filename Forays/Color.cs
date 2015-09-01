@@ -6,8 +6,8 @@ namespace Forays{
 	public enum Color{Black,White,Gray,Red,Green,Blue,Yellow,Magenta,Cyan,DarkGray,DarkRed,DarkGreen,DarkBlue,DarkYellow,
 		DarkMagenta,DarkCyan,RandomFire,RandomIce,RandomLightning,RandomBreached,RandomExplosion,RandomGlowingFungus,
 		RandomTorch,RandomDoom,RandomConfusion,RandomDark,RandomBright,RandomRGB,RandomDRGB,RandomRGBW,RandomCMY,
-		RandomDCMY,RandomCMYW,RandomRainbow,RandomAny,OutOfSight,TerrainDarkGray,DarkerGray,HealthBar,DarkerRed,
-		Transparent};
+		RandomDCMY,RandomCMYW,RandomRainbow,RandomAny,OutOfSight,TerrainDarkGray,DarkerGray,HealthBar,StatusEffectBar,DarkerRed,
+		DarkerMagenta,Transparent};
 	public static class Colors{
 		public const Color darkcolor = Color.DarkCyan; //for darkened map objects
 		public const Color unseencolor = Color.OutOfSight;
@@ -68,6 +68,7 @@ namespace Forays{
 			case Color.OutOfSight:
 			case Color.TerrainDarkGray:
 			case Color.HealthBar:
+			case Color.StatusEffectBar:
 			return GetColor(ResolveColor(c));
 			default:
 			return ConsoleColor.Black;
@@ -159,6 +160,13 @@ namespace Forays{
 			else{
 				return Color.DarkRed;
 			}
+			case Color.StatusEffectBar:
+			if(Screen.GLMode){
+				return Color.DarkerMagenta;
+			}
+			else{
+				return Color.DarkMagenta;
+			}
 			default:
 			return c;
 			}
@@ -204,6 +212,8 @@ namespace Forays{
 			return new Color4(50,50,50,255);
 			case Color.DarkerRed:
 			return new Color4(80,0,0,255); //DarkRed is 139 red
+			case Color.DarkerMagenta:
+			return new Color4(80,0,80,255); //DarkMagenta is 139 red and blue
 			case Color.Transparent:
 			return Color4.Transparent;
 			default:

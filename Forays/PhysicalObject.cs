@@ -148,6 +148,14 @@ namespace Forays{
 					cs.strings.Add(new cstr("   " + s,text));
 				}
 			}
+			if(name == "troll corpse"){ //gotta do this here, since TerrainFeature isn't a class.
+				result.Add(new colorstring("Regenerating".PadOuter(Global.STATUS_WIDTH),text,Color.StatusEffectBar));
+			}
+			else{
+				if(name == "troll bloodwitch corpse"){
+					result.Add(new colorstring("Regenerating 3".PadOuter(Global.STATUS_WIDTH),text,Color.StatusEffectBar));
+				}
+			}
 			return result;
 		}
 		public bool IsBurning(){
@@ -3293,6 +3301,7 @@ compare this number to 1/2:  if less than 1/2, major.
 					break;
 					}
 				}
+				UI.MapCursor = new pos(r,c);
 				if(description_shown_last_time){
 					Screen.MapDrawWithStrings(mem,desc_row,desc_col,desc_height,desc_width);
 					description_shown_last_time = false;
@@ -3611,7 +3620,6 @@ compare this number to 1/2:  if less than 1/2, major.
 			if(c > maxcol){
 				c = maxcol;
 			}
-			UI.MapCursor = new pos(r,c);
 			return result;
 		}
 		public static void Targeting_RemoveLine(Tile tc,bool done,List<Tile> line,colorchar[,] mem,int radius){

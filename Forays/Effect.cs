@@ -107,8 +107,8 @@ namespace Forays{
 		public static void ShowPreviousMessages(bool show_footsteps){
 			List<string> messages = B.GetMessages();
 			MouseUI.PushButtonMap(MouseMode.ScrollableMenu);
-			MouseUI.CreateMapButton(ConsoleKey.OemMinus,false,3,1);
-			MouseUI.CreateMapButton(ConsoleKey.OemPlus,false,24,1);
+			MouseUI.CreateMapButton(ConsoleKey.OemMinus,false,0,1);
+			MouseUI.CreateMapButton(ConsoleKey.OemPlus,false,21,1); //todo, update these values?
 			Screen.CursorVisible = false;
 			//Screen.Blank();
 			Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
@@ -453,6 +453,8 @@ namespace Forays{
 									user.GetItem(i);
 								}
 								else{
+									B.Add("Your pack is too full to fit anything else. ");
+									i.ignored = true;
 									user.tile().GetItem(i);
 								}
 							}

@@ -24,6 +24,24 @@ namespace Utilities{
 		public Dict(){ d = new Dictionary<TKey,TValue>(); }
 		public Dict(Dict<TKey,TValue> d2){ d = new Dictionary<TKey, TValue>(d2.d); }
 	}
+	public class Cached<T> where T : class{
+		protected T value;
+		protected Action set;
+		public Cached(Action setValue){
+			set = setValue;
+		}
+		public static implicit operator T(Cached<T> t){ return t.Value; }
+		public T Value{
+			get{
+				if(value == null){
+					set();
+				}
+				return value;
+			} //design-wise, should set be allowed here?
+		}
+		public void Reset(){ value = null; }
+		public bool HasValue(){ return value != null; } // design-wise, should this be allowed, or should this be fully invisible?
+	}
 	public struct cell{ //a position that holds an integer value, useful with priority queues
 		public pos p;
 		public int row{
@@ -705,11 +723,11 @@ namespace Utilities{
 			}
 			int added = totalWidth - s.Length;
 			string left = "";
-			for(int i=0;i<(added+1)/2;++i){ //todo: This seems to look better if it puts the extra space on the RIGHT, not the left. Consider changing.
+			for(int i=0;i<added/2;++i){
 				left = left + paddingChar;
 			}
 			string right = "";
-			for(int i=0;i<added/2;++i){
+			for(int i=0;i<(added+1)/2;++i){
 				right = right + paddingChar;
 			}
 			return left + s + right;
@@ -721,6 +739,20 @@ namespace Utilities{
 			char[] c = s.ToCharArray();
 			c[0] = Char.ToUpper(c[0]);
 			return new string(c);
+		}
+		public static string SafeSubstring(this string s,int startIndex){ //allows: startindex < 0,   startindex > s.Length
+			if(startIndex < 0) return s;
+			if(startIndex > s.Length) return "";
+			return s.Substring(startIndex);
+		}
+		public static string SafeSubstring(this string s,int startIndex,int length){ //allows: startindex < 0,   length < 0,   startindex + length > s.Length
+			if(length <= 0) return "";
+			if(startIndex < 0){
+				if(startIndex + length > s.Length) return s;
+				return s.Substring(0,startIndex + length);
+			}
+			if(startIndex + length > s.Length) return s.Substring(startIndex);
+			return s.Substring(startIndex,length);
 		}
 		public static List<pos> AllPositions<T>(this PosArray<T> array){
 			List<pos> result = new List<pos>();
