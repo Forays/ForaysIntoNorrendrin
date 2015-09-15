@@ -13,11 +13,12 @@ using System.Threading;
 using Utilities;
 namespace Forays{
 	public enum HelpTopic{Overview,Skills,Feats,Spells,Items,Commands,Advanced,Tips};
-	public enum TutorialTopic{Movement,Attacking,Torch,Fire,Exhaustion,Recovery,SwitchingEquipment,RangedAttacks,Shrines,DistributionOfShrines,Feats,ActiveFeats,
-		Combat,Defense,Magic,Spirit,Stealth,FindingConsumables,IdentifiedConsumables,UnidentifiedConsumables,MagicTrinkets,SpellTiers,SpellFailure,CastingWithoutMana,
-		ExhaustionAndArmor,ShinyPlateArmor,HeavyPlateArmor,CriticalHits,InstantKills,Dodging,FightingTheUnseen,NotRevealedByLight,Traps,CrackedWall,FirePit,Poppies,
-		StoneSlab,BlastFungus,PoolOfRestoration,IncreasedSpeed,Stunned,Frozen,Slimed,Oiled,Vulnerable,Silenced,Confusion,Bleeding,Immobilized,Acidified,Afraid,
-		Grabbed,Dulled,Possessed,Heavy,Merciful,Negated,Stuck,Infested,WeakPoint,WornOut,Damaged,Stoneform,Vampirism,Roots,BrutishStrength,MysticMind};
+	public enum TutorialTopic{Movement,Attacking,Torch,Fire,Exhaustion,Recovery,SwitchingEquipment,RangedAttacks,Shrines,DistributionOfShrines,
+		Feats,ActiveFeats,Combat,Defense,Magic,Spirit,Stealth,FindingConsumables,IdentifiedConsumables,UnidentifiedConsumables,MagicTrinkets,
+		SpellTiers,SpellFailure,CastingWithoutMana,ExhaustionAndArmor,ShinyPlateArmor,HeavyPlateArmor,CriticalHits,InstantKills,Dodging,
+		FightingTheUnseen,NotRevealedByLight,Traps,CrackedWall,FirePit,Poppies,StoneSlab,BlastFungus,PoolOfRestoration,IncreasedSpeed,
+		Stunned,Frozen,Slimed,Oiled,Vulnerable,Silenced,Confusion,Bleeding,Immobilized,Acidified,Afraid,Grabbed,Dulled,Possessed,Heavy,
+		Merciful,Negated,Stuck,Infested,WeakPoint,WornOut,Damaged,Stoneform,Vampirism,Roots,BrutishStrength,MysticMind};
 	public static class Help{
 		public static Dict<TutorialTopic,bool> displayed = new Dict<TutorialTopic,bool>();
 		public static void DisplayHelp(){ DisplayHelp(HelpTopic.Overview); }
@@ -26,17 +27,21 @@ namespace Forays{
 			Screen.CursorVisible = false;
 			Screen.Blank();
 			int num_topics = Enum.GetValues(typeof(HelpTopic)).Length;
-			Screen.WriteString(5,4,"Topics:",Color.Yellow);
+			int topic_start_row = (Global.SCREEN_H - num_topics - 1) / 2;
+			const int text_col = 18;
+			Screen.WriteString(topic_start_row-2,5,"Topics:",Color.Yellow);
 			for(int i=0;i<num_topics+1;++i){
-				Screen.WriteString(i+7,0,"[ ]");
-				Screen.WriteChar(i+7,1,(char)(i+'a'),Color.Cyan);
-				MouseUI.CreateStatsButton((ConsoleKey)(ConsoleKey.A + i),false,7+i,1);
+				Screen.WriteString(i+topic_start_row,1,"[ ]");
+				Screen.WriteChar(i+topic_start_row,2,(char)(i+'a'),Color.Cyan);
+				MouseUI.CreateButton((ConsoleKey)(ConsoleKey.A + i),false,i+topic_start_row,0,1,text_col - 1);
 			}
-			MouseUI.CreateButton(ConsoleKey.OemMinus,false,0,Global.MAP_OFFSET_COLS+3,1,Global.COLS-2);
-			MouseUI.CreateButton(ConsoleKey.OemPlus,false,23,Global.MAP_OFFSET_COLS+3,1,Global.COLS-2);
-			Screen.WriteString(num_topics+7,4,"Quit");
-			Screen.WriteString(0,16,"".PadRight(61,'-'));
-			Screen.WriteString(23,16,"".PadRight(61,'-'));
+			Screen.WriteString(num_topics+topic_start_row,5,"Quit");
+			const int text_width = 64;
+			const int text_height = 26;
+			MouseUI.CreateButton(ConsoleKey.OemMinus,false,0,text_col,1,text_width);
+			MouseUI.CreateButton(ConsoleKey.OemPlus,false,Global.SCREEN_H-1,text_col,1,text_width);
+			Screen.WriteString(0,text_col,"".PadRight(text_width - 3,'-'));
+			Screen.WriteString(Global.SCREEN_H-1,text_col,"".PadRight(text_width - 3,'-'));
 			List<string> text = HelpText(h);
 			int startline = 0;
 			ConsoleKeyInfo command;
@@ -44,34 +49,34 @@ namespace Forays{
 			for(bool done=false;!done;){
 				foreach(HelpTopic help in Enum.GetValues(typeof(HelpTopic))){
 					if(h == help){
-						Screen.WriteString(7+(int)help,4,Enum.GetName(typeof(HelpTopic),help),Color.Yellow);
+						Screen.WriteString((int)help + topic_start_row,5,Enum.GetName(typeof(HelpTopic),help),Color.Yellow);
 					}
 					else{
-						Screen.WriteString(7+(int)help,4,Enum.GetName(typeof(HelpTopic),help));
+						Screen.WriteString((int)help + topic_start_row,5,Enum.GetName(typeof(HelpTopic),help));
 					}
 				}
 				if(startline > 0){
-					Screen.WriteString(0,77,new colorstring("[",Color.Yellow,"-",Color.Cyan,"]",Color.Yellow));
+					Screen.WriteString(0,text_col + text_width - 3,new colorstring("[",Color.Yellow,"-",Color.Cyan,"]",Color.Yellow));
 				}
 				else{
-					Screen.WriteString(0,77,"---");
+					Screen.WriteString(0,text_col + text_width - 3,"---");
 				}
 				bool more = false;
-				if(startline + 22 < text.Count){
+				if(startline + text_height < text.Count){
 					more = true;
 				}
 				if(more){
-					Screen.WriteString(23,77,new colorstring("[",Color.Yellow,"+",Color.Cyan,"]",Color.Yellow));
+					Screen.WriteString(Global.SCREEN_H-1,text_col + text_width - 3,new colorstring("[",Color.Yellow,"+",Color.Cyan,"]",Color.Yellow));
 				}
 				else{
-					Screen.WriteString(23,77,"---");
+					Screen.WriteString(Global.SCREEN_H-1,text_col + text_width - 3,"---");
 				}
-				for(int i=1;i<=22;++i){
+				for(int i=1;i<Global.SCREEN_H-1;++i){
 					if(text.Count - startline < i){
-						Screen.WriteString(i,16,"".PadRight(64));
+						Screen.WriteString(i,text_col,"".PadRight(text_width));
 					}
 					else{
-						Screen.WriteString(i,16,text[i+startline-1].PadRight(64));
+						Screen.WriteString(i,text_col,text[i+startline-1].PadRight(text_width));
 					}
 				}
 				command = Input.ReadKey();
@@ -176,7 +181,7 @@ namespace Forays{
 					break;
 				case (char)8:
 					if(startline > 0){
-						startline -= 22;
+						startline -= text_height;
 						if(startline < 0){
 							startline = 0;
 						}
@@ -184,10 +189,10 @@ namespace Forays{
 					break;
 				case ' ':
 				case (char)13:
-					if(text.Count > 22){
-						startline += 22;
-						if(startline + 22 > text.Count){
-							startline = text.Count - 22;
+					if(text.Count > text_height){
+						startline += text_height;
+						if(startline + text_height > text.Count){
+							startline = text.Count - text_height;
 						}
 					}
 					break;
@@ -195,7 +200,7 @@ namespace Forays{
 					startline = 0;
 					break;
 				case ']':
-					startline = Math.Max(0,text.Count - 22);
+					startline = Math.Max(0,text.Count - text_height);
 					break;
 				default:
 					break;
@@ -211,23 +216,22 @@ namespace Forays{
 			switch(h){
 			case HelpTopic.Overview:
 				path = "help.txt";
-				num_lines = 46;
+				num_lines = 50;
 				break;
 			case HelpTopic.Commands:
 				path = "help.txt";
-				startline = 47;
-				num_lines = 26;
+				startline = 50;
 				break;
 			case HelpTopic.Items:
 				path = "item_help.txt";
 				break;
 			case HelpTopic.Skills:
 				path = "feat_help.txt";
-				num_lines = 20;
+				num_lines = 26;
 				break;
 			case HelpTopic.Feats:
 				path = "feat_help.txt";
-				startline = 21;
+				startline = 27;
 				break;
 			case HelpTopic.Spells:
 				path = "spell_help.txt";
@@ -272,14 +276,6 @@ namespace Forays{
 			}
 			return result;
 		}
-		/*public static Color NextColor(Color c){
-			if(c == Color.DarkCyan){
-				return Color.White;
-			}
-			else{
-				return (Color)(1+(int)c);
-			}
-		}*/
 		private static List<colorstring> BoxAnimationFrame(int height,int width){
 			Color box_edge_color = Color.Blue;
 			Color box_corner_color = Color.Yellow;
@@ -300,10 +296,10 @@ namespace Forays{
 				return;
 			}
 			MouseUI.PushButtonMap();
-			Color box_edge_color = Color.Blue;
-			Color box_corner_color = Color.Yellow;
-			Color first_line_color = Color.Yellow;
-			Color text_color = Color.Gray;
+			const Color box_edge_color = Color.Blue;
+			const Color box_corner_color = Color.Yellow;
+			const Color first_line_color = Color.Yellow;
+			const Color text_color = Color.Gray;
 			string[] text = TutorialText(topic);
 			int stringwidth = 27; // length of "[Press any key to continue]"
 			foreach(string s in text){
@@ -314,7 +310,6 @@ namespace Forays{
 			stringwidth += 4; //2 blanks on each side
 			int boxwidth = stringwidth + 2;
 			int boxheight = text.Length + 5;
-			//for(bool done=false;!done;){
 			colorstring[] box = new colorstring[boxheight]; //maybe i should make this a list to match the others
 			box[0] = new colorstring("+",box_corner_color,"".PadRight(stringwidth,'-'),box_edge_color,"+",box_corner_color);
 			box[text.Length + 1] = new colorstring("|",box_edge_color,"".PadRight(stringwidth),Color.Gray,"|",box_edge_color);
@@ -335,16 +330,16 @@ namespace Forays{
 			int y = (Global.SCREEN_H - boxheight) / 2;
 			int x = (Global.SCREEN_W - boxwidth) / 2;
 			int spaces_on_left = stringwidth - 27;
-			MouseUI.CreateButton(ConsoleKey.A,false,y + boxheight - 3,x + 1 + (spaces_on_left+1)/2,1,27);
+			MouseUI.CreateButton(ConsoleKey.A,false,y + boxheight - 3,x + 1 + spaces_on_left/2,1,27);
 			spaces_on_left = stringwidth - 21;
-			MouseUI.CreateButton(ConsoleKey.OemPlus,false,y + boxheight - 2,x + 1 + (spaces_on_left+1)/2,1,21);
+			MouseUI.CreateButton(ConsoleKey.OemPlus,false,y + boxheight - 2,x + 1 + spaces_on_left/2,1,21);
 			colorchar[,] memory = Screen.GetCurrentRect(y,x,boxheight,boxwidth);
 			List<List<colorstring>> frames = new List<List<colorstring>>();
 			frames.Add(BoxAnimationFrame(boxheight-2,FrameWidth(boxheight,boxwidth)));
 			for(int i=boxheight-4;i>0;i-=2){
 				frames.Add(BoxAnimationFrame(i,FrameWidth(frames.Last().Count,frames.Last()[0].Length())));
 			}
-			UI.DisplayStats(false);
+			UI.DisplayStats();
 			if(!no_displaynow_call){
 				Actor.B.DisplayNow();
 			}
@@ -360,35 +355,18 @@ namespace Forays{
 				++y;
 			}
 			Screen.CursorVisible = false;
+			bool mouse_movement = MouseUI.IgnoreMouseMovement;
+			MouseUI.IgnoreMouseMovement = false;
 			Game.GLUpdate();
 			Thread.Sleep(500);
 			Input.FlushInput();
-			/*	switch(Input.ReadKey().KeyChar){
-				case 'q':
-					box_edge_color = NextColor(box_edge_color);
-					break;
-				case 'w':
-					box_corner_color = NextColor(box_corner_color);
-					break;
-				case 'e':
-					first_line_color = NextColor(first_line_color);
-					break;
-				case 'r':
-					text_color = NextColor(text_color);
-					break;
-				default:
-					done=true;
-					break;
-				}
-			}*/
 			if(Input.ReadKey().KeyChar == '='){
 				Global.Options[OptionType.NEVER_DISPLAY_TIPS] = true;
 			}
+			MouseUI.IgnoreMouseMovement = mouse_movement;
 			Screen.WriteArray((Global.SCREEN_H - boxheight) / 2,x,memory);
-			if(topic != TutorialTopic.Feats){ //another exception
-				UI.DisplayStats(true);
-			}
 			MouseUI.PopButtonMap();
+			UI.DisplayStats();
 			displayed[topic] = true;
 			Screen.CursorVisible = true;
 		}

@@ -717,9 +717,9 @@ namespace Forays{
 				}
 			}
 			List<colorstring> result = new List<colorstring>();
-			Color text = Color.Gray;
+			Color text = UI.darken_status_bar? Colors.status_darken : Color.Gray;
 			if(p.Equals(UI.MapCursor)){
-				text = Colors.status_highlight;
+				text = UI.darken_status_bar? Colors.status_highlight_darken : Colors.status_highlight;
 			}
 			foreach(string s in s_name.Capitalize().GetWordWrappedList(Global.STATUS_WIDTH - 3,true)){
 				colorstring cs = new colorstring();
@@ -1284,7 +1284,7 @@ namespace Forays{
 				}
 			}
 		}
-		private Weapon WeaponOfType(WeaponType w){
+		public Weapon WeaponOfType(WeaponType w){
 			if(weapons == null || weapons.Count == 0){
 				return null;
 			}
@@ -1299,7 +1299,7 @@ namespace Forays{
 			}
 			return n.Value;
 		}
-		private Armor ArmorOfType(ArmorType a){
+		public Armor ArmorOfType(ArmorType a){
 			if(armors == null || armors.Count == 0){
 				return null;
 			}
@@ -1362,24 +1362,24 @@ namespace Forays{
 			}
 			return EquippedArmor.Protection();
 		}
-		public int TotalSkill(SkillType skill){
-			int result = skills[skill];
+		public int BonusSkill(SkillType skill){ // Actual bonus skill points, not just effective skill points like standing in darkness.
 			switch(skill){
 			case SkillType.COMBAT:
-				result += attrs[AttrType.BONUS_COMBAT];
-				break;
+			return attrs[AttrType.BONUS_COMBAT];
 			case SkillType.DEFENSE:
-				result += attrs[AttrType.BONUS_DEFENSE];
-				result += TotalProtectionFromArmor();
-				break;
+			return attrs[AttrType.BONUS_DEFENSE] + TotalProtectionFromArmor();
 			case SkillType.MAGIC:
-				result += attrs[AttrType.BONUS_MAGIC];
-				break;
+			return attrs[AttrType.BONUS_MAGIC];
 			case SkillType.SPIRIT:
-				result += attrs[AttrType.BONUS_SPIRIT];
-				break;
+			return attrs[AttrType.BONUS_SPIRIT];
 			case SkillType.STEALTH:
-				result += attrs[AttrType.BONUS_STEALTH];
+			default:
+			return attrs[AttrType.BONUS_STEALTH] - EquippedArmor.StealthPenalty();
+			}
+		}
+		public int TotalSkill(SkillType skill){ // Total effective skill, so some things can modify the total for Stealth.
+			int result = skills[skill] + BonusSkill(skill);
+			if(skill == SkillType.STEALTH){
 				if((LightRadius() > 0 && !M.wiz_lite && !M.wiz_dark) || (EquippedArmor.type == ArmorType.FULL_PLATE && tile().light_value > 0)){
 					return 0;
 				}
@@ -1388,8 +1388,6 @@ namespace Forays{
 						result += 2;
 					}
 				}
-				result -= EquippedArmor.StealthPenalty();
-				break;
 			}
 			return result;
 		}
@@ -2137,7 +2135,7 @@ namespace Forays{
 			Screen.UpdateScreenCenterColumn(col);
 			M.Draw();
 			UI.MapCursor = new pos(-1,-1);
-			UI.DisplayStats(true);
+			UI.DisplayStats();
 			if(HasAttr(AttrType.AUTOEXPLORE) && !grab_item_at_end_of_path){
 				if(path.Count == 0){ //todo: autoexplore could also track whether the current path is leading to an unexplored tile instead of to an item/shrine/etc.
 					if(!FindAutoexplorePath()){ // - in this case I could check that tile's neighbors each turn, and calculate a new path early if they've all been mapped now.
@@ -2444,7 +2442,7 @@ namespace Forays{
 						}
 					}
 					B.Print(false);
-					UI.DisplayStats(true);
+					UI.DisplayStats();
 					Cursor();
 				}
 				else{
@@ -2481,6 +2479,7 @@ namespace Forays{
 					}
 				}
 			}
+			MouseUI.IgnoreMouseMovement = false;
 			if(Q.turn == 0){
 				Help.TutorialTip(TutorialTopic.Movement); //todo: move this elsewhere?
 				Cursor();
@@ -2489,7 +2488,6 @@ namespace Forays{
 				Help.TutorialTip(TutorialTopic.Attacking);
 				Cursor();
 			}
-			MouseUI.IgnoreMouseMovement = false;
 			ConsoleKeyInfo command = Input.ReadKey();
 			char ch = command.GetAction().GetCommandChar();
 			bool alt = false;
@@ -3117,9 +3115,6 @@ namespace Forays{
 					break;
 				}
 				Screen.CursorVisible = false;
-				if(!interrupted_path.BoundsCheck(M.tile)){
-					B.DisplayNow("Move cursor to choose destination, then press Enter. ");
-				}
 				Dictionary<Actor,colorchar> old_ch = new Dictionary<Actor,colorchar>();
 				List<Actor> drawn = new List<Actor>();
 				foreach(Actor a in M.AllActors()){
@@ -3758,7 +3753,7 @@ namespace Forays{
 			}
 			case 'e':
 			{
-				int[] changes = DisplayEquipment();
+				int[] changes = UI.DisplayEquipment();
 				M.Redraw();
 				Weapon new_weapon = WeaponOfType((WeaponType)changes[0]);
 				Armor new_armor = ArmorOfType((ArmorType)changes[1]);
@@ -4066,9 +4061,9 @@ namespace Forays{
 			}
 			case 'c':
 			{
-				int feat = DisplayCharacterInfo();
+				int feat = UI.DisplayCharacterInfo();
 				if(feat >= 0){
-					if(FrozenThisTurn()){
+					if(FrozenThisTurn()){ //todo: fix this, once there are things besides feats to use.
 						break;
 					}
 					foreach(FeatType f in feats_in_order){
@@ -4292,18 +4287,22 @@ namespace Forays{
 			case '-':
 			{
 				MouseUI.PushButtonMap();
+				UI.draw_bottom_commands = false;
+				UI.darken_status_bar = true;
 				Screen.CursorVisible = false;
 				List<string> commandhelp = Help.HelpText(HelpTopic.Commands);
 				commandhelp.RemoveRange(0,2);
 				Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
-				for(int i=0;i<20;++i){
+				for(int i=0;i<23;++i){
 					Screen.WriteMapString(i+1,0,commandhelp[i].PadRight(COLS));
 				}
-				Screen.WriteMapString(ROWS-1,0,"".PadRight(COLS,'-'));
+				Screen.WriteMapString(ROWS+2,0,"".PadRight(COLS,'-'));
 				B.DisplayNow("Commands: ");
 				Screen.CursorVisible = true;
 				Input.ReadKey();
 				MouseUI.PopButtonMap();
+				UI.draw_bottom_commands = true;
+				UI.darken_status_bar = false;
 				Q0();
 				break;
 			}
@@ -4400,6 +4399,9 @@ namespace Forays{
 						Q0();
 						for(int i=0;i<20;++i){
 							Screen.WriteMapString(i,0,Item.GenerateScrollName().ToLower().PadRight(Global.COLS));
+						}
+						foreach(EquipmentStatus st in Enum.GetValues(typeof(EquipmentStatus))){
+							EquippedWeapon.status[st] = true;
 						}
 						Input.ReadKey();
 						/*while(true){
@@ -5347,7 +5349,7 @@ namespace Forays{
 							}
 						}*/
 						if(tile().inv == null){
-							tile().inv = Item.Create(ConsumableType.REGENERATION,row,col);
+							tile().inv = Item.Create(ConsumableType.ENCHANTMENT,row,col);
 							//TileInDirection(8).inv = Item.Create(ConsumableType.FLAMES,-1,-1);
 							B.Add("You feel something roll beneath your feet. ");
 							//magic_trinkets.Add(MagicTrinketType.PENDANT_OF_LIFE);
@@ -14986,528 +14988,6 @@ namespace Forays{
 			}
 			return result;
 		}
-		public int DisplayCharacterInfo(){ return DisplayCharacterInfo(true); }
-		public int DisplayCharacterInfo(bool readkey){
-			MouseUI.PushButtonMap();
-			UI.DisplayStats();
-			for(int i=1;i<ROWS-1;++i){
-				Screen.WriteMapString(i,0,"".PadRight(COLS));
-			}
-			Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
-			Screen.WriteMapString(ROWS-1,0,"".PadRight(COLS,'-'));
-			Color catcolor = Color.Green;
-			string s = ("Name: " + player_name).PadRight(COLS/2) + "Turns played: " + (Q.turn / 100);
-			Screen.WriteMapString(2,0,s);
-			Screen.WriteMapString(2,0,new cstr(catcolor,"Name"));
-			Screen.WriteMapString(2,COLS/2,new cstr(catcolor,"Turns played"));
-			Screen.WriteMapString(5,0,"Skills:");
-			Screen.WriteMapString(5,0,new cstr(catcolor,"Skills"));
-			int pos = 7;
-			for(SkillType sk = SkillType.COMBAT;sk < SkillType.NUM_SKILLS;++sk){
-				if(sk == SkillType.STEALTH && pos > 50){
-					Screen.WriteMapString(6,8,"Stealth(" + skills[SkillType.STEALTH].ToString());
-					pos = 16 + skills[SkillType.STEALTH].ToString().Length;
-					int bonus = attrs[AttrType.BONUS_STEALTH] - EquippedArmor.StealthPenalty();
-					if(bonus != 0){
-						if(bonus > 0){
-							Screen.WriteMapString(6,pos,new cstr(Color.Yellow,"+" + bonus.ToString()));
-							pos += bonus.ToString().Length + 1;
-						}
-						else{
-							Screen.WriteMapString(6,pos,new cstr(Color.Blue,bonus.ToString()));
-							pos += bonus.ToString().Length;
-						}
-					}
-					Screen.WriteMapChar(6,pos,')');
-				}
-				else{
-					Screen.WriteMapString(5,pos," " + Skill.Name(sk));
-					pos += Skill.Name(sk).Length + 1;
-					string count1 = skills[sk].ToString();
-					string count2;
-					switch(sk){
-					case SkillType.COMBAT:
-						count2 = attrs[AttrType.BONUS_COMBAT].ToString();
-						break;
-					case SkillType.DEFENSE:
-						count2 = (attrs[AttrType.BONUS_DEFENSE] + TotalProtectionFromArmor()).ToString();
-						break;
-					case SkillType.MAGIC:
-						count2 = attrs[AttrType.BONUS_MAGIC].ToString();
-						break;
-					case SkillType.SPIRIT:
-						count2 = attrs[AttrType.BONUS_SPIRIT].ToString();
-						break;
-					case SkillType.STEALTH:
-						count2 = (attrs[AttrType.BONUS_STEALTH] - EquippedArmor.StealthPenalty()).ToString();
-						break;
-					default:
-						count2 = "error";
-						break;
-					}
-					Screen.WriteMapString(5,pos,"(" + count1);
-					pos += count1.Length + 1;
-					if(count2 != "0"){
-						if(sk == SkillType.STEALTH && attrs[AttrType.BONUS_STEALTH] - EquippedArmor.StealthPenalty() < 0){
-							Screen.WriteMapString(5,pos,new cstr(Color.Blue,count2));
-							pos += count2.Length;
-						}
-						else{
-							Screen.WriteMapString(5,pos,new cstr(Color.Yellow,"+" + count2));
-							pos += count2.Length + 1;
-						}
-					}
-					Screen.WriteMapChar(5,pos,')');
-					pos++;
-				}
-			}
-			Screen.WriteMapString(8,0,"Feats: ");
-			Screen.WriteMapString(8,0,new cstr(catcolor,"Feats"));
-			string featlist = "";
-			int active_feat_count = 0;
-			foreach(FeatType f in feats_in_order){
-				if(featlist.Length > 0){
-					featlist = featlist + ", ";
-				}
-				if(Feat.IsActivated(f)){
-					featlist = featlist + "[" + (char)(active_feat_count + 'a') + "] " + Feat.Name(f);
-					++active_feat_count;
-				}
-				else{
-					featlist = featlist + Feat.Name(f);
-				}
-			}
-			MouseUI.AutomaticButtonsFromStrings = true;
-			int currentrow = 8;
-			while(featlist.Length > COLS-7){
-				int currentcol = COLS-8;
-				while(featlist[currentcol] != ','){
-					--currentcol;
-				}
-				Screen.WriteString(currentrow + Global.MAP_OFFSET_ROWS,7 + Global.MAP_OFFSET_COLS,featlist.Substring(0,currentcol+1).GetColorString());
-				//Screen.WriteMapString(currentrow,7,featlist.Substring(0,currentcol+1).GetColorString());
-				featlist = featlist.Substring(currentcol+2);
-				++currentrow;
-			}
-			Screen.WriteString(currentrow + Global.MAP_OFFSET_ROWS,7 + Global.MAP_OFFSET_COLS,featlist.GetColorString());
-			MouseUI.AutomaticButtonsFromStrings = false;
-			Screen.WriteMapString(11,0,"Spells: ");
-			Screen.WriteMapString(11,0,new cstr(catcolor,"Spells"));
-			string spelllist = "";
-			for(SpellType sp = SpellType.RADIANCE;sp < SpellType.NUM_SPELLS;++sp){
-				if(HasSpell(sp)){
-					if(spelllist.Length == 0){ //if this is the first one...
-						spelllist = spelllist + Spell.Name(sp);
-					}
-					else{
-						spelllist = spelllist + ", " + Spell.Name(sp);
-					}
-				}
-			}
-			currentrow = 11;
-			while(spelllist.Length > COLS-8){
-				int currentcol = COLS-9;
-				while(spelllist[currentcol] != ','){
-					--currentcol;
-				}
-				Screen.WriteMapString(currentrow,8,spelllist.Substring(0,currentcol+1));
-				spelllist = spelllist.Substring(currentcol+2);
-				++currentrow;
-			}
-			Screen.WriteMapString(currentrow,8,spelllist);
-			Screen.WriteMapString(14,0,"Magical equipment: ");
-			Screen.WriteMapString(14,0,new cstr(catcolor,"Magical equipment"));
-			string equipmentlist = "";
-			foreach(Weapon w in weapons){
-				if(w.enchantment != EnchantmentType.NO_ENCHANTMENT){
-					string weapon_name = w.NameWithEnchantment().ToUpper()[0] + w.NameWithEnchantment().Substring(1);
-					if(equipmentlist.Length == 0){
-						equipmentlist = equipmentlist + weapon_name;
-					}
-					else{
-						equipmentlist = equipmentlist + ", " + weapon_name;
-					}
-				}
-			}
-			foreach(MagicTrinketType trinket in magic_trinkets){
-				string trinket_name = MagicTrinket.Name(trinket).ToUpper()[0] + MagicTrinket.Name(trinket).Substring(1);
-				if(equipmentlist.Length == 0){
-					equipmentlist = equipmentlist + trinket_name;
-				}
-				else{
-					equipmentlist = equipmentlist + ", " + trinket_name;
-				}
-			}
-			currentrow = 14;
-			if(equipmentlist.Length > COLS-19){
-				int currentcol = COLS-20;
-				while(equipmentlist[currentcol] != ','){
-					--currentcol;
-				}
-				Screen.WriteMapString(currentrow,19,equipmentlist.Substring(0,currentcol+1));
-				equipmentlist = equipmentlist.Substring(currentcol+2);
-				++currentrow;
-			}
-			while(equipmentlist.Length > COLS-2){
-				int currentcol = COLS-3;
-				while(equipmentlist[currentcol] != ','){
-					--currentcol;
-				}
-				Screen.WriteMapString(currentrow,2,equipmentlist.Substring(0,currentcol+1));
-				equipmentlist = equipmentlist.Substring(currentcol+2);
-				++currentrow;
-				if(currentrow == ROWS){
-					break;
-				}
-			}
-			if(currentrow == 14){
-				Screen.WriteMapString(currentrow,19,equipmentlist);
-			}
-			else{
-				if(currentrow != ROWS){
-					Screen.WriteMapString(currentrow,2,equipmentlist);
-				}
-			}
-			Screen.ResetColors();
-			B.DisplayNow("Character information: ");
-			Screen.CursorVisible = true;
-			int num_active_feats = 0;
-			foreach(FeatType feat in Enum.GetValues(typeof(FeatType))){
-				if(HasFeat(feat) && Feat.IsActivated(feat)){
-					++num_active_feats;
-				}
-			}
-			if(readkey){
-				int result = GetSelection("Character information: ",num_active_feats,false,true,false);
-				MouseUI.PopButtonMap();
-				return result;
-				//Input.ReadKey();
-			}
-			else{
-				MouseUI.PopButtonMap();
-				return -1;
-			}
-		}
-		public int[] DisplayEquipment(){
-			MouseUI.PushButtonMap();
-			WeaponType new_weapon_type = EquippedWeapon.type;
-			ArmorType new_armor_type = EquippedArmor.type;
-			int selected_magic_trinket_idx = -1;
-			if(magic_trinkets.Count > 0){
-				selected_magic_trinket_idx = R.Roll(magic_trinkets.Count)-1;
-				int i = 0;
-				foreach(MagicTrinketType trinket in magic_trinkets){
-					MouseUI.CreateButton((ConsoleKey)(ConsoleKey.I + i),false,i+1+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS + 32,1,34);
-					++i;
-				}
-			}
-			Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
-			for(int i=1;i<ROWS-1;++i){
-				Screen.WriteMapString(i,0,"".PadRight(COLS));
-			}
-			int line = 1;
-			for(WeaponType w = WeaponType.SWORD;w <= WeaponType.BOW;++w){
-				Screen.WriteMapString(line,6,WeaponOfType(w).EquipmentScreenName());
-				ConsoleKey key = (ConsoleKey)(ConsoleKey.A + line-1);
-				if(w == new_weapon_type){
-					key = ConsoleKey.Enter;
-				}
-				if(magic_trinkets.Count >= line){
-					MouseUI.CreateButton(key,false,line+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,1,32);
-				}
-				else{
-					MouseUI.CreateMapButton(key,false,line,1);
-				}
-				++line;
-			}
-			line = 8;
-			for(ArmorType a = ArmorType.LEATHER;a <= ArmorType.FULL_PLATE;++a){
-				Screen.WriteMapString(line,6,ArmorOfType(a).EquipmentScreenName());
-				ConsoleKey key = (ConsoleKey)(ConsoleKey.A + line-3);
-				if(a == new_armor_type){
-					key = ConsoleKey.Enter;
-				}
-				if(magic_trinkets.Count >= line){
-					MouseUI.CreateButton(key,false,line+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,1,32);
-				}
-				else{
-					MouseUI.CreateMapButton(key,false,line,1);
-				}
-				++line;
-			}
-			line = 1;
-			foreach(MagicTrinketType m in magic_trinkets){
-				string s = MagicTrinket.Name(m);
-				Screen.WriteMapString(line,38,s[0].ToString().ToUpper() + s.Substring(1));
-				++line;
-			}
-			Screen.WriteMapString(12,0,new cstr(Color.DarkRed,"Weapon: "));
-			Screen.WriteMapChar(12,6,':');
-			Screen.WriteMapString(16,0,new cstr(Color.DarkCyan,"Armor: "));
-			Screen.WriteMapChar(16,5,':');
-			Screen.WriteMapString(19,0,new cstr(Color.DarkGreen,"Magic trinket: "));
-			Screen.WriteMapChar(19,13,':');
-			Screen.WriteMapString(11,0,"".PadRight(COLS,'-'));
-			ConsoleKeyInfo command;
-			bool done = false;
-			while(!done){
-				Weapon new_weapon = WeaponOfType(new_weapon_type);
-				Armor new_armor = ArmorOfType(new_armor_type);
-				line = 1;
-				for(WeaponType w = WeaponType.SWORD;w <= WeaponType.BOW;++w){
-					if(new_weapon_type == w){
-						Screen.WriteMapChar(line,0,'>');
-						Screen.WriteMapString(line,2,new colorstring("[",Color.Gray,((char)(w+(int)'a')).ToString(),Color.Red,"]",Color.Gray));
-						//Screen.WriteMapString(line,2,new cstr(Color.Red,"[" + (char)(w+(int)'a') + "]"));
-					}
-					else{
-						Color letter_color = Color.Cyan;
-						if(EquippedWeapon.status[EquipmentStatus.STUCK]){
-							letter_color = Color.Red;
-						}
-						Screen.WriteMapChar(line,0,' ');
-						Screen.WriteMapString(line,2,new colorstring("[",Color.Gray,((char)(w+(int)'a')).ToString(),letter_color,"]",Color.Gray));
-						//Screen.WriteMapString(line,2,new cstr(letter_color,"[" + (char)(w+(int)'a') + "]"));
-					}
-					++line;
-				}
-				line = 8;
-				for(ArmorType a = ArmorType.LEATHER;a <= ArmorType.FULL_PLATE;++a){
-					if(new_armor_type == a){
-						Screen.WriteMapChar(line,0,'>');
-						Screen.WriteMapString(line,2,new colorstring("[",Color.Gray,((char)(a+(int)'f')).ToString(),Color.Red,"]",Color.Gray));
-						//Screen.WriteMapString(line,2,new cstr(Color.Red,"[" + (char)(a+(int)'f') + "]"));
-					}
-					else{
-						Color letter_color = Color.Cyan;
-						if(EquippedArmor.status[EquipmentStatus.STUCK]){
-							letter_color = Color.Red;
-						}
-						Screen.WriteMapChar(line,0,' ');
-						Screen.WriteMapString(line,2,new colorstring("[",Color.Gray,((char)(a+(int)'f')).ToString(),letter_color,"]",Color.Gray));
-						//Screen.WriteMapString(line,2,new cstr(letter_color,"[" + (char)(a+(int)'f') + "]"));
-					}
-					++line;
-				}
-				line = 1;
-				int letter = 0;
-				foreach(MagicTrinketType m in magic_trinkets){
-					if(selected_magic_trinket_idx == magic_trinkets.IndexOf(m)){
-						Screen.WriteMapChar(line,32,'>');
-					}
-					else{
-						Screen.WriteMapChar(line,32,' ');
-					}
-					Screen.WriteMapString(line,34,new colorstring("[",Color.Gray,((char)(letter+(int)'i')).ToString(),Color.Red,"]",Color.Gray));
-					//Screen.WriteMapString(line,34,new cstr(Color.Red,"[" + (char)(letter+(int)'i') + "]"));
-					++line;
-					++letter;
-				}
-				Screen.WriteMapString(12,8,new_weapon.Description()[0].PadRight(COLS));
-				Screen.WriteMapString(13,0,new_weapon.Description()[1].PadRight(COLS));
-				colorstring weaponstatus = new colorstring();
-				colorstring armorstatus = new colorstring();
-				cstr weaponstatusdescription = new cstr();
-				cstr armorstatusdescription = new cstr();
-				int weaponstatuscount = 0;
-				int armorstatuscount = 0;
-				for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
-					EquipmentStatus st = (EquipmentStatus)i;
-					if(new_weapon.status[st]){
-						weaponstatus.strings.Add(new cstr(Weapon.StatusName(st) + "  ",Weapon.StatusColor(st)));
-						weaponstatusdescription = new cstr(Weapon.StatusDescription(st).PadRight(COLS),Weapon.StatusColor(st));
-						++weaponstatuscount;
-					}
-					if(new_armor.status[st]){
-						armorstatus.strings.Add(new cstr(Weapon.StatusName(st) + "  ",Weapon.StatusColor(st)));
-						armorstatusdescription = new cstr(Weapon.StatusDescription(st).PadRight(COLS),Weapon.StatusColor(st));
-						++armorstatuscount;
-					}
-				}
-				int ws_length = weaponstatus.Length();
-				if(ws_length < COLS && ws_length > 0){
-					cstr cs = weaponstatus.strings.LastOrDefault();
-					string s = cs.s;
-					s = s.Substring(0,s.Length-2); //remove the last 2 spaces
-					ws_length -= 2;
-					weaponstatus.strings[weaponstatus.strings.Count-1] = new cstr(s,cs.color);
-					int left_half = ((COLS - ws_length) / 2) - 2;
-					int right_half = (COLS - ws_length) - left_half;
-					weaponstatus.strings.Insert(0,new cstr("".PadRight(left_half),Color.Gray));
-					weaponstatus.strings.Add(new cstr("".PadRight(right_half),Color.Gray));
-				}
-				int as_length = armorstatus.Length();
-				if(as_length < COLS && as_length > 0){
-					cstr cs = armorstatus.strings.LastOrDefault();
-					string s = cs.s;
-					s = s.Substring(0,s.Length-2); //remove the last 2 spaces
-					as_length -= 2;
-					armorstatus.strings[armorstatus.strings.Count-1] = new cstr(s,cs.color);
-					int left_half = ((COLS - as_length) / 2) - 2;
-					int right_half = (COLS - as_length) - left_half;
-					armorstatus.strings.Insert(0,new cstr("".PadRight(left_half),Color.Gray));
-					armorstatus.strings.Add(new cstr("".PadRight(right_half),Color.Gray));
-				}
-				if(new_weapon.enchantment != EnchantmentType.NO_ENCHANTMENT){
-					Screen.WriteMapString(14,1,new_weapon.DescriptionOfEnchantment().PadRight(COLS),new_weapon.EnchantmentColor());
-					if(weaponstatuscount == 1){
-						Screen.WriteMapString(15,1,weaponstatusdescription);
-					}
-					else{
-						Screen.WriteMapString(15,1,weaponstatus);
-					}
-				}
-				else{
-					if(weaponstatuscount == 1){
-						Screen.WriteMapString(14,1,weaponstatusdescription);
-					}
-					else{
-						Screen.WriteMapString(14,1,weaponstatus);
-					}
-					Screen.WriteMapString(15,1,"".PadRight(COLS));
-				}
-				Screen.WriteMapString(16,7,new_armor.Description()[0].PadRight(COLS));
-				Screen.WriteMapString(17,0,new_armor.Description()[1].PadRight(COLS));
-				if(new_armor.enchantment != EnchantmentType.NO_ENCHANTMENT){
-					Screen.WriteMapString(18,8,new_armor.DescriptionOfEnchantment().PadRight(COLS));
-					if(armorstatuscount == 1){
-						Screen.WriteMapString(19,1,armorstatusdescription);
-					}
-					else{
-						Screen.WriteMapString(19,1,armorstatus);
-					}
-				}
-				else{
-					if(armorstatuscount == 1){
-						Screen.WriteMapString(18,1,armorstatusdescription);
-					}
-					else{
-						Screen.WriteMapString(18,1,armorstatus);
-					}
-				}
-				if(selected_magic_trinket_idx >= 0){
-					string[] magic_item_desc = MagicTrinket.Description(magic_trinkets[selected_magic_trinket_idx]);
-					Screen.WriteMapString(19,15,magic_item_desc[0].PadRight(51));
-					Screen.WriteMapString(20,15,magic_item_desc[1].PadRight(51));
-				}
-				else{
-					Screen.WriteMapString(19,15,"(none)");
-				}
-				if(new_weapon == EquippedWeapon && new_armor == EquippedArmor){
-					Screen.WriteMapString(ROWS-1,0,"".PadRight(COLS,'-'));
-				}
-				else{
-					if((new_weapon != EquippedWeapon && EquippedWeapon.status[EquipmentStatus.STUCK]) || (new_armor != EquippedArmor && EquippedArmor.status[EquipmentStatus.STUCK])){
-						Screen.WriteMapString(ROWS-1,0,"".PadRight(COLS,'-'));
-						MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS+ROWS-1,Global.MAP_OFFSET_COLS);
-					}
-					else{
-						Screen.WriteMapString(ROWS-1,0,"[Enter] to confirm-----".PadLeft(43,'-'));
-						Screen.WriteMapString(ROWS-1,21,new cstr(Color.Magenta,"Enter"));
-						MouseUI.CreateMapButton(ConsoleKey.Enter,false,ROWS-1,1);
-					}
-				}
-				Screen.ResetColors();
-				B.DisplayNow("Your equipment: ");
-				Screen.CursorVisible = true;
-				command = Input.ReadKey();
-				char ch = command.GetCommandChar();
-				switch(ch){
-				case 'a':
-				case 'b':
-				case 'c':
-				case 'd':
-				case 'e':
-				case '!':
-				case '@':
-				case '#':
-				case '$':
-				case '%':
-				{
-					switch(ch){
-					case '!':
-						ch = 'a';
-						break;
-					case '@':
-						ch = 'b';
-						break;
-					case '#':
-						ch = 'c';
-						break;
-					case '$':
-						ch = 'd';
-						break;
-					case '%':
-						ch = 'e';
-						break;
-					}
-					int num = (int)(ch - 'a');
-					if(num != (int)(new_weapon_type)){
-						MouseUI.GetButton((int)(new_weapon_type)+1+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS).key = (ConsoleKey)(ConsoleKey.A + (int)new_weapon_type);
-						MouseUI.GetButton(num+1+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS).key = ConsoleKey.Enter;
-						new_weapon_type = (WeaponType)num;
-					}
-					break;
-				}
-				case 'f':
-				case 'g':
-				case 'h':
-				case '*':
-				case '(':
-				case ')':
-				{
-					switch(ch){
-					case '*':
-						ch = 'f';
-						break;
-					case '(':
-						ch = 'g';
-						break;
-					case ')':
-						ch = 'h';
-						break;
-					}
-					int num = (int)(ch - 'f');
-					if(num != (int)(new_armor_type)){
-						MouseUI.GetButton((int)(new_armor_type)+8+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS).key = (ConsoleKey)(ConsoleKey.F + (int)new_armor_type);
-						MouseUI.GetButton(num+8+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS).key = ConsoleKey.Enter;
-						new_armor_type = (ArmorType)num;
-					}
-					break;
-				}
-				case 'i':
-				case 'j':
-				case 'k':
-				case 'l':
-				case 'm':
-				case 'n':
-				case 'o':
-				case 'p':
-				case 'q':
-				case 'r':
-				{
-					int num = (int)ch - (int)'i';
-					if(num < magic_trinkets.Count && num != selected_magic_trinket_idx){
-						selected_magic_trinket_idx = num;
-					}
-					break;
-				}
-				case (char)27:
-				case ' ':
-					new_weapon_type = EquippedWeapon.type; //reset
-					new_armor_type = EquippedArmor.type;
-					done = true;
-					break;
-				case (char)13:
-					done = true;
-					break;
-				default:
-					break;
-				}
-			}
-			MouseUI.PopButtonMap();
-			return new int[]{(int)new_weapon_type,(int)new_armor_type};
-		}
 		public void IncreaseSkill(SkillType skill){
 			List<string> learned = new List<string>();
 			skills[skill]++;
@@ -15586,7 +15066,7 @@ namespace Forays{
 				for(int i=0;i<4;++i){
 					MouseUI.CreateMapButton((ConsoleKey)(ConsoleKey.A + i),false,1 + i*5,5);
 				}
-				MouseUI.CreateButton(ConsoleKey.Oem2,true,Global.MAP_OFFSET_ROWS + ROWS-1,45,1,12);
+				MouseUI.CreateButton(ConsoleKey.Oem2,true,Global.MAP_OFFSET_ROWS + ROWS-1,Global.MAP_OFFSET_COLS + 32,1,12);
 				while(!done){
 					Screen.ResetColors();
 					Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
@@ -15623,14 +15103,14 @@ namespace Forays{
 						Screen.WriteMapChar(21,10,new colorchar(Color.Cyan,'d'));
 						Screen.WriteMapChar(21,33,new colorchar(Color.Cyan,'?'));
 						Screen.WriteMapString(21,48,new cstr(Color.Magenta,"Enter"));
-						MouseUI.CreateButton(ConsoleKey.Enter,false,Global.MAP_OFFSET_ROWS + ROWS-1,60,1,17);
+						MouseUI.CreateButton(ConsoleKey.Enter,false,Global.MAP_OFFSET_ROWS + ROWS-1,Global.MAP_OFFSET_COLS + 47,1,17);
 					}
 					else{
 						Screen.WriteMapString(21,0,"--Type [a-d] to choose a feat---[?] for help----------------------");
 						Screen.WriteMapChar(21,8,new colorchar(Color.Cyan,'a'));
 						Screen.WriteMapChar(21,10,new colorchar(Color.Cyan,'d'));
 						Screen.WriteMapChar(21,33,new colorchar(Color.Cyan,'?'));
-						MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS + ROWS-1,60);
+						MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS + ROWS-1,Global.MAP_OFFSET_COLS + 47);
 					}
 					B.DisplayNow("Your " + Skill.Name(skill) + " skill increases to " + skills[skill] + ". Choose a feat: ");
 					if(!Help.displayed[TutorialTopic.Feats]){
@@ -16676,9 +16156,6 @@ namespace Forays{
 			}
 			if(no_ask){
 				B.DisplayNow(message);
-				if(!no_ask){
-					MouseUI.PopButtonMap();
-				}
 				MouseUI.AutomaticButtonsFromStrings = false;
 				return -1;
 			}
@@ -16692,9 +16169,7 @@ namespace Forays{
 						M.Draw();
 					}
 				}
-				if(!no_ask){
-					MouseUI.PopButtonMap();
-				}
+				MouseUI.PopButtonMap();
 				MouseUI.AutomaticButtonsFromStrings = false;
 				return result;
 			}

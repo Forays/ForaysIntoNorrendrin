@@ -14,7 +14,7 @@ namespace Forays{
 		private int max_length;
 		private List<string> str = new List<string>();
 		private string overflow;
-		private int log_length = 1000;
+		public const int log_length = 1000;
 		private string[] log;
 		private int num_messages;
 		private int position;
@@ -30,7 +30,7 @@ namespace Forays{
 			for(int i=0;i<log_length;++i){
 				log[i] = "";
 			}
-			position = 18;
+			position = 21;
 			num_messages = position;
 			M = g.M;
 			player = g.player;
@@ -140,7 +140,6 @@ namespace Forays{
 			else{
 				string s = str.LastOrDefault();
 				int last = (position-1).Modulo(log_length);
-				//if(last == -1){ last = 19; }
 				string prev = log[last];
 				string count = "1";
 				int pos = prev.LastIndexOf(" (x");
@@ -171,7 +170,6 @@ namespace Forays{
 				}
 				if(old_message){
 					Screen.WriteMapString(i-3,0,PreviousMessage(offset+3-(i+lines)).PadToMapSize(),Color.DarkGray);
-					//Screen.ForegroundColor = ConsoleColor.Gray;
 				}
 				else{
 					if(repeated_message){
@@ -211,18 +209,10 @@ namespace Forays{
 				player.Interrupt();
 			}
 			interrupt = false;
-			/*foreach(string s in str){
-				if(s != "You regenerate. " && s != "You rest... " && s != "You breathe in the overwhelming scent of the poppies. " && s != ""){ //eventually this will become a list of ignored strings
-					if(!player.HasAttr(AttrType.RESTING)){
-						player.Interrupt();
-					}
-				}
-			}*/
 			bool repeated_message = false;
 			foreach(string s in str){
 				if(s != ""){
 					int last = (position-1).Modulo(log_length);
-					//if(last == -1){ last = 19; }
 					string prev = log[last];
 					string count = "1";
 					int pos = prev.LastIndexOf(" (x");
@@ -244,11 +234,9 @@ namespace Forays{
 					else{
 						log[position] = s;
 						position = (position+1).Modulo(log_length);
-						if(num_messages < 1000){
+						if(num_messages < log_length){
 							++num_messages;
 						}
-						//++position;
-						//if(position == 20){ position = 0; }
 						repeated_message = false;
 					}
 				}
@@ -264,7 +252,6 @@ namespace Forays{
 				}
 				if(old_message){
 					Screen.WriteMapString(i-3,0,PreviousMessage(3-i).PadToMapSize(),Color.DarkGray);
-					//Screen.ForegroundColor = ConsoleColor.Gray;
 				}
 				else{
 					if(repeated_message){
@@ -272,7 +259,6 @@ namespace Forays{
 						if(pos != -1){
 							Screen.WriteMapString(i-3,0,PreviousMessage(3-i).Substring(0,pos));
 							Screen.WriteMapString(i-3,pos,PreviousMessage(3-i).Substring(pos).PadToMapSize(),Color.DarkGray);
-							//Screen.ForegroundColor = ConsoleColor.Gray;
 						}
 						else{
 							Screen.WriteMapString(i-3,0,PreviousMessage(3-i).PadToMapSize());
@@ -293,7 +279,6 @@ namespace Forays{
 				Screen.WriteString(cursor_row,cursor_col,"[more]",Color.Yellow);
 				MouseUI.PushButtonMap();
 				Screen.SetCursorPosition(cursor_col+6,cursor_row);
-				//Screen.ForegroundColor = ConsoleColor.Gray;
 				Screen.CursorVisible = true;
 				Input.ReadKey();
 				MouseUI.PopButtonMap();

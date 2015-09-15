@@ -159,28 +159,33 @@ namespace Forays{
 				GLGame.Timer.Start();
 				Screen.CursorVisible = false;
 			}
-			for(int i=0;i<24;++i){ //todo: update title screen!
-				Color color = Color.Yellow;
-				if(i==18){
-					color = Color.Green;
-				}
-				if(i>18){
-					color = Color.DarkGray;
-				}
-				for(int j=0;j<80;++j){
-					if(Global.titlescreen[i][j] != ' '){
-						if(Global.titlescreen[i][j] == '#' && (!Global.LINUX || Screen.GLMode)){
-							Screen.WriteChar(i,j,new colorchar(Color.Black,Color.Yellow,' '));
+			Input.LoadKeyRebindings();
+			TitleScreen();
+			MainMenu();
+		}
+		static void TitleScreen(){
+			for(int i=0;i<Global.title[0].GetLength(0);++i){
+				for(int j=0;j<Global.title[0][0].Length;++j){
+					if(Global.title[0][i][j] != ' '){
+						const int row_offset = 4;
+						const int col_offset = 19;
+						if(Global.title[0][i][j] == '#' && (!Global.LINUX || Screen.GLMode)){
+							Screen.WriteChar(i+row_offset,j+col_offset,' ',Color.Black,Color.Yellow);
 						}
 						else{
-							Screen.WriteChar(i,j,new colorchar(color,Color.Black,Global.titlescreen[i][j]));
+							Screen.WriteChar(i+row_offset,j+col_offset,Global.title[0][i][j],Color.Yellow);
 						}
 					}
 				}
 			}
-			Input.LoadKeyRebindings();
+			for(int i=0;i<Global.title[1].GetLength(0);++i){
+				for(int j=0;j<Global.title[1][0].Length;++j){
+					Screen.WriteChar(i+19,j+37,Global.title[1][i][j],Color.Green);
+				}
+			}
+			Screen.WriteString(Global.SCREEN_H-3,Global.SCREEN_W-14,"version " + Global.VERSION + " ",Color.DarkGray);
+			Screen.WriteString(Global.SCREEN_H-2,Global.SCREEN_W-19,"by Derrick Creamer ",Color.DarkGray);
 			Input.ReadKey();
-			MainMenu();
 		}
 		static void MainMenu(){
 			ConsoleKeyInfo command;
@@ -192,24 +197,26 @@ namespace Forays{
 			MouseUI.PushButtonMap();
 			while(true){
 				Screen.Blank();
-				Screen.WriteMapString(1,0,new cstr(Color.Yellow,"Forays into Norrendrin " + Global.VERSION));
+				int row = 8;
+				int col = (Global.SCREEN_W - 28) / 2; //centering "Forays into Norrendrin x.y.z", which is 28 chars.
+				Screen.WriteString(row++,col,new cstr(Color.Yellow,"Forays into Norrendrin " + Global.VERSION));
+				Screen.WriteString(row++,col,new cstr(Color.Green,"".PadRight(28,'-')));
+				col += 4; //recenter for menu options
+				row++;
 				bool saved_game = File.Exists("forays.sav");
 				if(!saved_game){
-					Screen.WriteMapString(4,0,"[a] Start a new game");
+					Screen.WriteString(row++,col,"[a] Start a new game");
 				}
 				else{
-					Screen.WriteMapString(4,0,"[a] Resume saved game");
+					Screen.WriteString(row++,col,"[a] Resume saved game");
 				}
-				Screen.WriteMapString(5,0,"[b] How to play");
-				Screen.WriteMapString(6,0,"[c] High scores");
-				Screen.WriteMapString(7,0,"[d] Quit");
+				Screen.WriteString(row++,col,"[b] How to play");
+				Screen.WriteString(row++,col,"[c] High scores");
+				Screen.WriteString(row++,col,"[d] Quit");
 				for(int i=0;i<4;++i){
-					Screen.WriteMapChar(i+4,1,new colorchar(Color.Cyan,(char)(i+'a')));
+					Screen.WriteChar(i+row-4,col+1,new colorchar(Color.Cyan,(char)(i+'a')));
+					MouseUI.CreateButton((ConsoleKey)(i + ConsoleKey.A),false,i+row-4,0,1,Global.SCREEN_W);
 				}
-				MouseUI.CreateButton(ConsoleKey.A,false,4+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
-				MouseUI.CreateButton(ConsoleKey.B,false,5+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
-				MouseUI.CreateButton(ConsoleKey.C,false,6+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
-				MouseUI.CreateButton(ConsoleKey.D,false,7+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
 				Screen.ResetColors();
 				Screen.SetCursorPosition(Global.MAP_OFFSET_COLS,Global.MAP_OFFSET_ROWS+8);
 				command = Input.ReadKey();
@@ -279,18 +286,20 @@ namespace Forays{
 						}
 						if(Actor.player_name == ""){
 							MouseUI.PushButtonMap(MouseMode.NameEntry);
-							for(int i=4;i<=7;++i){
+							Screen.Blank();
+							/*for(int i=4;i<=7;++i){
 								Screen.WriteMapString(i,0,"".PadToMapSize());
-							}
+							}*/
 							string s = "";
 							int name_option = 0;
+							int c = 3;
 							while(true){
-								Screen.WriteMapString(4,0,"Enter name: ");
+								Screen.WriteMapString(4,c,"Enter name: ");
 								if(s == ""){
-									Screen.WriteMapString(6,0,"(Press [Enter] for a random name)".GetColorString());
+									Screen.WriteMapString(6,c,"(Press [Enter] for a random name)".GetColorString());
 								}
 								else{
-									Screen.WriteMapString(6,0,"(Press [Enter] when finished)    ".GetColorString());
+									Screen.WriteMapString(6,c,"(Press [Enter] when finished)    ".GetColorString());
 								}
 								List<string> name_options = new List<string>{"Default: Choose a new name for each character","Static:  Use this name for every character","Legacy:  Name all future characters after this one","Random:  Name all future characters randomly"};
 								for(int i=0;i<4;++i){
@@ -298,17 +307,17 @@ namespace Forays{
 									if(i == name_option){
 										option_color = Color.White;
 									}
-									Screen.WriteMapString(15+i,0,name_options[i],option_color);
+									Screen.WriteMapString(15+i,c,name_options[i],option_color);
 								}
-								Screen.WriteMapString(20,0,"(Press [Tab] to change naming preference)".GetColorString());
+								Screen.WriteMapString(20,c,"(Press [Tab] to change naming preference)".GetColorString());
 								if(name_option != 0){
-									Screen.WriteMapString(21,0,"(To stop naming characters automatically, delete name.txt)");
+									Screen.WriteMapString(22,c-5,"(To stop naming characters automatically, delete name.txt)",Color.Green);
 								}
 								else{
-									Screen.WriteMapString(21,0,"".PadToMapSize());
+									Screen.WriteMapString(22,c-5,"".PadToMapSize());
 								}
-								Screen.WriteMapString(4,12,s.PadRight(26));
-								Screen.SetCursorPosition(Global.MAP_OFFSET_COLS + 12 + s.Length,Global.MAP_OFFSET_ROWS + 4);
+								Screen.WriteMapString(4,c+12,s.PadRight(26));
+								Screen.SetCursorPosition(c + Global.MAP_OFFSET_COLS + 12 + s.Length,Global.MAP_OFFSET_ROWS + 4);
 								MouseUI.CreateButton(ConsoleKey.Enter,false,6+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
 								MouseUI.CreateButton(ConsoleKey.Tab,false,20+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
 								MouseUI.CreateButton(ConsoleKey.F21,false,15+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
@@ -803,12 +812,12 @@ namespace Forays{
 								throw new Exception("Error: some actors/tiles weren't loaded(7). ");
 							}
 						}
-						string[] messages = new string[1000]; //hacky - this equals the log length in Buffer.
+						string[] messages = new string[Buffer.log_length];
 						int num_messages = b.ReadInt32();
 						for(int i=0;i<num_messages;++i){
 							messages[i] = b.ReadString();
 						}
-						for(int i=num_messages;i<1000;++i){
+						for(int i=num_messages;i<Buffer.log_length;++i){
 							messages[i] = "";
 						}
 						int message_pos = b.ReadInt32();
@@ -835,7 +844,7 @@ namespace Forays{
 						MouseUI.IgnoreMouseClicks = true;
 						Screen.CursorVisible = false;
 						Screen.Blank();
-						Screen.WriteString(11,3,"An error has occured. See error.txt for more details. Press any key to quit. ");
+						Screen.WriteString(12,0,"  An error has occured. See error.txt for more details. Press any key to quit.".PadOuter(Global.SCREEN_W));
 						Input.ReadKey();
 						Global.Quit();
 					}
@@ -864,7 +873,7 @@ namespace Forays{
 							while(s.Substring(0,2) != "--"){
 								s = file.ReadLine();
 								if(s.Substring(0,2) == "--"){
-									if(!added && num_scores < 22){
+									if(!added && num_scores < Global.HIGH_SCORES){
 										char symbol = Global.BOSS_KILLED? 'W' : '-';
 										newhighscores.Add(game.M.current_level.ToString() + " " + symbol + " " + Actor.player_name + " -- " + Global.KILLED_BY);
 										on_highscore_list = true;
@@ -872,7 +881,7 @@ namespace Forays{
 									newhighscores.Add(s);
 									break;
 								}
-								if(num_scores < 22){
+								if(num_scores < Global.HIGH_SCORES){
 									string[] tokens = s.Split(' ');
 									int dlev = Convert.ToInt32(tokens[0]);
 									if(dlev < game.M.current_level || (dlev == game.M.current_level && Global.BOSS_KILLED)){
@@ -883,7 +892,7 @@ namespace Forays{
 											added = true;
 											on_highscore_list = true;
 										}
-										if(num_scores < 22){
+										if(num_scores < Global.HIGH_SCORES){
 											newhighscores.Add(s);
 											++num_scores;
 										}
@@ -945,7 +954,7 @@ namespace Forays{
 						s = "!!";
 						while(s.Substring(0,2) != "--"){
 							s = file.ReadLine();
-							if(s.Substring(0,2) == "--"){
+							if(s.Substring(0,2) == "--" || scores.Count == Global.HIGH_SCORES){
 								break;
 							}
 							else{
@@ -954,7 +963,7 @@ namespace Forays{
 						}
 						file.Close();
 					}
-					if(scores.Count == 22 && !on_highscore_list && recentdepth != -1){
+					if(scores.Count == Global.HIGH_SCORES && !on_highscore_list && recentdepth != -1){
 						scores.RemoveLast();
 						scores.Add(recentdepth.ToString() + " " + recentwin + " " + recentname + " -- " + recentcause);
 					}
@@ -973,28 +982,27 @@ namespace Forays{
 							longest_cause = cause_of_death.Length;
 						}
 					}
-					int total_spaces = 76 - (longest_name+longest_cause); //max name length is 26 and max cause length is 42. The other 4 spaces are used for depth.
+					int total_spaces = Global.SCREEN_W - (longest_name + 4 + longest_cause); //max name length is 26 and max cause length is 42. Depth is the '4'.
 					int half_spaces = total_spaces / 2;
 					int half_spaces_offset = (total_spaces+1) / 2;
 					int spaces1 = half_spaces / 4;
 					int spaces2 = half_spaces - (half_spaces / 4);
 					int spaces3 = half_spaces_offset - (half_spaces_offset / 4);
-					//int spaces4 = half_spaces_offset / 4;
 					int name_middle = spaces1 + longest_name/2;
 					int depth_middle = spaces1 + spaces2 + longest_name + 1;
 					int cause_middle = spaces1 + spaces2 + spaces3 + longest_name + 4 + (longest_cause-1)/2;
 					Color primary = Color.Green;
 					Color recent = Color.Cyan;
-					Screen.WriteString(0,34,new cstr("HIGH SCORES",Color.Yellow));
-					Screen.WriteString(1,34,new cstr("-----------",Color.Cyan));
+					Screen.WriteString(0,(Global.SCREEN_W - 11) / 2,new cstr("HIGH SCORES",Color.Yellow)); //"HIGH SCORES" has width 11
+					Screen.WriteString(1,(Global.SCREEN_W - 11) / 2,new cstr("-----------",Color.Cyan));
 					Screen.WriteString(2,name_middle-4,new cstr("Character",primary));
 					Screen.WriteString(2,depth_middle-2,new cstr("Depth",primary));
 					Screen.WriteString(2,cause_middle-6,new cstr("Cause of death",primary));
 					bool written_recent = false;
 					int line = 3;
 					foreach(string s in scores){
-						if(line > 24){ //todo: screen_h?
-							continue;
+						if(line >= Global.SCREEN_H){
+							break;
 						}
 						string[] tokens = s.Split(' ');
 						int dlev = Convert.ToInt32(tokens[0]);
@@ -1042,7 +1050,7 @@ namespace Forays{
 			game.player.attrs[AttrType.FROZEN] = 0; //...without borders
 			//game.M.Draw();
 			colorchar[,] mem = null;
-			UI.DisplayStats(false);
+			UI.DisplayStats();
 			bool showed_IDed_tip = false;
 			if(Global.KILLED_BY != "giving up" && !Help.displayed[TutorialTopic.IdentifiedConsumables]){
 				if(game.player.inv.Where(item=>Item.identified[item.type] && item.Is(ConsumableType.HEALING,ConsumableType.TIME,ConsumableType.TELEPORTAL)).Count > 0){
@@ -1151,7 +1159,7 @@ namespace Forays{
 					break;
 				}
 				case 2:
-					game.player.DisplayEquipment();
+					UI.DisplayEquipment();
 					break;
 				case 3:
 					MouseUI.PushButtonMap();
@@ -1170,7 +1178,7 @@ namespace Forays{
 					break;
 				}
 				case 5:
-					game.player.DisplayCharacterInfo();
+					UI.DisplayCharacterInfo();
 					break;
 				case 6:
 				{
@@ -1186,7 +1194,7 @@ namespace Forays{
 						filename = filename + ".txt";
 					}
 					StreamWriter file = new StreamWriter(filename,true);
-					game.player.DisplayCharacterInfo(false);
+					UI.DisplayCharacterInfo(false);
 					colorchar[,] screen = Screen.GetCurrentScreen();
 					for(int i=2;i<Global.SCREEN_H;++i){
 						for(int j=0;j<Global.SCREEN_W;++j){

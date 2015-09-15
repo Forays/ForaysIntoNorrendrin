@@ -14,7 +14,7 @@ using Utilities;
 using PosArrays;
 namespace Forays{
 	public static class Global{
-		public const string VERSION = "version 0.8.X ";
+		public const string VERSION = "0.8.X";
 		public static bool LINUX = false;
 		public static bool GRAPHICAL = false;
 		public const int SCREEN_H = 28;
@@ -26,6 +26,7 @@ namespace Forays{
 		public const int STATUS_WIDTH = 20;
 		public const int MAX_LIGHT_RADIUS = 12; //the maximum POSSIBLE light radius. used in light calculations.
 		public const int MAX_INVENTORY_SIZE = 20;
+		public const int HIGH_SCORES = 25;
 		public static bool GAME_OVER = false;
 		public static bool BOSS_KILLED = false;
 		public static bool QUITTING = false;
@@ -45,31 +46,24 @@ namespace Forays{
 			}
 			return result;
 		}
-		public static string[] titlescreen =  new string[]{
-"                                                                                ",
-"                                                                                ",
-"        #######                                                                 ",
-"        #######                                                                 ",
-"        ##    #                                                                 ",
-"        ##                                                                      ",
-"        ##  #                                                                   ",
-"        #####                                                                   ",
-"        #####                                                                   ",
-"        ##  #   ###   # ##   ###    #   #   ###                                 ",
-"        ##     #   #  ##    #   #   #   #  #                                    ",
-"        ##     #   #  #     #   #    # #    ##                                  ",
-"        ##     #   #  #     #   #     #       #                                 ",
-"        ##      ###   #      ### ##   #    ###                                  ",
-"                                     #                                          ",
-"                                    #                                           ",
-"                                                                                ",
-"                                                                                ",
-"                         I N T O     N O R R E N D R I N                        ",
-"                                                                                ",
-"                                                                                ",
-"                                                                                ",
-"                                                                  " + VERSION,
-"                                                             by Derrick Creamer "};
+		public static string[][] title = new string[][]{new string[]{
+				"#######                                ",
+				"#######                                ",
+				"##    #                                ",
+				"##                                     ",
+				"##  #                                  ",
+				"#####                                  ",
+				"#####                                  ",
+				"##  #   ###   # ##   ###    #   #   ###",
+				"##     #   #  ##    #   #   #   #  #   ",
+				"##     #   #  #     #   #    # #    ## ",
+				"##     #   #  #     #   #     #       #",
+				"##      ###   #      ### ##   #    ### ",
+				"                             #         ",
+				"                            #          "},
+				new string[]{
+				"I N T O     N O R R E N D R I N"}
+		};
 		public static string RomanNumeral(int num){
 			string result = "";
 			while(num > 1000){
@@ -172,7 +166,7 @@ namespace Forays{
 						try{
 							topic = (TutorialTopic)Enum.Parse(typeof(TutorialTopic),tokens[1],true);
 						}
-						catch(ArgumentException e){
+						catch(ArgumentException){
 							valid = false;
 						}
 						if(valid){
@@ -594,6 +588,22 @@ namespace Forays{
 		public static string PadToMapSize(this string s){
 			return s.PadRight(Global.COLS);
 		}
+		public static int LastSpaceBeforeWrap(this colorstring cs,int wrap_index){
+			string s = "";
+			foreach(cstr c in cs.strings){
+				s += c.s;
+			}
+			return s.LastSpaceBeforeWrap(wrap_index);
+		}
+		public static int LastSpaceBeforeWrap(this string s,int wrap_index){
+			if(wrap_index < 0 || wrap_index >= s.Length) return -1;
+			for(int n=wrap_index;n>=0;--n){
+				if(s[n] == ' '){
+					return n;
+				}
+			}
+			return -1;
+		}
 		public static colorstring GetColorString(this string s){ return GetColorString(s,Color.Gray,Color.Cyan,Color.Black); }
 		public static colorstring GetColorString(this string s,Color text_color){ return GetColorString(s,text_color,Color.Cyan,Color.Black); }
 		public static colorstring GetColorString(this string s,Color text_color,Color key_color){ return GetColorString(s,text_color,key_color,Color.Black); }
@@ -642,6 +652,54 @@ namespace Forays{
 				result.Add(s.GetColorString());
 			}
 			return result;
+		}
+		public static void AddWithWrap(this List<colorstring> l,colorstring cs,int wrap_width,int indent = 0){
+			colorstring last = l.LastOrDefault();
+			colorstring remainder = null;
+			if(last == null){
+				remainder = cs;
+			}
+			else{
+				if(last.Length() + cs.Length() <= wrap_width){
+					foreach(cstr s in cs.strings){
+						last.strings.Add(s);
+					}
+				}
+				else{
+					int split_idx = cs.LastSpaceBeforeWrap(wrap_width - last.Length());
+					if(split_idx == -1){
+						remainder = cs;
+					}
+					else{
+						var split = cs.SplitAt(split_idx,true);
+						foreach(cstr s in split[0].strings){
+							last.strings.Add(s);
+						}
+						remainder = split[1];
+					}
+				}
+			}
+			while(remainder?.Length() > 0){
+				if(indent + remainder.Length() <= wrap_width){
+					l.Add(new colorstring("".PadRight(indent)) + remainder);
+					break;
+				}
+				else{
+					colorstring next = new colorstring("".PadRight(indent));
+					l.Add(next);
+					int split_idx = remainder.LastSpaceBeforeWrap(wrap_width - indent);
+					bool remove_space = true;
+					if(split_idx == -1){ // if there's nowhere better, just cut it off at the end of the line.
+						split_idx = wrap_width - indent;
+						remove_space = false;
+					}
+					var split = remainder.SplitAt(split_idx,remove_space);
+					foreach(cstr s in split[0].strings){
+						next.strings.Add(s);
+					}
+					remainder = split[1];
+				}
+			}
 		}
 		public static List<Tile> ToFirstSolidTile(this List<Tile> line){
 			List<Tile> result = new List<Tile>();

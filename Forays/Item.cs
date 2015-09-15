@@ -467,9 +467,9 @@ namespace Forays{
 		}
 		public override List<colorstring> GetStatusBarInfo(){
 			List<colorstring> result = new List<colorstring>();
-			Color text = Color.Gray;
+			Color text = UI.darken_status_bar? Colors.status_darken : Color.Gray;
 			if(p.Equals(UI.MapCursor)){
-				text = Colors.status_highlight;
+				text = UI.darken_status_bar? Colors.status_highlight_darken : Colors.status_highlight;
 			}
 			foreach(string s in Name(true).GetWordWrappedList(17,true)){
 				colorstring cs = new colorstring();
@@ -2519,37 +2519,251 @@ namespace Forays{
 			return "Unknown item.";
 		}
 	}
-	public class Weapon{
-		public WeaponType type;
+	public abstract class Equipment{
 		public EnchantmentType enchantment;
 		public Dict<EquipmentStatus,bool> status = new Dict<EquipmentStatus,bool>();
-		public Weapon(WeaponType type_){
-			type = type_;
-			enchantment = EnchantmentType.NO_ENCHANTMENT;
+		public abstract string NameWithoutEnchantment();
+		public override string ToString(){
+			return NameWithEnchantment();
 		}
-		public Weapon(WeaponType type_,EnchantmentType enchantment_){
+		public string NameWithEnchantment(){
+			string ench = "";
+			switch(enchantment){
+			case EnchantmentType.ECHOES:
+			ench = " of echoes";
+			break;
+			case EnchantmentType.CHILLING:
+			ench = " of chilling";
+			break;
+			case EnchantmentType.PRECISION:
+			ench = " of precision";
+			break;
+			case EnchantmentType.DISRUPTION:
+			ench = " of disruption";
+			break;
+			case EnchantmentType.VICTORY:
+			ench = " of victory";
+			break;
+			default:
+			break;
+			}
+			return NameWithoutEnchantment() + ench;
+		}
+		public bool IsEnchanted(){ return enchantment != EnchantmentType.NO_ENCHANTMENT; }
+		public static Color StatusColor(EquipmentStatus status){
+			switch(status){
+			case EquipmentStatus.LOW_ON_ARROWS:
+			return Color.DarkBlue;
+			case EquipmentStatus.ALMOST_OUT_OF_ARROWS:
+			return Color.Blue;
+			case EquipmentStatus.ONE_ARROW_LEFT: //if I add more statuses, I might make these all the same color. don't want to hog ALL the blue.
+			return Color.DarkCyan;
+			case EquipmentStatus.OUT_OF_ARROWS:
+			return Color.Cyan;
+			case EquipmentStatus.POISONED: //weapon-only statuses
+			return Color.Green;
+			case EquipmentStatus.MERCIFUL:
+			return Color.Yellow;
+			case EquipmentStatus.POSSESSED:
+			return Color.Red;
+			case EquipmentStatus.DULLED:
+			return Color.DarkGray;
+			case EquipmentStatus.HEAVY: //statuses that might apply to both
+			return Color.DarkYellow;
+			case EquipmentStatus.STUCK:
+			return Color.Magenta;
+			case EquipmentStatus.NEGATED:
+			return Color.White;
+			case EquipmentStatus.WEAK_POINT: //armor-only statuses
+			return Color.Blue;
+			case EquipmentStatus.WORN_OUT:
+			return Color.Yellow;
+			case EquipmentStatus.DAMAGED:
+			return Color.Red;
+			case EquipmentStatus.INFESTED:
+			return Color.DarkGreen;
+			case EquipmentStatus.RUSTED:
+			return Color.DarkRed;
+			default:
+			return Color.RandomDark;
+			}
+		}
+		public static string StatusName(EquipmentStatus status){
+			switch(status){
+			case EquipmentStatus.HEAVY:
+			return "Heavy";
+			case EquipmentStatus.STUCK:
+			return "Stuck";
+			case EquipmentStatus.MERCIFUL:
+			return "Merciful";
+			case EquipmentStatus.DAMAGED:
+			return "Damaged";
+			case EquipmentStatus.DULLED:
+			return "Dulled";
+			case EquipmentStatus.INFESTED:
+			return "Infested";
+			case EquipmentStatus.NEGATED:
+			return "Negated";
+			case EquipmentStatus.POSSESSED:
+			return "Possessed";
+			case EquipmentStatus.RUSTED:
+			return "Rusted";
+			case EquipmentStatus.WEAK_POINT:
+			return "Weak point";
+			case EquipmentStatus.WORN_OUT:
+			return "Worn out";
+			case EquipmentStatus.POISONED:
+			return "Poison-covered";
+			case EquipmentStatus.LOW_ON_ARROWS:
+			return "Low on arrows";
+			case EquipmentStatus.ALMOST_OUT_OF_ARROWS:
+			return "Almost out of arrows";
+			case EquipmentStatus.ONE_ARROW_LEFT:
+			return "One arrow left";
+			case EquipmentStatus.OUT_OF_ARROWS:
+			return "Out of arrows";
+			default:
+			return "";
+			}
+		}
+		public colorstring NameOnStatusBar(){
+			if(IsEnchanted()){
+				colorstring cs = new colorstring("+",EnchantmentColor());
+				return new colorstring("-- ",cs,NameWithoutEnchantment().Capitalize(),cs," --").PadOuter(Global.STATUS_WIDTH);
+			}
+			else{
+				return new colorstring(("-- " + NameWithoutEnchantment().Capitalize() + " --").PadOuter(Global.STATUS_WIDTH),Color.Gray);
+			}
+		}
+		public Color EnchantmentColor(){
+			switch(enchantment){
+			case EnchantmentType.ECHOES:
+			return Color.Magenta;
+			case EnchantmentType.CHILLING:
+			return Color.Blue;
+			case EnchantmentType.PRECISION:
+			return Color.White;
+			case EnchantmentType.DISRUPTION:
+			return Color.Yellow;
+			case EnchantmentType.VICTORY:
+			return Color.Red;
+			default:
+			return Color.Gray;
+			}
+		}
+		public static string StatusDescription(EquipmentStatus status){
+			switch(status){
+			case EquipmentStatus.POISONED: //weapon-only statuses
+			return " Poison-covered -- Poisons the target, and might poison you too.";
+			case EquipmentStatus.MERCIFUL:
+			return " Merciful -- Unable to take the last bit of health from an enemy.";
+			case EquipmentStatus.POSSESSED:
+			return " Possessed -- This weapon will sometimes attack the wrong target.";
+			case EquipmentStatus.DULLED:
+			return "     Dulled -- This weapon deals minimum damage on each hit.";
+			case EquipmentStatus.LOW_ON_ARROWS:
+			return "        Low on arrows -- Your quiver feels a bit light.";
+			case EquipmentStatus.ALMOST_OUT_OF_ARROWS:
+			return "     Almost out of arrows -- Your quiver is almost empty.";
+			case EquipmentStatus.ONE_ARROW_LEFT:
+			return " One arrow left -- This final arrow will have perfect accuracy.";
+			case EquipmentStatus.OUT_OF_ARROWS:
+			return " Out of arrows -- Repair your equipment to restock your arrows.";
+			case EquipmentStatus.HEAVY: //statuses that might apply to both
+			return "   Heavy -- Attacking with this weapon often causes exhaustion.";
+			case EquipmentStatus.STUCK:
+			return "             Stuck -- This item can't be unequipped.";
+			case EquipmentStatus.NEGATED:
+			return "   Negated -- The enchantment on this item has been suppressed.";
+			case EquipmentStatus.WEAK_POINT: //armor-only statuses
+			return " Weak point -- Enemies are twice as likely to score critical hits.";
+			case EquipmentStatus.WORN_OUT:
+			return "   Worn out -- Any further wear on this armor might damage it.";
+			case EquipmentStatus.DAMAGED:
+			return "          Damaged -- This armor provides no protection.";
+			case EquipmentStatus.INFESTED:
+			return "          Infested -- Insects constantly bite the wearer.";
+			case EquipmentStatus.RUSTED:
+			return "                          Rusted"; //not implemented
+			default:
+			return "";
+			}
+		}
+		public List<colorstring> ShortStatusList(){
+			List<colorstring> result = new List<colorstring>();
+			List<EquipmentStatus> list = new List<EquipmentStatus>();
+			for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
+				EquipmentStatus st = (EquipmentStatus)i;
+				if(status[st]){
+					list.Add(st);
+				}
+			}
+			for(int i=0;i<list.Count;++i){
+				EquipmentStatus st = list[i];
+				string comma = (i == list.Count - 1)? "" : ",";
+				colorstring statusString = new colorstring(" " + StatusName(st) + comma,StatusColor(st));
+				result.AddWithWrap(statusString,Global.COLS - 2,1);
+			}
+			if(result.Count > 2){ //hard cap at 2 lines
+				result.RemoveRange(2,result.Count - 2);
+			}
+			for(int i=0;i<result.Count;++i){
+				result[i] = result[i].PadOuter(Global.COLS);
+			}
+			return result;
+		}
+		public List<colorstring> LongStatusList(){
+			List<colorstring> result = new List<colorstring>();
+			for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
+				EquipmentStatus st = (EquipmentStatus)i;
+				if(status[st]){
+					result.Add(new colorstring(StatusDescription(st),StatusColor(st)));
+				}
+			}
+			return result;
+		}
+		public string DescriptionOfEnchantment(){
+			switch(enchantment){
+			case EnchantmentType.ECHOES:
+			return "Successful hits will also attack anything behind the target.".PadOuter(Global.COLS);
+			case EnchantmentType.CHILLING:
+			return "Deals 1 extra cold damage. This damage doubles on each hit.".PadOuter(Global.COLS);
+			case EnchantmentType.PRECISION:
+			return "This weapon is twice as likely to score critical hits.".PadOuter(Global.COLS);
+			case EnchantmentType.DISRUPTION:
+			return "Nonliving foes will lose 20% of their maximum health on each hit.".PadOuter(Global.COLS);
+			case EnchantmentType.VICTORY:
+			return "Defeating an enemy with this weapon will restore 5 HP.".PadOuter(Global.COLS);
+			}
+			return "";
+		}
+		public colorstring EquipmentScreenName(){
+			colorstring result = new colorstring(NameWithEnchantment().Capitalize() + " ",EnchantmentColor());
+			for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
+				if(status[(EquipmentStatus)i]){
+					result.strings.Add(new cstr("*",StatusColor((EquipmentStatus)i)));
+					if(result.Length() >= 25){
+						break;
+					}
+				}
+			}
+			return result;
+		}
+	}
+	public class Weapon : Equipment{
+		public WeaponType type;
+		public Weapon(WeaponType type_,EnchantmentType enchantment_ = EnchantmentType.NO_ENCHANTMENT){
 			type = type_;
 			enchantment = enchantment_;
 		}
-		public bool IsEnchanted(){ return enchantment != EnchantmentType.NO_ENCHANTMENT; }
-		public bool IsEdged(){
-			if(type == WeaponType.SWORD || type == WeaponType.DAGGER){
-				return true;
-			}
-			return false;
-		} //note that the bow is neither
-		public bool IsBlunt(){
-			if(type == WeaponType.MACE || type == WeaponType.STAFF){
-				return true;
-			}
-			return false;
-		}
+		public bool IsEdged(){ return IsEdged(type); }
 		public static bool IsEdged(WeaponType type){
 			if(type == WeaponType.SWORD || type == WeaponType.DAGGER){
 				return true;
 			}
-			return false;
+			return false; //note that the bow is neither edged nor blunt.
 		}
+		public bool IsBlunt(){ return IsBlunt(type); }
 		public static bool IsBlunt(WeaponType type){
 			if(type == WeaponType.MACE || type == WeaponType.STAFF){
 				return true;
@@ -2572,10 +2786,7 @@ namespace Forays{
 				return new AttackInfo(100,0,AttackEffect.NO_CRIT,"error");
 			}
 		}
-		public override string ToString(){
-			return NameWithEnchantment();
-		}
-		public string NameWithoutEnchantment(){
+		public override string NameWithoutEnchantment(){
 			switch(type){
 			case WeaponType.SWORD:
 				return "sword";
@@ -2588,263 +2799,37 @@ namespace Forays{
 			case WeaponType.BOW:
 				return "bow";
 			default:
-				return "no weapon";
+				return "(none)";
 			}
 		}
-		public string NameWithEnchantment(){
-			string ench = "";
-			switch(enchantment){
-			case EnchantmentType.ECHOES:
-				ench = " of echoes";
-				break;
-			case EnchantmentType.CHILLING:
-				ench = " of chilling";
-				break;
-			case EnchantmentType.PRECISION:
-				ench = " of precision";
-				break;
-			case EnchantmentType.DISRUPTION:
-				ench = " of disruption";
-				break;
-			case EnchantmentType.VICTORY:
-				ench = " of victory";
-				break;
-			default:
-				break;
-			}
-			return NameWithoutEnchantment() + ench;
-		}
-		public colorstring StatusName(){
-			if(IsEnchanted()){
-				colorstring cs = new colorstring("+",EnchantmentColor());
-				return new colorstring("-- ",cs,NameWithoutEnchantment().Capitalize(),cs," --").PadOuter(Global.STATUS_WIDTH);
-			}
-			else{
-				return new colorstring(("-- " + NameWithoutEnchantment().Capitalize() + " --").PadOuter(Global.STATUS_WIDTH),Color.Gray);
-			}
-		}
-		/*public cstr StatsName(){
-			cstr cs;
-			cs.bgcolor = Color.Black;
-			cs.color = Color.Gray;
+		public List<string> Description(){
 			switch(type){
 			case WeaponType.SWORD:
-				cs.s = "Sword";
-				break;
-			case WeaponType.MACE:
-				cs.s = "Mace";
-				break;
-			case WeaponType.DAGGER:
-				cs.s = "Dagger";
-				break;
-			case WeaponType.STAFF:
-				cs.s = "Staff";
-				break;
-			case WeaponType.BOW:
-				cs.s = "Bow";
-				break;
-			default:
-				cs.s = "no weapon";
-				break;
-			}
-			if(enchantment != EnchantmentType.NO_ENCHANTMENT){
-				cs.s = "+" + cs.s + "+";
-			}
-			cs.color = EnchantmentColor();
-			return cs;
-		}*/
-		public Color EnchantmentColor(){
-			switch(enchantment){
-			case EnchantmentType.ECHOES:
-				return Color.Magenta;
-			case EnchantmentType.CHILLING:
-				return Color.Blue;
-			case EnchantmentType.PRECISION:
-				return Color.White;
-			case EnchantmentType.DISRUPTION:
-				return Color.Yellow;
-			case EnchantmentType.VICTORY:
-				return Color.Red;
-			default:
-				return Color.Gray;
-			}
-		}
-		public static Color StatusColor(EquipmentStatus status){
-			switch(status){
-			case EquipmentStatus.LOW_ON_ARROWS:
-				return Color.DarkBlue;
-			case EquipmentStatus.ALMOST_OUT_OF_ARROWS:
-				return Color.Blue;
-			case EquipmentStatus.ONE_ARROW_LEFT: //if I add more statuses, I might make these all the same color. don't want to hog ALL the blue.
-				return Color.DarkCyan;
-			case EquipmentStatus.OUT_OF_ARROWS:
-				return Color.Cyan;
-			case EquipmentStatus.POISONED: //weapon-only statuses
-				return Color.Green;
-			case EquipmentStatus.MERCIFUL:
-				return Color.Yellow;
-			case EquipmentStatus.POSSESSED:
-				return Color.Red;
-			case EquipmentStatus.DULLED:
-				return Color.DarkGray;
-			case EquipmentStatus.HEAVY: //statuses that might apply to both
-				return Color.DarkYellow;
-			case EquipmentStatus.STUCK:
-				return Color.Magenta;
-			case EquipmentStatus.NEGATED:
-				return Color.White;
-			case EquipmentStatus.WEAK_POINT: //armor-only statuses
-				return Color.Blue;
-			case EquipmentStatus.WORN_OUT:
-				return Color.Yellow;
-			case EquipmentStatus.DAMAGED:
-				return Color.Red;
-			case EquipmentStatus.INFESTED:
-				return Color.DarkGreen;
-			case EquipmentStatus.RUSTED:
-				return Color.DarkRed;
-			default:
-				return Color.RandomDark;
-			}
-		}
-		public static string StatusName(EquipmentStatus status){
-			switch(status){
-			case EquipmentStatus.HEAVY:
-				return "Heavy";
-			case EquipmentStatus.STUCK:
-				return "Stuck";
-			case EquipmentStatus.MERCIFUL:
-				return "Merciful";
-			case EquipmentStatus.DAMAGED:
-				return "Damaged";
-			case EquipmentStatus.DULLED:
-				return "Dulled";
-			case EquipmentStatus.INFESTED:
-				return "Infested";
-			case EquipmentStatus.NEGATED:
-				return "Negated";
-			case EquipmentStatus.POSSESSED:
-				return "Possessed";
-			case EquipmentStatus.RUSTED:
-				return "Rusted";
-			case EquipmentStatus.WEAK_POINT:
-				return "Weak point";
-			case EquipmentStatus.WORN_OUT:
-				return "Worn out";
-			case EquipmentStatus.POISONED:
-				return "Poison-covered";
-			case EquipmentStatus.LOW_ON_ARROWS:
-				return "Low on arrows";
-			case EquipmentStatus.ALMOST_OUT_OF_ARROWS:
-				return "Almost out of arrows";
-			case EquipmentStatus.ONE_ARROW_LEFT:
-				return "One arrow left";
-			case EquipmentStatus.OUT_OF_ARROWS:
-				return "Out of arrows";
-			default:
-				return "No status";
-			}
-		}
-		public colorstring EquipmentScreenName(){
-			colorstring result = new colorstring(NameWithEnchantment().Capitalize() + " ",EnchantmentColor());
-			for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
-				if(status[(EquipmentStatus)i]){
-					result.strings.Add(new cstr("*",StatusColor((EquipmentStatus)i)));
-					if(result.Length() >= 25){
-						break;
-					}
-				}
-			}
-			return result;
-		}
-		public string[] Description(){
-			switch(type){
-			case WeaponType.SWORD:
-				return new string[]{"Sword -- A basic weapon, the sword delivers powerful",
+				return new List<string>{"Sword -- A basic weapon, the sword delivers powerful",
 									"     critical hits that remove half of a foe's maximum health."};
 			case WeaponType.MACE:
-				return new string[]{"Mace -- The mace won't be stopped by armor. Critical",
+				return new List<string>{"Mace -- The mace won't be stopped by armor. Critical",
 									"           hits will knock the foe back three spaces."};
 			case WeaponType.DAGGER:
-				return new string[]{"Dagger -- In darkness, the dagger always hits and is",
+				return new List<string>{"Dagger -- In darkness, the dagger always hits and is",
 									"     twice as likely to score a critical hit, stunning the foe."};
 			case WeaponType.STAFF:
-				return new string[]{"Staff -- Always hits against a foe that just moved, in",
+				return new List<string>{"Staff -- Always hits against a foe that just moved, in",
 									"   addition to swapping places. Critical hits will trip the foe."};
 			case WeaponType.BOW:
-				return new string[]{"Bow -- A ranged weapon, less accurate than melee.",
+				return new List<string>{"Bow -- A ranged weapon, less accurate than melee.",
 									"        Critical hits will immobilize the target briefly."};
 			default:
-				return new string[]{"no weapon","description"};
-			}
-		}
-		public string DescriptionOfEnchantment(){
-			switch(enchantment){
-			case EnchantmentType.ECHOES:
-				return "  Successful hits will also attack anything behind the target.";
-			case EnchantmentType.CHILLING:
-				return "   Deals 1 extra cold damage. This damage doubles on each hit.";
-			case EnchantmentType.PRECISION:
-				return "     This weapon is twice as likely to score critical hits.";
-			case EnchantmentType.DISRUPTION:
-				return "Nonliving foes will lose 20% of their maximum health on each hit.";
-			case EnchantmentType.VICTORY:
-				return "     Defeating an enemy with this weapon will restore 5 HP.";
-			}
-			return "";
-		}
-		public static string StatusDescription(EquipmentStatus status){
-			switch(status){
-			case EquipmentStatus.POISONED: //weapon-only statuses
-				return " Poison-covered -- Poisons the target, and might poison you too.";
-			case EquipmentStatus.MERCIFUL:
-				return " Merciful -- Unable to take the last bit of health from an enemy.";
-			case EquipmentStatus.POSSESSED:
-				return " Possessed -- This weapon will sometimes attack the wrong target.";
-			case EquipmentStatus.DULLED:
-				return "     Dulled -- This weapon deals minimum damage on each hit.";
-			case EquipmentStatus.LOW_ON_ARROWS:
-				return "        Low on arrows -- Your quiver feels a bit light.";
-			case EquipmentStatus.ALMOST_OUT_OF_ARROWS:
-				return "     Almost out of arrows -- Your quiver is almost empty.";
-			case EquipmentStatus.ONE_ARROW_LEFT:
-				return " One arrow left -- This final arrow will have perfect accuracy.";
-			case EquipmentStatus.OUT_OF_ARROWS:
-				return " Out of arrows -- Repair your equipment to restock your arrows.";
-			case EquipmentStatus.HEAVY: //statuses that might apply to both
-				return "   Heavy -- Attacking with this weapon often causes exhaustion.";
-			case EquipmentStatus.STUCK:
-				return "             Stuck -- This item can't be unequipped.";
-			case EquipmentStatus.NEGATED:
-				return "   Negated -- The enchantment on this item has been suppressed.";
-			case EquipmentStatus.WEAK_POINT: //armor-only statuses
-				return "Weak point -- Enemies are twice as likely to score critical hits.";
-			case EquipmentStatus.WORN_OUT:
-				return "   Worn out -- Any further wear on this armor might damage it.";
-			case EquipmentStatus.DAMAGED:
-				return "          Damaged -- This armor provides no protection.";
-			case EquipmentStatus.INFESTED:
-				return "          Infested -- Insects constantly bite the wearer.";
-			case EquipmentStatus.RUSTED:
-				return "                          Rusted"; //not implemented
-			default:
-				return "No status";
+				return new List<string>{"",""};
 			}
 		}
 	}
-	public class Armor{
+	public class Armor : Equipment{
 		public ArmorType type;
-		public EnchantmentType enchantment;
-		public Dict<EquipmentStatus,bool> status = new Dict<EquipmentStatus,bool>();
-		public Armor(ArmorType type_){
-			type = type_;
-			enchantment = EnchantmentType.NO_ENCHANTMENT;
-		}
-		public Armor(ArmorType type_,EnchantmentType enchantment_){
+		public Armor(ArmorType type_,EnchantmentType enchantment_ = EnchantmentType.NO_ENCHANTMENT){
 			type = type_;
 			enchantment = enchantment_;
 		}
-		public bool IsEnchanted(){ return enchantment != EnchantmentType.NO_ENCHANTMENT; }
 		public int Protection(){
 			if(status[EquipmentStatus.DAMAGED]){
 				return 0;
@@ -2870,10 +2855,7 @@ namespace Forays{
 				return 0;
 			}
 		}
-		public override string ToString(){
-			return NameWithEnchantment();
-		}
-		public string NameWithoutEnchantment(){
+		public override string NameWithoutEnchantment(){
 			switch(type){
 			case ArmorType.LEATHER:
 				return "leather";
@@ -2885,94 +2867,20 @@ namespace Forays{
 				return "no armor";
 			}
 		}
-		public string NameWithEnchantment(){
-			string ench = "";
-			/*switch(enchantment){
-			case EnchantmentType.ECHOES:
-				ench = " of echoes";
-				break;
-			case EnchantmentType.FIRE:
-				ench = " of fire";
-				break;
-			case EnchantmentType.FORCE:
-				ench = " of force";
-				break;
-			case EnchantmentType.NULLIFICATION:
-				ench = " of nullification";
-				break;
-			case EnchantmentType.ICE:
-				ench = " of ice";
-				break;
-			default:
-				break;
-			}*/
-			return NameWithoutEnchantment() + ench;
-		}
-		public colorstring StatusName(){
-			if(IsEnchanted()){
-				colorstring cs = new colorstring("+",EnchantmentColor());
-				return new colorstring("-- ",cs,NameWithoutEnchantment().Capitalize(),cs," --").PadOuter(Global.STATUS_WIDTH);
-			}
-			else{
-				return new colorstring(("-- " + NameWithoutEnchantment().Capitalize() + " --").PadOuter(Global.STATUS_WIDTH),Color.Gray);
-			}
-		}
-		public cstr StatsName(){
-			cstr cs;
-			cs.bgcolor = Color.Black;
-			cs.color = Color.Gray;
+		public List<string> Description(){
 			switch(type){
 			case ArmorType.LEATHER:
-				cs.s = "Leather";
-				break;
-			case ArmorType.CHAINMAIL:
-				cs.s = "Chainmail";
-				break;
-			case ArmorType.FULL_PLATE:
-				cs.s = "Full plate";
-				break;
-			default:
-				cs.s = "no armor";
-				break;
-			}
-			if(enchantment != EnchantmentType.NO_ENCHANTMENT){
-				cs.s = "+" + cs.s + "+";
-			}
-			cs.color = EnchantmentColor();
-			return cs;
-		}
-		public Color EnchantmentColor(){
-			return Color.Gray;
-		}
-		public colorstring EquipmentScreenName(){
-			colorstring result = new colorstring(StatsName());
-			result.strings[0] = new cstr(result.strings[0].s + " ",result.strings[0].color);
-			for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
-				if(status[(EquipmentStatus)i]){
-					result.strings.Add(new cstr("*",Weapon.StatusColor((EquipmentStatus)i)));
-				}
-			}
-			return result;
-		}
-		public string[] Description(){
-			switch(type){
-			case ArmorType.LEATHER:
-				return new string[]{"Leather -- +2 Defense. Leather armor is light and quiet",
+				return new List<string>{"Leather -- +2 Defense. Leather armor is light and quiet",
 									"         but provides only basic protection against attacks."};
 			case ArmorType.CHAINMAIL:
-				return new string[]{"Chainmail -- +6 Defense, -1 Stealth. Chainmail provides",
+				return new List<string>{"Chainmail -- +6 Defense, -1 Stealth. Chainmail provides",
 									"            good protection but hampers stealth slightly."};
 			case ArmorType.FULL_PLATE:
-				return new string[]{"Full plate -- +10 Defense, -3 Stealth. Plate is noisy,",
+				return new List<string>{"Full plate -- +10 Defense, -3 Stealth. Plate is noisy,",
 									" shiny, & tiring, providing great defense at the cost of stealth."};
-				/*return new string[]{"Full plate -- +10 Defense, -3 Stealth. Plate armor is",
-									" noisy and shiny, providing great defense at the cost of stealth."};*/
 			default:
-				return new string[]{"no armor",""};
+				return new List<string>{"",""};
 			}
-		}
-		public string DescriptionOfEnchantment(){
-			return "";
 		}
 	}
 	public static class MagicTrinket{
@@ -2997,32 +2905,31 @@ namespace Forays{
 			case MagicTrinketType.BOOTS_OF_GRIPPING:
 				return "boots of gripping";
 			default:
-				return "no item";
+				return "(none)";
 			}
 		}
-		public static string[] Description(MagicTrinketType type){
+		public static List<string> Description(MagicTrinketType type){
 			switch(type){
 			case MagicTrinketType.PENDANT_OF_LIFE:
-				return new string[]{"Pendant of life -- Prevents a lethal attack from","finishing you, but often vanishes afterward."};
-				//return new string[]{"Pendant of life -- Prevents a lethal attack from","finishing you, but crumbles after a few uses."};
+				return new List<string>{"Pendant of life -- Prevents a lethal attack from","finishing you, but often vanishes afterward."};
 			case MagicTrinketType.CLOAK_OF_SAFETY:
-				return new string[]{"Cloak of safety -- Lets you escape to safety","if your health falls too low. Works only once."};
+				return new List<string>{"Cloak of safety -- Lets you escape to safety","if your health falls too low. Works only once."};
 			case MagicTrinketType.BELT_OF_WARDING:
-				return new string[]{"Belt of warding -- If you would take more than 15","damage at once, this item reduces the amount to 15."};
+				return new List<string>{"Belt of warding -- If you would take more than 15","damage at once, this item reduces the amount to 15."};
 			case MagicTrinketType.BRACERS_OF_ARROW_DEFLECTION:
-				return new string[]{"Bracers of arrow deflection -- Blocks every arrow","fired at you."};
+				return new List<string>{"Bracers of arrow deflection -- Blocks every arrow","fired at you."};
 			case MagicTrinketType.CIRCLET_OF_THE_THIRD_EYE:
-				return new string[]{"Circlet of the third eye -- Grants a vision of","your surroundings when you rest."};
+				return new List<string>{"Circlet of the third eye -- Grants a vision of","your surroundings when you rest."};
 			case MagicTrinketType.LENS_OF_SCRYING:
-				return new string[]{"Lens of scrying -- Identifies a random unknown item","from your pack when you descend to a new depth."};
+				return new List<string>{"Lens of scrying -- Identifies a random unknown item","from your pack when you descend to a new depth."};
 			case MagicTrinketType.RING_OF_KEEN_SIGHT:
-				return new string[]{"Ring of keen sight -- Doubles your chance to","find traps."};
+				return new List<string>{"Ring of keen sight -- Doubles your chance to","find traps."};
 			case MagicTrinketType.RING_OF_THE_LETHARGIC_FLAME:
-				return new string[]{"Ring of the lethargic flame -- While you're on","fire, you'll only burn for 1 damage each turn."};
+				return new List<string>{"Ring of the lethargic flame -- While you're on","fire, you'll only burn for 1 damage each turn."};
 			case MagicTrinketType.BOOTS_OF_GRIPPING:
-				return new string[]{"Boots of gripping -- Lets you walk across slippery","surfaces without losing traction."};
+				return new List<string>{"Boots of gripping -- Lets you walk across slippery","surfaces without losing traction."};
 			default:
-				return new string[]{"no item","here"};
+				return new List<string>{"(none)"};
 			}
 		}
 	}

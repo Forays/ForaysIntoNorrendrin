@@ -1,21 +1,26 @@
+Skills:
 
-Combat  - Measures your deadliness with blade and bow.
+Combat:   Measures your deadliness with blade and bow.
           Each level grants +1 damage and +1% to hit with all
           weapons.
 
-Defense - Measures your ability to avoid physical harm.
+
+Defense:  Measures your ability to avoid physical harm.
           Each level adds 3% to your chance to avoid attacks.
 
-Magic   - Measures your ability to cast spells.
+
+Magic:    Measures your ability to cast spells.
           Each level grants another spell and increases your
           mana by 5.
 
-Spirit  - Measures your willpower and ability to tap into your
+
+Spirit:   Measures your willpower and ability to tap into your
           emotions, whether devotion or rage.
           Each level increases your chance to ignore certain
           status effects by 8%.
 
-Stealth - Measures your ability to avoid notice.
+
+Stealth:  Measures your ability to avoid notice.
           Each level increases your chance to remain unseen by
           enemies.
 
@@ -125,3 +130,5 @@ Danger sense - Once you've seen or detected an enemy, you can
                sense where it's safe and where that enemy might
                detect you. Your torch must be extinguished
                while you're sneaking.
+
+

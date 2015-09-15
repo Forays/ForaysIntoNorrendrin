@@ -1,34 +1,38 @@
 (Forays into Norrendrin is a roguelike game. Don't know what a
- roguelike is? Visit roguebasin.roguelikedevelopment.org for
- more info.)
+ roguelike is? Visit www.roguebasin.com for more info.)
 
 
 How to play:
 
-Important commands to remember are 'e' to examine and change
-your equipment, and 'a' to use your consumable items.
-If your health drops, press 'r' to rest - but only once per
+(Forays has in-game help in the form of tutorial tips that pop
+ up to explain each new concept the first time you encounter it,
+ so feel free to exit Help and jump right in!)
+
+
+Important commands to remember are [e] to examine and change
+your equipment, and [a] to use your consumable items.
+If your health drops, press [r] to rest - but only once per
 level!
 
 
 Your torch illuminates your surroundings, but also gives away
 your position. If you wish to avoid notice, put away your
-torch with 't'. ('t' will also bring it back out again.)
+torch with [t]. ([t] will also bring it back out again.)
 
 
-Press tab to look at your surroundings. (Pressing escape or
-space will exit most menus and selections.)
+Press Tab to look at your surroundings. (Pressing Escape or
+Space will exit most menus and selections.)
 
 
-If you've learned a spell, you can cast it by pressing 'z'. 
+If you've learned a spell, you can cast it by pressing [z].
 
 
-You can view and activate feats from the character screen 'c'.
+You can view and activate feats from the character screen [c].
 (Some feats are activated, while some are entirely passive.)
 
 
-Try switching to your bow and firing some arrows('e' to switch,
-'s' to shoot). You always have access to five different weapons
+Try switching to your bow and firing some arrows([e] to switch,
+[s] to shoot). You always have access to five different weapons
 and three different armors. 
 
 
@@ -37,36 +41,35 @@ Some enemies - mostly humanoids - can carry consumable items,
 though.
 
 
-When you find stairs, you can walk down them with '>'. (It's a
+When you find stairs, you can walk down them with [>]. (It's a
 one-way trip, so don't leave anything behind!)
 
 
-Press 'f' now to switch to the command help page. (The command
-list can be accessed directly in-game by pressing '-'.)
+The full command list can be accessed in-game by pressing [-].
 
 
 Command list:
 
-tab : look around                             z : cast a spell 
-r : rest to recover health and mana           c : use a feat
-t : turn your torch on/off                    s : fire an arrow
-e : view and change equipment
+Tab : Look around   (Tab again to cycle between targets)
+r : Rest to recover health/mana/exhaustion & repair equipment
+t : Turn your torch on/off                  z : Cast a spell
+e : View and change equipment               s : Fire an arrow
 
-i : view your inventory
-a : use a consumable item
-g : pick up an item                        d : drop an item
+i : View your inventory
+a : Use a consumable item                   f : Fling an item
+g : Pick up an item                         d : Drop an item
 
-> : take stairs to next level              o : operate terrain
-w : walk automatically in a direction      x : explore
-m : view map for the current level         X : travel
+x : Explore automatically until something happens
+X : Travel to a specific location           . : Wait one turn
+> : Take stairs to next level               o : Operate terrain
+w : Walk automatically in a direction       m : View dungeon map
 
-c : view character information (and activate feats)
-p : view previous messages
+p : View previous messages                  \ : View known items
+c : View character info, including feats/other active abilities
 
-q : quit                             = : change options
-? : view the help screen             - : view this command list
-alt+enter : fullscreen
+q : Quit or save                      = : Change options
+? : View the help screen              - : View this command list
+Alt+Enter : Fullscreen
 
-(You can also switch weapons with 1-5 on the top row of the
- keyboard, and armor with 8-0. You can press tab to cycle
- between interesting targets.)
+(You can also switch weapons without using the equipment screen
+ with 1-5 on the top row of the keyboard, & with 8-0 for armor.)

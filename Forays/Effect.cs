@@ -22,7 +22,9 @@ namespace Forays{
 		private static int COLS{ get{ return Global.COLS; } }
 		public static void ShowKnownItems(Dict<ConsumableType,bool> IDed){
 			MouseUI.PushButtonMap();
-			int width = 25;
+			UI.draw_bottom_commands = false;
+			UI.darken_status_bar = true;
+			const int width = 25;
 			List<ConsumableType> potion_order = new List<ConsumableType>{ConsumableType.STONEFORM,ConsumableType.CLOAKING,ConsumableType.VAMPIRISM,ConsumableType.HEALING,ConsumableType.MYSTIC_MIND,ConsumableType.SILENCE,ConsumableType.REGENERATION,ConsumableType.ROOTS,ConsumableType.BRUTISH_STRENGTH,ConsumableType.HASTE};
 			List<ConsumableType> scroll_order = new List<ConsumableType>{ConsumableType.SUNLIGHT,ConsumableType.DARKNESS,ConsumableType.BLINKING,ConsumableType.RENEWAL,ConsumableType.FIRE_RING,ConsumableType.CALLING,ConsumableType.KNOWLEDGE,ConsumableType.PASSAGE,ConsumableType.THUNDERCLAP,ConsumableType.RAGE,ConsumableType.ENCHANTMENT,ConsumableType.TIME,ConsumableType.TRAP_CLEARING};
 			List<ConsumableType> orb_order = new List<ConsumableType>{ConsumableType.BREACHING,ConsumableType.FREEZING,ConsumableType.SHIELDING,ConsumableType.BLADES,ConsumableType.CONFUSION,ConsumableType.FLAMES,ConsumableType.DETONATION,ConsumableType.PAIN,ConsumableType.TELEPORTAL,ConsumableType.FOG};
@@ -68,33 +70,35 @@ namespace Forays{
 				++list_idx;
 			}
 			Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
-			for(int i=1;i<ROWS-1;++i){
+			for(int i=1;i<ROWS+2;++i){
 				Screen.WriteMapString(i,0,"".PadToMapSize());
 			}
-			Screen.WriteMapString(ROWS-1,0,"".PadRight(COLS,'-'));
-			Color label_color = Color.Yellow;
-			int first_column_offset = 2;
-			int second_column_offset = first_column_offset + 35;
-			Screen.WriteMapString(2,8 + first_column_offset,"- Potions -",label_color);
-			Screen.WriteMapString(2,4 + second_column_offset,"- Scrolls -",label_color);
-			int line = 3;
+			Screen.WriteMapString(ROWS+2,0,"".PadRight(COLS,'-'));
+			const Color label_color = Color.Yellow;
+			const int first_column_offset = 2;
+			const int second_column_offset = first_column_offset + 35;
+			const int first_item_row = 4;
+			Screen.WriteMapString(first_item_row - 1,8 + first_column_offset,"- Potions -",label_color);
+			Screen.WriteMapString(first_item_row - 1,7 + second_column_offset,"- Scrolls -",label_color);
+			int line = first_item_row;
 			foreach(colorstring s in potions){
 				Screen.WriteMapString(line,first_column_offset,s);
 				++line;
 			}
-			line = 3;
+			line = first_item_row;
 			foreach(colorstring s in scrolls){
 				Screen.WriteMapString(line,second_column_offset,s);
 				++line;
 			}
-			Screen.WriteMapString(12,9 + first_column_offset,"- Orbs -",label_color);
-			Screen.WriteMapString(12,8 + second_column_offset,"- Wands -",label_color);
-			line = 13;
+			const int second_item_row = first_item_row + 11;
+			Screen.WriteMapString(second_item_row - 1,9 + first_column_offset,"- Orbs -",label_color);
+			Screen.WriteMapString(second_item_row - 1,8 + second_column_offset,"- Wands -",label_color);
+			line = second_item_row;
 			foreach(colorstring s in orbs){
 				Screen.WriteMapString(line,first_column_offset,s);
 				++line;
 			}
-			line = 13;
+			line = second_item_row;
 			foreach(colorstring s in wands){
 				Screen.WriteMapString(line,second_column_offset,s);
 				++line;
@@ -103,19 +107,23 @@ namespace Forays{
 			Screen.CursorVisible = true;
 			Input.ReadKey();
 			MouseUI.PopButtonMap();
+			UI.draw_bottom_commands = true;
+			UI.darken_status_bar = false;
 		}
 		public static void ShowPreviousMessages(bool show_footsteps){
+			const int text_height = Global.ROWS + 1;
 			List<string> messages = B.GetMessages();
 			MouseUI.PushButtonMap(MouseMode.ScrollableMenu);
+			UI.draw_bottom_commands = false;
+			UI.darken_status_bar = true;
 			MouseUI.CreateMapButton(ConsoleKey.OemMinus,false,0,1);
-			MouseUI.CreateMapButton(ConsoleKey.OemPlus,false,21,1); //todo, update these values?
+			MouseUI.CreateMapButton(ConsoleKey.OemPlus,false,text_height + 1,1);
 			Screen.CursorVisible = false;
-			//Screen.Blank();
 			Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
-			Screen.WriteMapString(21,0,"".PadRight(COLS,'-'));
-			ConsoleKeyInfo command2;
-			char ch2;
-			int startline = Math.Max(0,messages.Count - 20);
+			Screen.WriteMapString(text_height + 1,0,"".PadRight(COLS,'-'));
+			ConsoleKeyInfo command;
+			char ch;
+			int startline = Math.Max(0,messages.Count - text_height);
 			for(bool done = false;!done;){
 				if(startline > 0){
 					Screen.WriteMapString(0,COLS-3,new colorstring("[",Color.Yellow,"-",Color.Cyan,"]",Color.Yellow));
@@ -124,16 +132,16 @@ namespace Forays{
 					Screen.WriteMapString(0,COLS-3,"---");
 				}
 				bool more = false;
-				if(startline + 20 < messages.Count){
+				if(startline + text_height < messages.Count){
 					more = true;
 				}
 				if(more){
-					Screen.WriteMapString(ROWS-1,COLS-3,new colorstring("[",Color.Yellow,"+",Color.Cyan,"]",Color.Yellow));
+					Screen.WriteMapString(text_height + 1,COLS-3,new colorstring("[",Color.Yellow,"+",Color.Cyan,"]",Color.Yellow));
 				}
 				else{
-					Screen.WriteMapString(ROWS-1,COLS-3,"---");
+					Screen.WriteMapString(text_height + 1,COLS-3,"---");
 				}
-				for(int i=1;i<=20;++i){
+				for(int i=1;i<=text_height;++i){
 					if(messages.Count - startline < i){
 						Screen.WriteMapString(i,0,"".PadToMapSize());
 					}
@@ -143,34 +151,34 @@ namespace Forays{
 				}
 				B.DisplayNow("Previous messages: ");
 				Screen.CursorVisible = true;
-				command2 = Input.ReadKey();
-				ConsoleKey ck = command2.Key;
+				command = Input.ReadKey();
+				ConsoleKey ck = command.Key;
 				switch(ck){
 				case ConsoleKey.Backspace:
 				case ConsoleKey.PageUp:
 				case ConsoleKey.NumPad9:
-				ch2 = (char)8;
+				ch = (char)8;
 				break;
 				case ConsoleKey.Enter:
-				ch2 = ' '; //hackery ahoy - enter becomes space and pagedown becomes enter.
+				ch = ' '; //hackery ahoy - enter becomes space and pagedown becomes enter.
 				break;
 				case ConsoleKey.PageDown:
 				case ConsoleKey.NumPad3:
-				ch2 = (char)13;
+				ch = (char)13;
 				break;
 				case ConsoleKey.Home:
 				case ConsoleKey.NumPad7:
-				ch2 = '[';
+				ch = '[';
 				break;
 				case ConsoleKey.End:
 				case ConsoleKey.NumPad1:
-				ch2 = ']';
+				ch = ']';
 				break;
 				default:
-				ch2 = command2.GetCommandChar();
+				ch = command.GetCommandChar();
 				break;
 				}
-				switch(ch2){
+				switch(ch){
 				case ' ':
 				case (char)27:
 				done = true;
@@ -191,17 +199,17 @@ namespace Forays{
 				break;
 				case (char)8:
 				if(startline > 0){
-					startline -= 20;
+					startline -= text_height;
 					if(startline < 0){
 						startline = 0;
 					}
 				}
 				break;
 				case (char)13:
-				if(messages.Count > 20){
-					startline += 20;
-					if(startline + 20 > messages.Count){
-						startline = messages.Count - 20;
+				if(messages.Count > text_height){
+					startline += text_height;
+					if(startline + text_height > messages.Count){
+						startline = messages.Count - text_height;
 					}
 				}
 				break;
@@ -209,7 +217,7 @@ namespace Forays{
 				startline = 0;
 				break;
 				case ']':
-				startline = Math.Max(0,messages.Count - 20);
+				startline = Math.Max(0,messages.Count - text_height);
 				break;
 				default:
 				break;
@@ -220,6 +228,8 @@ namespace Forays{
 				Screen.AnimateMapCells(Actor.previous_footsteps,new colorchar('!',Color.Red),150);
 			}
 			MouseUI.PopButtonMap();
+			UI.draw_bottom_commands = true;
+			UI.darken_status_bar = false;
 		}
 		public static bool Telekinesis(bool cast,Actor user,Tile t){
 			bool wand = !cast;

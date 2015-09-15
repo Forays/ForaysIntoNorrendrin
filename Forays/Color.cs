@@ -12,6 +12,8 @@ namespace Forays{
 		public const Color darkcolor = Color.DarkCyan; //for darkened map objects
 		public const Color unseencolor = Color.OutOfSight;
 		public const Color status_highlight = Color.Green;
+		public const Color status_darken = Color.DarkGray;
+		public const Color status_highlight_darken = Color.DarkGreen;
 		public static ConsoleColor GetColor(Color c){
 			switch(c){
 			case Color.Black:

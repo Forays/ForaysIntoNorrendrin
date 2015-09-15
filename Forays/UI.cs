@@ -5,9 +5,12 @@ using PosArrays;
 using Utilities;
 namespace Forays{
 	public static class UI{
-		public static Actor player{get{ return Actor.player; } }
-		public static Map M{get{ return Actor.M; } }
-		public static Queue Q{get{ return Actor.Q; } }
+		private static Actor player{get{ return Actor.player; } }
+		private static Map M{get{ return Actor.M; } }
+		private static Queue Q{get{ return Actor.Q; } }
+		private static Buffer B{get{ return Actor.B; } }
+		private static int ROWS{ get{ return Global.ROWS; } }
+		private static int COLS{ get{ return Global.COLS; } }
 
 		public static bool status_hover = false;
 		private static pos internal_map_cursor = new pos(-1,-1);
@@ -59,10 +62,10 @@ namespace Forays{
 			AttrType.BRUTISH_STRENGTH,AttrType.RADIANT_HALO,AttrType.EMPOWERED_SPELLS,AttrType.CONVICTION, //other positive effects
 			};
 
-		public static void DisplayStats(){ DisplayStats(false); }
-		public static void DisplayStats(bool cyan_letters){
+		public static void DisplayStats(){
 			bool buttons = MouseUI.AutomaticButtonsFromStrings;
 			MouseUI.AutomaticButtonsFromStrings = false;
+			bool commands_darkened = MouseUI.Mode != MouseMode.Map;
 			Screen.CursorVisible = false;
 			int row = 0;
 			if(!viewing_map_shrine_info){ //todo: make this shrine stuff a separate method or something.
@@ -103,13 +106,13 @@ namespace Forays{
 					StatusWriteString(ref row,new colorstring(AttrType.SILENCED.StatusName(player).PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkMagenta));
 				}
 				equipment_row = row;
-				StatusWriteString(ref row,player.EquippedWeapon.StatusName());
+				StatusWriteString(ref row,player.EquippedWeapon.NameOnStatusBar());
 				for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
 					if(player.EquippedWeapon.status[(EquipmentStatus)i]){
 						StatusWriteString(ref row,new colorstring(Weapon.StatusName((EquipmentStatus)i).PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkBlue));
 					}
 				}
-				StatusWriteString(ref row,player.EquippedArmor.StatusName());
+				StatusWriteString(ref row,player.EquippedArmor.NameOnStatusBar());
 				for(int i=0;i<(int)EquipmentStatus.NUM_STATUS;++i){
 					if(player.EquippedArmor.status[(EquipmentStatus)i]){
 						StatusWriteString(ref row,new colorstring(Weapon.StatusName((EquipmentStatus)i).PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkBlue));
@@ -190,7 +193,7 @@ namespace Forays{
 					"[p]revious messages ",
 					"Help [?]            ",
 					"Options [=]         ",
-					"[q]uit              ",
+					"[q]uit or save      ",
 					"[v]iew more         ",
 				};
 			break;
@@ -200,14 +203,14 @@ namespace Forays{
 			};
 			break;
 			}
-			/*if(player.attrs[AttrType.RESTING] == -1){
+			/*if(player.attrs[AttrType.RESTING] == -1){ //todo: am I still graying out certain commands when appropriate?
 				blocked_commands.Add(5);
 			}
 			if(M.wiz_dark || M.wiz_lite){
 				blocked_commands.Add(3);
 			}*/
-			Color wordcolor = cyan_letters? Color.Gray : Color.DarkGray;
-			Color lettercolor = cyan_letters? Color.Cyan : Color.DarkCyan;
+			Color wordcolor = commands_darkened? Color.DarkGray : Color.Gray;
+			Color lettercolor = commands_darkened? Color.DarkCyan : Color.Cyan;
 			for(int i=0;i<commandhints.Length;++i){
 				if(blocked_commands.Contains(i)){
 					Screen.WriteString(status_row_cutoff+i+1,0,commandhints[i].GetColorString(Color.DarkGray,Color.DarkCyan));
@@ -216,15 +219,13 @@ namespace Forays{
 					Screen.WriteString(status_row_cutoff+i+1,0,commandhints[i].GetColorString(wordcolor,lettercolor));
 				}
 			}
-			Screen.WriteString(Global.SCREEN_H - 3,Global.MAP_OFFSET_COLS,"You are in a maze of twisty passages, all alike. ".PadOuter(Global.COLS),Color.Gray,Color.DarkerGray);
-			//Screen.WriteString(Global.SCREEN_H - 2,Global.MAP_OFFSET_COLS,"   E[x]plore   [t]orch   [s]hoot bow   Cast spell [z]   [r]est    ".GetColorString(wordcolor,lettercolor));
-			Color hack_color_todo = Color.Black; //so, darker gray looks pretty decent. Not sure what to do in 16 color mode.
-			//dark green is also not completely terrible. 
-			Color hackcolor2 = Color.Gray; //todo - add these colors to Color.cs as statics. Set in Main based on GLMode?
-			Screen.WriteString(Global.SCREEN_H - 2,Global.MAP_OFFSET_COLS,"E[x]plore     [t]orch     [s]hoot bow    [r]est     Cast spell [z]".GetColorString(hackcolor2,lettercolor,hack_color_todo));
-			Screen.WriteString(Global.SCREEN_H - 1,Global.MAP_OFFSET_COLS,"[i]nventory   [e]quipment [c]haracter    [m]ap              [Menu]".GetColorString(hackcolor2,lettercolor,hack_color_todo));
-			//Screen.WriteString(Global.SCREEN_H - 2,Global.MAP_OFFSET_COLS,"   E[x]plore   [t]orch   [s]hoot bow   [r]est   Cast spell [z]    ".GetColorString(wordcolor,lettercolor,hack_color_todo));
-			//Screen.WriteString(Global.SCREEN_H - 1,Global.MAP_OFFSET_COLS,"     [i]nventory   [e]quipment   [c]haracter   [m]ap   [Menu]     ".GetColorString(wordcolor,lettercolor,hack_color_todo));
+			if(draw_bottom_commands){
+				Screen.WriteString(Global.SCREEN_H - 3,Global.MAP_OFFSET_COLS,"You are in a maze of twisty passages, all alike. ".PadOuter(Global.COLS),wordcolor,Color.DarkerGray); //todo: fix this for terminal mode.
+				//so, darker gray looks pretty decent. Not sure what to do in 16 color mode.
+				//dark green is also not completely terrible.
+				Screen.WriteString(Global.SCREEN_H - 2,Global.MAP_OFFSET_COLS,"E[x]plore     [t]orch     [s]hoot bow    [r]est     Cast spell [z]".GetColorString(wordcolor,lettercolor));
+				Screen.WriteString(Global.SCREEN_H - 1,Global.MAP_OFFSET_COLS,"[i]nventory   [e]quipment [c]haracter    [m]ap              [Menu]".GetColorString(wordcolor,lettercolor));
+			}
 			Screen.ResetColors();
 			MouseUI.AutomaticButtonsFromStrings = buttons;
 		}
@@ -235,6 +236,8 @@ namespace Forays{
 			Screen.WriteString(row,0,s);
 			++row;
 		}
+		public static bool draw_bottom_commands = true;
+		public static bool darken_status_bar = false;
 		public static int status_row_start = 5;
 		public static int equipment_row = 1;
 		public static int depth_row = 3;
@@ -543,6 +546,520 @@ namespace Forays{
 			}
 			box.Add(new colorstring("+",box_corner_color,"".PadRight(widest,'-'),box_edge_color,"+",box_corner_color));
 			return box;
+		}
+		public static int DisplayCharacterInfo(){ return DisplayCharacterInfo(true); }
+		public static int DisplayCharacterInfo(bool readkey){ //todo remove old version in Actor
+			MouseUI.PushButtonMap();
+			UI.DisplayStats();
+			UI.draw_bottom_commands = false;
+			UI.darken_status_bar = true;
+
+			const Color c = Color.Green;
+			const Color text = Color.Gray;
+			List<colorstring> top = new List<colorstring>{new colorstring("".PadRight(COLS,'-'),text)};
+			List<colorstring> name = new List<colorstring>{(new cstr("Name",c) + new cstr(": " + Actor.player_name,text)).PadRight(COLS/2) + (new cstr("Turns played",c) + new cstr(": " + Q.turn/100,text))};
+			List<colorstring> skills = null;
+			List<colorstring> feats = null;
+			List<colorstring> spells = null;
+			List<colorstring> trinkets = null;
+			List<colorstring> divider = new List<colorstring>{new colorstring("Active abilities",c,":",text)};
+			List<colorstring> actives = new List<colorstring>();
+
+			List<List<colorstring>> potential_skills = new List<List<colorstring>>();
+			for(int indent=7;indent>=1;--indent){
+				List<colorstring> list = new List<colorstring>{new colorstring("Skills",c,":",text)};
+				potential_skills.Add(list);
+				for(SkillType sk = SkillType.COMBAT;sk < SkillType.NUM_SKILLS;++sk){
+					int skill_base = player.skills[sk];
+					int skill_mod = player.BonusSkill(sk);
+					colorstring skill_string = new colorstring(" " + Skill.Name(sk) + "(",text,skill_base.ToString(),Color.White);
+					if(skill_mod > 0){
+						skill_string.Add($"+{skill_mod}",Color.Yellow);
+					}
+					else{
+						if(skill_mod < 0){
+							skill_string.strings.Add(new cstr(skill_mod.ToString(),Color.Blue));
+						}
+					}
+					skill_string.strings.Add(new cstr(")",text));
+					list.AddWithWrap(skill_string,Global.COLS,indent);
+				}
+			}
+			skills = potential_skills.WhereLeast(x=>x.Count)[0]; //Take the first result (i.e. highest indent) from the lowest count.
+
+			List<List<colorstring>> potential_feats = new List<List<colorstring>>();
+			for(int indent=6;indent>=1;--indent){
+				List<colorstring> list = new List<colorstring>{new colorstring("Feats",c,":",text)};
+				potential_feats.Add(list);
+				for(int i=0;i<Actor.feats_in_order.Count;++i){
+					string comma = (i == Actor.feats_in_order.Count - 1)? "" : ",";
+					colorstring feat_string = new colorstring(" " + Feat.Name(Actor.feats_in_order[i]) + comma);
+					list.AddWithWrap(feat_string,Global.COLS,indent);
+				}
+			}
+			feats = potential_feats.WhereLeast(x=>x.Count)[0]; //Take the first result (i.e. highest indent) from the lowest count.
+
+			List<List<colorstring>> potential_spells = new List<List<colorstring>>();
+			for(int indent=7;indent>=1;--indent){
+				List<colorstring> list = new List<colorstring>{new colorstring("Spells",c,":",text)};
+				potential_spells.Add(list);
+				for(int i=0;i<Actor.spells_in_order.Count;++i){
+					string comma = (i == Actor.spells_in_order.Count - 1)? "" : ",";
+					colorstring spell_string = new colorstring(" " + Spell.Name(Actor.spells_in_order[i]) + comma);
+					list.AddWithWrap(spell_string,Global.COLS,indent);
+				}
+			}
+			spells = potential_spells.WhereLeast(x=>x.Count)[0]; //Take the first result (i.e. highest indent) from the lowest count.
+
+			List<string> magic_equipment_names = new List<string>();
+			foreach(Weapon w in player.weapons){
+				if(w.IsEnchanted()){
+					magic_equipment_names.Add(w.NameWithEnchantment());
+				}
+			}
+			foreach(Armor a in player.armors){
+				if(a.IsEnchanted()){
+					magic_equipment_names.Add(a.NameWithEnchantment());
+				}
+			}
+			foreach(MagicTrinketType trinket in player.magic_trinkets){
+				magic_equipment_names.Add(MagicTrinket.Name(trinket));
+			}
+
+			List<List<colorstring>> potential_trinkets = new List<List<colorstring>>();
+			for(int indent=18;indent>=1;--indent){ //todo keep this value?
+				List<colorstring> list = new List<colorstring>{new colorstring("Magical equipment",c,":",text)};
+				potential_trinkets.Add(list);
+				for(int i=0;i<magic_equipment_names.Count;++i){
+					string comma = (i == magic_equipment_names.Count - 1)? "" : ",";
+					colorstring equip_string = new colorstring(" " + magic_equipment_names[i].Capitalize() + comma);
+					list.AddWithWrap(equip_string,Global.COLS,indent);
+				}
+			}
+			trinkets = potential_trinkets.WhereLeast(x=>x.Count)[0]; //Take the first result (i.e. highest indent) from the lowest count.
+
+			List<FeatType> active_feats = new List<FeatType>();
+
+			foreach(FeatType f in Actor.feats_in_order){
+				if(Feat.IsActivated(f)){
+					active_feats.Add(f);
+				}
+			}
+
+			for(int i=0;i<active_feats.Count;++i){
+				actives.Add(new colorstring("  [",text,((char)(i+'a')).ToString(),Color.Cyan,"] " + Feat.Name(active_feats[i]),text));
+			}
+
+			//eventually activated trinkets or temporary effects will go here.
+
+			const int total_height = Global.SCREEN_H - Global.MAP_OFFSET_ROWS;
+			List<List<colorstring>> all = new List<List<colorstring>>{top,name,skills,feats,spells,trinkets,divider,actives};
+			List<List<colorstring>> some = new List<List<colorstring>>{name,skills,feats,spells};
+			List<List<colorstring>> top_titles = new List<List<colorstring>>{name,skills,feats,spells,trinkets};
+			int rows_left = total_height - 1; // -1 for the bottom border
+			foreach(var list in all){
+				rows_left -= list.Count;
+			}
+
+			//Here's how the extra rows are distributed:
+			if(rows_left >= 1){
+				trinkets.Add(new colorstring(""));
+				--rows_left;
+			}
+
+			if(rows_left >= 1){
+				actives.Add(new colorstring(""));
+				--rows_left;
+			}
+
+			List<List<colorstring>> cramped = new List<List<colorstring>>();
+			foreach(var list in some){
+				if(list.Count == 1){
+					cramped.Add(list); //a list is considered cramped if its title (in green) is right next to another title.
+				}
+			}
+			if(rows_left >= cramped.Count){
+				foreach(var list in cramped){
+					list.Add(new colorstring(""));
+					--rows_left;
+				}
+			}
+
+			List<List<colorstring>> no_blank_line = new List<List<colorstring>>();
+			foreach(var list in some){
+				if(list.Last().Length() > 0){
+					no_blank_line.Add(list); //this time, we try to put a space between each list and the next title.
+				}
+			}
+			if(rows_left >= no_blank_line.Count){
+				foreach(var list in no_blank_line){
+					list.Add(new colorstring(""));
+					--rows_left;
+				}
+			}
+
+			/*if(rows_left >= 1){
+				divider.Add(new colorstring(""));
+				--rows_left;
+			}*/
+
+			int top_text_height = 0;
+			foreach(var list in top_titles){
+				top_text_height += list.Count;
+			}
+			if(rows_left >= 1 && top_text_height < 14){
+				top.Add(new colorstring(""));
+				--rows_left;
+			}
+
+			for(int i=0;i<rows_left;++i){
+				actives.Add(new colorstring(""));
+			}
+
+			int row = 0;
+			foreach(var list in all){
+				foreach(colorstring cs in list){
+					Screen.WriteMapString(row,0,cs.PadRight(COLS));
+					++row;
+				}
+			}
+			Screen.WriteMapString(row,0,"".PadRight(COLS,'-'),text);
+			Screen.ResetColors();
+			B.DisplayNow("Character information: ");
+			Screen.CursorVisible = true;
+
+			int result = -1;
+			if(readkey){
+				result = player.GetSelection("Character information: ",active_feats.Count,false,true,false); //todo, currently only feats.
+			}
+			MouseUI.PopButtonMap();
+			UI.draw_bottom_commands = true;
+			UI.darken_status_bar = false;
+			return result;
+		}
+		public static int[] DisplayEquipment(){
+			MouseUI.PushButtonMap();
+			UI.draw_bottom_commands = false;
+			UI.darken_status_bar = true;
+			Weapon equippedWeapon = player.EquippedWeapon;
+			Armor equippedArmor = player.EquippedArmor;
+			WeaponType selectedWeapon = equippedWeapon.type;
+			ArmorType selectedArmor = equippedArmor.type;
+			List<MagicTrinketType> trinkets = player.magic_trinkets;
+			int selectedTrinketIdx = -1;
+			if(trinkets.Count > 0){
+				selectedTrinketIdx = R.Roll(trinkets.Count)-1;
+				int i = 0;
+				foreach(MagicTrinketType trinket in trinkets){
+					MouseUI.CreateButton((ConsoleKey)(ConsoleKey.I + i),false,i+1+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS + 32,1,34);
+					++i;
+				}
+			}
+			Screen.Blank();
+			Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
+			int line = 1;
+			for(WeaponType w = WeaponType.SWORD;w <= WeaponType.BOW;++w){
+				Screen.WriteMapString(line,2,"[ ] " + player.WeaponOfType(w).EquipmentScreenName());
+				ConsoleKey key = (ConsoleKey)(ConsoleKey.A + line-1);
+				if(w == selectedWeapon){
+					key = ConsoleKey.Enter;
+				}
+				if(trinkets.Count >= line){
+					MouseUI.CreateButton(key,false,line+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,1,32);
+				}
+				else{
+					MouseUI.CreateMapButton(key,false,line,1);
+				}
+				++line;
+			}
+			line = 8;
+			for(ArmorType a = ArmorType.LEATHER;a <= ArmorType.FULL_PLATE;++a){
+				Screen.WriteMapString(line,2,"[ ] " + player.ArmorOfType(a).EquipmentScreenName());
+				ConsoleKey key = (ConsoleKey)(ConsoleKey.A + line-3);
+				if(a == selectedArmor){
+					key = ConsoleKey.Enter;
+				}
+				if(trinkets.Count >= line){
+					MouseUI.CreateButton(key,false,line+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,1,32);
+				}
+				else{
+					MouseUI.CreateMapButton(key,false,line,1);
+				}
+				++line;
+			}
+			line = 1;
+			foreach(MagicTrinketType m in trinkets){
+				Screen.WriteMapString(line,34,"[ ] " + MagicTrinket.Name(m).Capitalize());
+				++line;
+			}
+			Screen.WriteMapString(11,0,"".PadRight(COLS,'-'));
+			ConsoleKeyInfo command;
+			bool done = false;
+			while(!done){
+				line = 1;
+				for(WeaponType w = WeaponType.SWORD;w <= WeaponType.BOW;++w){
+					char c = ' ';
+					Color letter_color = Color.Cyan;
+					if(equippedWeapon.status[EquipmentStatus.STUCK]){
+						letter_color = Color.Red;
+					}
+					if(selectedWeapon == w){
+						c = '>';
+						letter_color = Color.Red;
+					}
+					Screen.WriteMapChar(line,0,c);
+					Screen.WriteMapChar(line,3,(char)(w+(int)'a'),letter_color);
+					++line;
+				}
+				line = 8;
+				for(ArmorType a = ArmorType.LEATHER;a <= ArmorType.FULL_PLATE;++a){
+					char c = ' ';
+					Color letter_color = Color.Cyan;
+					if(equippedArmor.status[EquipmentStatus.STUCK]){
+						letter_color = Color.Red;
+					}
+					if(selectedArmor == a){
+						c = '>';
+						letter_color = Color.Red;
+					}
+					Screen.WriteMapChar(line,0,c);
+					Screen.WriteMapChar(line,3,(char)(a+(int)'f'),letter_color);
+					++line;
+				}
+				line = 1;
+				int letter = 0;
+				foreach(MagicTrinketType m in trinkets){
+					if(selectedTrinketIdx == trinkets.IndexOf(m)){
+						Screen.WriteMapChar(line,32,'>');
+					}
+					else{
+						Screen.WriteMapChar(line,32,' ');
+					}
+					Screen.WriteMapChar(line,35,(char)(letter+(int)'i'),Color.Red);
+					++line;
+					++letter;
+				}
+				Weapon newWeapon = player.WeaponOfType(selectedWeapon);
+				Armor newArmor = player.ArmorOfType(selectedArmor);
+				MagicTrinketType selectedTrinket = selectedTrinketIdx >= 0? trinkets[selectedTrinketIdx] : MagicTrinketType.NO_MAGIC_TRINKET;
+				List<colorstring> wStr = newWeapon.Description().GetColorStrings();
+				wStr[0] = new colorstring("Weapon",Color.DarkRed,": ",Color.Gray) + wStr[0];
+				List<colorstring> aStr = newArmor.Description().GetColorStrings();
+				aStr[0] = new colorstring("Armor",Color.DarkCyan,": ",Color.Gray) + aStr[0];
+				{
+					string wEnch = newWeapon.DescriptionOfEnchantment();
+					string aEnch = newArmor.DescriptionOfEnchantment();
+					if(wEnch != ""){
+						wStr.Add(new colorstring(wEnch,newWeapon.EnchantmentColor()));
+					}
+					if(aEnch != ""){
+						aStr.Add(new colorstring(aEnch,newArmor.EnchantmentColor()));
+					}
+				}
+				List<colorstring> mStr = MagicTrinket.Description(selectedTrinket).GetColorStrings();
+				mStr[0] = new colorstring("Magic trinket",Color.DarkGreen,": ",Color.Gray) + mStr[0];
+				if(mStr.Count > 1){
+					mStr[1] = "".PadRight(15) + mStr[1];
+				}
+				List<colorstring> wStatusShort = newWeapon.ShortStatusList();
+				List<colorstring> aStatusShort = newArmor.ShortStatusList();
+
+				int wMin = wStr.Count + wStatusShort.Count;
+				int aMin = aStr.Count + aStatusShort.Count;
+
+				int lines_free = 12 - wMin - aMin - mStr.Count;
+
+				List<colorstring> wStatusLong = newWeapon.LongStatusList();
+				List<colorstring> aStatusLong = newArmor.LongStatusList();
+				int wDiff = wStatusLong.Count - wStatusShort.Count;
+				int aDiff = aStatusLong.Count - aStatusShort.Count;
+
+				bool expandW = false;
+				bool expandA = false;
+				if(wDiff + aDiff <= lines_free){ //if there's room to use the full versions of both, do that.
+					expandW = true;
+					expandA = true;
+				}
+				else{
+					if(wDiff > aDiff){ //otherwise, try to fit the biggest.
+						if(wDiff <= lines_free){
+							expandW = true;
+						}
+						else{
+							if(aDiff <= lines_free){
+								expandA = true;
+							} //if that doesn't work, we settle for the condensed version.
+						}
+					}
+					else{
+						if(aDiff <= lines_free){
+							expandA = true;
+						}
+						else{
+							if(wDiff <= lines_free){
+								expandW = true;
+							}
+						}
+					}
+				}
+				if(expandW){
+					wStr.AddRange(wStatusLong);
+					lines_free -= wDiff;
+				}
+				else{
+					wStr.AddRange(wStatusShort);
+				}
+				if(expandA){
+					aStr.AddRange(aStatusLong);
+					lines_free -= aDiff;
+				}
+				else{
+					aStr.AddRange(aStatusShort);
+				}
+
+				List<colorstring> top = new List<colorstring>();
+
+				//now let's distribute those extra lines. (0-7 possible)
+				for(int i=0;i<2;++i){ //space between sections, then at the bottom. This takes care of 6 lines.
+					if(lines_free >= 2){
+						lines_free -= 2;
+						wStr.Add(new colorstring(""));
+						aStr.Add(new colorstring(""));
+					}
+					if(lines_free >= 1){
+						lines_free -= 1;
+						mStr.Add(new colorstring(""));
+					}
+				}
+				if(lines_free >= 1){ //if there's one left, it means that we had the full 7 lines, so we need an extra space at the top.
+					lines_free -= 1;
+					top.Add(new colorstring(""));
+				}
+
+				int row = 12;
+				foreach(List<colorstring> list in new List<List<colorstring>>{top,wStr,aStr,mStr}){
+					foreach(colorstring cs in list){
+						Screen.WriteMapString(row++,0,cs.PadRight(COLS));
+					}
+				}
+
+				if(newWeapon == equippedWeapon && newArmor == equippedArmor){
+					Screen.WriteMapString(row,0,"".PadRight(COLS,'-'));
+					MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS+row,Global.MAP_OFFSET_COLS);
+				}
+				else{
+					if((newWeapon != equippedWeapon && equippedWeapon.status[EquipmentStatus.STUCK]) || (newArmor != equippedArmor && equippedArmor.status[EquipmentStatus.STUCK])){
+						Screen.WriteMapString(row,0,"".PadRight(COLS,'-'));
+						MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS+row,Global.MAP_OFFSET_COLS);
+					}
+					else{
+						Screen.WriteMapString(row,0,new colorstring("[",Color.Gray,"Enter",Color.Magenta,"] to confirm",Color.Gray).PadOuter(COLS,'-'));
+						MouseUI.CreateMapButton(ConsoleKey.Enter,false,row,1);
+					}
+				}
+
+				Screen.ResetColors();
+				B.DisplayNow("Your equipment: ");
+				Screen.CursorVisible = true;
+				command = Input.ReadKey();
+				char ch = command.GetCommandChar();
+				switch(ch){
+				case 'a':
+				case 'b':
+				case 'c':
+				case 'd':
+				case 'e':
+				case '!':
+				case '@':
+				case '#':
+				case '$':
+				case '%':
+				{
+					switch(ch){
+					case '!':
+					ch = 'a';
+					break;
+					case '@':
+					ch = 'b';
+					break;
+					case '#':
+					ch = 'c';
+					break;
+					case '$':
+					ch = 'd';
+					break;
+					case '%':
+					ch = 'e';
+					break;
+					}
+					int num = (int)(ch - 'a');
+					if(num != (int)(selectedWeapon)){
+						MouseUI.GetButton((int)(selectedWeapon)+1+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS).key = (ConsoleKey)(ConsoleKey.A + (int)selectedWeapon);
+						MouseUI.GetButton(num+1+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS).key = ConsoleKey.Enter;
+						selectedWeapon = (WeaponType)num;
+					}
+					break;
+				}
+				case 'f':
+				case 'g':
+				case 'h':
+				case '*':
+				case '(':
+				case ')':
+				{
+					switch(ch){
+					case '*':
+					ch = 'f';
+					break;
+					case '(':
+					ch = 'g';
+					break;
+					case ')':
+					ch = 'h';
+					break;
+					}
+					int num = (int)(ch - 'f');
+					if(num != (int)(selectedArmor)){
+						MouseUI.GetButton((int)(selectedArmor)+8+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS).key = (ConsoleKey)(ConsoleKey.F + (int)selectedArmor);
+						MouseUI.GetButton(num+8+Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS).key = ConsoleKey.Enter;
+						selectedArmor = (ArmorType)num;
+					}
+					break;
+				}
+				case 'i':
+				case 'j':
+				case 'k':
+				case 'l':
+				case 'm':
+				case 'n':
+				case 'o':
+				case 'p':
+				case 'q':
+				case 'r':
+				{
+					int num = (int)ch - (int)'i';
+					if(num < trinkets.Count && num != selectedTrinketIdx){
+						selectedTrinketIdx = num;
+					}
+					break;
+				}
+				case (char)27:
+				case ' ':
+				selectedWeapon = equippedWeapon.type; //reset
+				selectedArmor = equippedArmor.type;
+				done = true;
+				break;
+				case (char)13:
+				done = true;
+				break;
+				default:
+				break;
+				}
+			}
+			MouseUI.PopButtonMap();
+			UI.draw_bottom_commands = true;
+			UI.darken_status_bar = false;
+			return new int[]{(int)selectedWeapon,(int)selectedArmor};
 		}
 	}
 }

@@ -133,9 +133,9 @@ namespace Forays{
 		}
 		public virtual List<colorstring> GetStatusBarInfo(){
 			List<colorstring> result = new List<colorstring>();
-			Color text = Color.Gray;
+			Color text = UI.darken_status_bar? Colors.status_darken : Color.Gray;
 			if(p.Equals(UI.MapCursor)){
-				text = Colors.status_highlight;
+				text = UI.darken_status_bar? Colors.status_highlight_darken : Colors.status_highlight;
 			}
 			foreach(string s in name.GetWordWrappedList(17,true)){
 				colorstring cs = new colorstring();

@@ -41,6 +41,9 @@ namespace Forays{
 			bgcolor = Color.Black;
 			c = c_;
 		}
+		public static implicit operator colorchar(char c){
+			return new colorchar(c,Color.Gray,Color.Black);
+		}
 	}
 	public struct cstr{ //todo: change this to a class eventually
 		public Color color;
@@ -167,6 +170,18 @@ namespace Forays{
 				}
 			}
 		}
+		public void Add(cstr cs){
+			strings.Add(cs);
+		}
+		public void Add(string s){
+			strings.Add(new cstr(s,Color.Gray));
+		}
+		public void Add(string s1,Color c1){
+			strings.Add(new cstr(s1,c1));
+		}
+		public void Add(string s1,Color c1,Color bg1){
+			strings.Add(new cstr(s1,c1,bg1));
+		}
 		public colorstring PadLeft(int totalWidth){
 			return PadLeft(totalWidth,new colorchar(' ',Color.Gray,Color.Black));
 		}
@@ -224,6 +239,42 @@ namespace Forays{
 				result.strings.Add(s);
 			}
 			result.strings.Add(new cstr(two,Color.Gray));
+			return result;
+		}
+		public colorstring[] SplitAt(int idx,bool remove_at_split_idx = false){
+			if(idx < 0){
+				throw new ArgumentOutOfRangeException("idx argument " + idx.ToString() + " can't be negative.");
+			}
+			if(idx >= Length()){
+				throw new ArgumentOutOfRangeException("idx argument " + idx.ToString() + " can't be outside the string.");
+			}
+			colorstring[] result = new colorstring[2];
+			result[0] = new colorstring();
+			result[1] = new colorstring();
+			foreach(cstr s in strings){
+				int len_0 = result[0].Length();
+				if(len_0 < idx){
+					if(len_0 + s.s.Length > idx){
+						result[0].strings.Add(new cstr(s.s.Substring(0,idx - len_0),s.color,s.bgcolor));
+						int second_start = idx - len_0;
+						if(remove_at_split_idx){
+							++second_start;
+						}
+						if(second_start < s.s.Length){
+							result[1].strings.Add(new cstr(s.s.Substring(idx - len_0),s.color,s.bgcolor));
+						}
+						if(result[0].Length() != idx){
+							throw new Exception("whoops"); //todo, remove this after it works.
+						}
+					}
+					else{
+						result[0].strings.Add(s);
+					}
+				}
+				else{
+					result[1].strings.Add(s);
+				}
+			}
 			return result;
 		}
 	}
