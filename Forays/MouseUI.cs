@@ -183,21 +183,21 @@ namespace Forays{
 			case 0:
 			UI.status_row_cutoff = Global.SCREEN_H - 9;
 			CreateStatsButton(ConsoleKey.Tab,false,Global.SCREEN_H-8,1); //look
-			CreateStatsButton(ConsoleKey.A,false,Global.SCREEN_H-7,1); //apply
-			CreateStatsButton(ConsoleKey.G,false,Global.SCREEN_H-6,1); //get
-			CreateStatsButton(ConsoleKey.F,false,Global.SCREEN_H-5,1); //fling
-			CreateStatsButton(ConsoleKey.OemPeriod,false,Global.SCREEN_H-4,1); //wait [.]
-			CreateStatsButton(ConsoleKey.X,true,Global.SCREEN_H-3,1); //travel
-			CreateStatsButton(ConsoleKey.OemPeriod,true,Global.SCREEN_H-2,1); //descend [>]
+			CreateStatsButton(ConsoleKey.P,false,Global.SCREEN_H-7,1); //previous messages
+			CreateStatsButton(ConsoleKey.A,false,Global.SCREEN_H-6,1); //apply
+			CreateStatsButton(ConsoleKey.G,false,Global.SCREEN_H-5,1); //get
+			CreateStatsButton(ConsoleKey.F,false,Global.SCREEN_H-4,1); //fling
+			CreateStatsButton(ConsoleKey.OemPeriod,false,Global.SCREEN_H-3,1); //wait [.]
+			CreateStatsButton(ConsoleKey.Oem2,true,Global.SCREEN_H-2,1); //help [?]
 			CreateStatsButton(ConsoleKey.V,false,Global.SCREEN_H-1,1); //view more
 			break;
 			case 1:
 			UI.status_row_cutoff = Global.SCREEN_H - 9;
-			CreateStatsButton(ConsoleKey.W,false,Global.SCREEN_H-8,1); //walk
+			CreateStatsButton(ConsoleKey.Oem5,false,Global.SCREEN_H-8,1); //known items [\]
 			CreateStatsButton(ConsoleKey.O,false,Global.SCREEN_H-7,1); //operate
-			CreateStatsButton(ConsoleKey.Oem5,false,Global.SCREEN_H-6,1); //known items [\]
-			CreateStatsButton(ConsoleKey.P,false,Global.SCREEN_H-5,1); //previous messages
-			CreateStatsButton(ConsoleKey.Oem2,true,Global.SCREEN_H-4,1); //help [?]
+			CreateStatsButton(ConsoleKey.X,true,Global.SCREEN_H-6,1); //travel
+			CreateStatsButton(ConsoleKey.OemPeriod,true,Global.SCREEN_H-5,1); //descend [>]
+			CreateStatsButton(ConsoleKey.W,false,Global.SCREEN_H-4,1); //walk
 			CreateStatsButton(ConsoleKey.OemPlus,false,Global.SCREEN_H-3,1); //options [=]
 			CreateStatsButton(ConsoleKey.Q,false,Global.SCREEN_H-2,1); //quit
 			CreateStatsButton(ConsoleKey.V,false,Global.SCREEN_H-1,1); //view more
@@ -219,9 +219,7 @@ namespace Forays{
 			CreateButton(ConsoleKey.E,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+14,1,11); //equipment
 			CreateButton(ConsoleKey.C,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+26,1,11); //character
 			CreateButton(ConsoleKey.M,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+41,1,5); //map
-			if(Screen.GLMode){
-				CreateButton(ConsoleKey.F21,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+60,1,6); //menu
-			}
+			CreateButton(ConsoleKey.F21,false,Global.SCREEN_H-1,Global.MAP_OFFSET_COLS+60,1,6); //menu
 		}
 		public static void CreatePlayerStatsButtons(){
 			if(Mode != MouseMode.Map) return;

@@ -1986,7 +1986,16 @@ namespace Forays{
 					}
 					else{
 						if(tile().symbol == '.' && tile().color == Color.White && R.CoinFlip()){
-							tile().color = BloodColor();
+							Color blood = BloodColor();
+							tile().color = blood;
+							switch(blood){
+							case Color.DarkRed:
+							M.aesthetics[p] = AestheticFeature.BloodDarkRed;
+							break;
+							default:
+							M.aesthetics[p] = AestheticFeature.BloodOther;
+							break;
+							}
 						}
 					}
 					int amount = (maxhp + 49) / 50; //50 turns of bleeding is lethal - if you have 100hp, bleeding deals 2 damage. if you have 101hp, bleeding deals 3.
@@ -8330,7 +8339,7 @@ namespace Forays{
 						bool on_line = line_from_target.Contains(tile());
 						bool space_near_target = line_from_target.Count > 1 && line_from_target[1].passable && line_from_target[1].actor() == null;
 						if(on_line && DistanceFrom(target) > thrall.DistanceFrom(target)){
-							if(!HasAttr(AttrType.COOLDOWN_2) && thrall.curhp <= thrall.maxhp/2){ //check whether you can shield it, if the thrall is low on health.
+							if(!HasAttr(AttrType.COOLDOWN_2) && thrall.curhp <= thrall.maxhp / 2){ //check whether you can shield it, if the thrall is low on health.
 								RefreshDuration(AttrType.COOLDOWN_2,1500);
 								B.Add(TheName(true) + " shields " + thrall.TheName(true) + ". ",this,thrall);
 								B.DisplayNow();
@@ -10870,7 +10879,7 @@ namespace Forays{
 			case ActorType.VULGAR_DEMON:
 				return Color.Green;
 			case ActorType.MUD_ELEMENTAL:
-				//return Color.DarkYellow; //conflicts with wax walls
+				//return Color.DarkYellow; //conflicts with wax walls - what if I prevent it from coloring walls?
 			case ActorType.CARNIVOROUS_BRAMBLE:
 			case ActorType.FROSTLING:
 			case ActorType.SPORE_POD:
@@ -11569,6 +11578,14 @@ namespace Forays{
 							while(cone.Remove(t)){ } //remove all
 							if(t.Is(TileType.WALL) || t.name == "floor"){
 								t.color = blood;
+								switch(blood){
+								case Color.DarkRed:
+								M.aesthetics[t.p] = AestheticFeature.BloodDarkRed;
+								break;
+								default:
+								M.aesthetics[t.p] = AestheticFeature.BloodOther;
+								break;
+								}
 							}
 						}
 					}
@@ -12720,13 +12737,6 @@ namespace Forays{
 					B.Add("The glow leaves " + Your() + " sword. ",this);
 					attrs[AttrType.KEEPS_DISTANCE] = 0;
 				}
-				/*if(type == ActorType.LUMINOUS_AVENGER && light_radius != curhp / 4){ //no longer changes its light radius based on remaining hp
-					int old = LightRadius();
-					light_radius = curhp / 4;
-					if(old != LightRadius()){
-						UpdateRadius(old,LightRadius());
-					}
-				}*/
 			}
 			if(curhp <= 0){
 				if(type == ActorType.PLAYER){
@@ -14993,67 +15003,55 @@ namespace Forays{
 			skills[skill]++;
 			bool active_feat_learned = false;
 			B.Add("You feel a rush of power. ");
-			//DisplayStats();
 			B.PrintAll();
 			ConsoleKeyInfo command;
 			bool gain_feat = false;
 			if(!M.feat_gained_this_level){
-				int total = 0;
-				foreach(FeatType ft in feats_in_order){
-					if(Feat.Skill(ft) == skill){
-						++total;
-					}
-				}
-				if(total < 4){
-					List<List<Tile>> shrines = new List<List<Tile>>{new List<Tile>{this.tile()}};
-					foreach(Tile neighbor in tile().TilesAtDistance(2)){
-						if(neighbor.IsShrine() && neighbor.type != TileType.SPELL_EXCHANGE_SHRINE){
-							shrines[0].Add(neighbor);
-							break;
-						}
-					}
+				if(Feat.NumberOfFeats(skill,feats_in_order) < 4){
+					List<List<SkillType>> skill_groups = new List<List<SkillType>>{new List<SkillType>{tile().type.GetAssociatedSkill()}};
 					for(int i=0;i<ROWS;++i){
 						for(int j=0;j<COLS;++j){
-							if(M.tile[i,j].IsShrine() && M.tile[i,j].type != TileType.SPELL_EXCHANGE_SHRINE){
-								bool found = false;
-								foreach(List<Tile> l in shrines){
-									foreach(Tile t in l){
-										if(t == M.tile[i,j]){
-											found = true;
-											break;
+							if(M.tile[i,j].IsShrine() && M.tile[i,j].type != TileType.SPELL_EXCHANGE_SHRINE && this.DistanceFrom(i,j) > 2){
+								foreach(var list in skill_groups){
+									foreach(SkillType s in list){
+										if(s == M.tile[i,j].type.GetAssociatedSkill()){
+											goto NoAdd;
 										}
 									}
-									if(found){
-										break;
+								}
+								List<SkillType> newlist = new List<SkillType>();
+								foreach(Tile t in M.tile[i,j].TilesWithinDistance(2)){
+									if(t.IsShrine() && t.type != TileType.SPELL_EXCHANGE_SHRINE){
+										SkillType newskill = t.type.GetAssociatedSkill();
+										if(Feat.NumberOfFeats(newskill,feats_in_order) >= 4){
+											goto NoAdd;
+										}
+										newlist.Add(newskill);
 									}
 								}
-								if(!found){
-									shrines.Add(M.tile[i,j].TilesWithinDistance(2).Where(x=>x.IsShrine() && x.type != TileType.SPELL_EXCHANGE_SHRINE));
-								}
+								skill_groups.Add(newlist);
+								NoAdd: continue;
 							}
 						}
 					}
-					List<List<Tile>> removed = new List<List<Tile>>();
-					for(int idx = 1;idx < shrines.Count;++idx){
-						foreach(Tile t in shrines[idx]){
-							SkillType t_skill = SkillType.COMBAT + (t.type - TileType.COMBAT_SHRINE);
-							int total2 = 0;
-							foreach(FeatType ft in feats_in_order){
-								if(Feat.Skill(ft) == t_skill){
-									++total2;
+					if(M.nextLevelShrines?.Count > 0){
+						List<SchismDungeonGenerator.CellType> nextShrines = new List<SchismDungeonGenerator.CellType>(M.nextLevelShrines);
+						while(nextShrines.Count > 0){
+							List<SkillType> newlist = new List<SkillType>();
+							newlist.Add(nextShrines.RemoveFirst().GetAssociatedSkill());
+							if(nextShrines.Count > 0){
+								newlist.Add(nextShrines.RemoveFirst().GetAssociatedSkill());
+							}
+							foreach(SkillType newskill in newlist){
+								if(Feat.NumberOfFeats(newskill,feats_in_order) >= 4){
+									goto NoAdd;
 								}
 							}
-							if(total2 >= 4){
-								removed.Add(shrines[idx]);
-								break;
-							}
+							skill_groups.Add(newlist);
+							NoAdd: continue;
 						}
 					}
-					foreach(List<Tile> l in removed){
-						shrines.Remove(l);
-					}
-					List<Tile> chosen_shrines = shrines.Random();
-					if(chosen_shrines.Contains(this.tile())){
+					if(skill_groups.Random().Contains(skill)){
 						gain_feat = true;
 					}
 				}
@@ -16397,6 +16395,13 @@ namespace Forays{
 			default:
 				return false;
 			}
+		}
+		public static int NumberOfFeats(SkillType skill,List<FeatType> list){
+			int result = 0;
+			foreach(FeatType f in list){
+				if(Feat.Skill(f) == skill) ++result;
+			}
+			return result;
 		}
 		public static FeatType OfSkill(SkillType skill,int num){ // 0 through 3
 			switch(skill){

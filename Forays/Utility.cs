@@ -9,7 +9,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using PosArrays;
-//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v11)
+//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v12)
 namespace Utilities{
 	public class Dict<TKey,TValue>{ //a Dictionary that returns the default value for keys that haven't been added
 		public Dictionary<TKey,TValue> d;
@@ -143,6 +143,8 @@ namespace Utilities{
 		public static int[] FourDirections = {8,6,2,4}; //the directions correspond to the numbers on a keyboard's numpad.
 		public static int[] DiagonalDirections = {9,3,1,7};
 		public static int[] NineDirections = {5,8,9,6,3,2,1,4,7}; //eight, plus the direction that corresponds to "here".
+		public static int[][] FourDirectionPairs = {new int[]{8,2},new int[]{6,4}};
+		public static int[][] EightDirectionPairs = {new int[]{8,2},new int[]{9,1},new int[]{6,4},new int[]{3,7}};
 		public static int RotateDir(this int dir,bool clockwise,int times = 1){
 			if(DefaultMetric == DistanceMetric.Chebyshev){
 				return dir.RotateEightWayDir(clockwise,times);
@@ -565,6 +567,26 @@ namespace Utilities{
 			int idx = l.Count-1;
 			T result = l[idx];
 			l.RemoveAt(idx);
+			return result;
+		}
+		public static T First<T>(this List<T> l){
+			if(l.Count == 0){
+				throw new IndexOutOfRangeException("This list is empty! It has no first value.");
+			}
+			return l[0];
+		}
+		public static T FirstOrDefault<T>(this List<T> l){
+			if(l.Count == 0){
+				return default(T);
+			}
+			return l[0];
+		}
+		public static T RemoveFirst<T>(this List<T> l){
+			if(l.Count == 0){
+				throw new IndexOutOfRangeException("This list is empty! It has no first value.");
+			}
+			T result = l[0];
+			l.RemoveAt(0);
 			return result;
 		}
 		public static void AddUnique<T>(this List<T> l,T obj){

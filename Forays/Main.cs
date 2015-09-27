@@ -779,12 +779,6 @@ namespace Forays{
 						UI.viewing_commands_idx = b.ReadInt32();
 						game.M.feat_gained_this_level = b.ReadBoolean();
 						game.M.extra_danger = b.ReadInt32();
-						Map.shrine_locations = new pos[5];
-						for(int i=0;i<5;++i){
-							int r = b.ReadInt32();
-							int c = b.ReadInt32();
-							Map.shrine_locations[i] = new pos(r,c);
-						}
 						int num_unIDed = b.ReadInt32();
 						for(int i=0;i<num_unIDed;++i){
 							ConsumableType ct = (ConsumableType)b.ReadInt32();
@@ -828,6 +822,15 @@ namespace Forays{
 						Tile.Feature(FeatureType.TELEPORTAL).color = Item.Prototype(ConsumableType.TELEPORTAL).color;
 						game.M.CalculatePoppyDistanceMap();
 						game.M.UpdateDangerValues();
+						if(game.M.aesthetics == null) game.M.aesthetics = new PosArray<AestheticFeature>(Global.ROWS,Global.COLS); //todo! save these properly
+						if(game.M.dungeon_description == null){
+							game.M.dungeon_description = new PosArray<string>(Global.ROWS,Global.COLS);
+							for(int ii=0;ii<Global.ROWS;++ii){
+								for(int jj=0;jj<Global.COLS;++jj){
+									game.M.dungeon_description[ii,jj] = "";
+								}
+							}
+						} //todo fixme hack save properly
 					}
 					Game.NoClose = true;
 					MouseUI.PushButtonMap(MouseMode.Map);

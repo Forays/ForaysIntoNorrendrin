@@ -385,10 +385,6 @@ namespace Forays{
 			b.Write(UI.viewing_commands_idx);
 			b.Write(M.feat_gained_this_level);
 			b.Write(M.extra_danger);
-			for(int i=0;i<5;++i){
-				b.Write(Map.shrine_locations[i].row);
-				b.Write(Map.shrine_locations[i].col);
-			}
 			b.Write(Item.unIDed_name.Count);
 			foreach(ConsumableType ct in Item.unIDed_name.Keys){
 				b.Write((int)ct);
@@ -820,6 +816,38 @@ namespace Forays{
 		}
 		public static float[] GetFloatValues(this Color4 c){
 			return new float[]{c.R,c.G,c.B,c.A};
+		}
+		public static SkillType GetAssociatedSkill(this TileType t){
+			switch(t){
+			case TileType.COMBAT_SHRINE:
+			return SkillType.COMBAT;
+			case TileType.DEFENSE_SHRINE:
+			return SkillType.DEFENSE;
+			case TileType.MAGIC_SHRINE:
+			return SkillType.MAGIC;
+			case TileType.SPIRIT_SHRINE:
+			return SkillType.SPIRIT;
+			case TileType.STEALTH_SHRINE:
+			return SkillType.STEALTH;
+			default:
+			return SkillType.NO_SKILL;
+			}
+		}
+		public static SkillType GetAssociatedSkill(this SchismDungeonGenerator.CellType t){
+			switch(t){
+			case SchismDungeonGenerator.CellType.SpecialFeature1:
+			return SkillType.COMBAT;
+			case SchismDungeonGenerator.CellType.SpecialFeature2:
+			return SkillType.DEFENSE;
+			case SchismDungeonGenerator.CellType.SpecialFeature3:
+			return SkillType.MAGIC;
+			case SchismDungeonGenerator.CellType.SpecialFeature4:
+			return SkillType.SPIRIT;
+			case SchismDungeonGenerator.CellType.SpecialFeature5:
+			return SkillType.STEALTH;
+			default:
+			return SkillType.NO_SKILL;
+			}
 		}
 	}
 }

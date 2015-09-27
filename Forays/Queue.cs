@@ -2092,12 +2092,7 @@ namespace Forays{
 								t.RemoveFeature(FeatureType.FIRE);
 								Fire.burning_objects.Remove(t);
 								if(t.name == "floor" && t.type != TileType.BREACHED_WALL){
-									if(R.OneIn(4)){
-										t.color = Color.Gray;
-									}
-									else{
-										t.color = Color.TerrainDarkGray;
-									}
+									t.MakeFloorCharred();
 								}
 							}
 						}

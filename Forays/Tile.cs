@@ -79,7 +79,7 @@ namespace Forays{
 		public TileType? toggles_into;
 		public Item inv;
 		public List<FeatureType> features = new List<FeatureType>();
-		private static List<FeatureType> feature_priority = new List<FeatureType>{FeatureType.GRENADE,FeatureType.FIRE,FeatureType.SPORES,FeatureType.POISON_GAS,FeatureType.PIXIE_DUST,FeatureType.CONFUSION_GAS,FeatureType.THICK_DUST,FeatureType.TELEPORTAL,FeatureType.STABLE_TELEPORTAL,FeatureType.FOG,FeatureType.WEB,FeatureType.TROLL_BLOODWITCH_CORPSE,FeatureType.TROLL_CORPSE,FeatureType.BONES,FeatureType.INACTIVE_TELEPORTAL,FeatureType.OIL,FeatureType.SLIME,FeatureType.FORASECT_EGG};
+		public static List<FeatureType> feature_priority = new List<FeatureType>{FeatureType.GRENADE,FeatureType.FIRE,FeatureType.SPORES,FeatureType.POISON_GAS,FeatureType.PIXIE_DUST,FeatureType.CONFUSION_GAS,FeatureType.THICK_DUST,FeatureType.TELEPORTAL,FeatureType.STABLE_TELEPORTAL,FeatureType.FOG,FeatureType.WEB,FeatureType.TROLL_BLOODWITCH_CORPSE,FeatureType.TROLL_CORPSE,FeatureType.BONES,FeatureType.INACTIVE_TELEPORTAL,FeatureType.OIL,FeatureType.SLIME,FeatureType.FORASECT_EGG};
 		private static int spellbooks_generated = 0;
 		
 		private static Dictionary<TileType,Tile> proto= new Dictionary<TileType, Tile>();
@@ -2430,12 +2430,7 @@ namespace Forays{
 						RemoveFeature(FeatureType.FIRE);
 						Fire.burning_objects.Remove(this);
 						if(name == "floor" && type != TileType.BREACHED_WALL){
-							if(R.OneIn(4)){
-								color = Color.Gray;
-							}
-							else{
-								color = Color.TerrainDarkGray;
-							}
+							MakeFloorCharred();
 						}
 					}
 					if(actor() != null && actor().IsBurning()){
@@ -2454,12 +2449,7 @@ namespace Forays{
 						RemoveFeature(FeatureType.FIRE);
 						Fire.burning_objects.Remove(this);
 						if(name == "floor" && type != TileType.BREACHED_WALL){
-							if(R.OneIn(4)){
-								color = Color.Gray;
-							}
-							else{
-								color = Color.TerrainDarkGray;
-							}
+							MakeFloorCharred();
 						}
 					}
 					if(actor() != null && actor().IsBurning()){
@@ -2565,6 +2555,15 @@ namespace Forays{
 		public void RemoveAllGases(){
 			foreach(FeatureType f in new List<FeatureType>{FeatureType.FOG,FeatureType.PIXIE_DUST,FeatureType.POISON_GAS,FeatureType.SPORES,FeatureType.THICK_DUST,FeatureType.CONFUSION_GAS}){
 				RemoveFeature(f);
+			}
+		}
+		public void MakeFloorCharred(){
+			M.aesthetics[p] = AestheticFeature.Charred;
+			if(R.OneIn(4)){
+				color = Color.Gray;
+			}
+			else{
+				color = Color.TerrainDarkGray;
 			}
 		}
 		private void add_fire_to_features(){ //Let's try lowercase_with_underscores for private 'helper' methods.

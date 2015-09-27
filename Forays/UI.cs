@@ -139,7 +139,7 @@ namespace Forays{
 				Color[] colors = new Color[5];
 				string[] shrines = new string[]{"  Combat    ","  Defense   ","  Magic     ","  Spirit    ","  Stealth   "};
 				for(int i=0;i<5;++i){
-					if(Map.shrine_locations[i].BoundsCheck(M.tile,true) && M.tile[Map.shrine_locations[i]].seen){
+					/*if(Map.shrine_locations[i].BoundsCheck(M.tile,true) && M.tile[Map.shrine_locations[i]].seen){
 						if(M.tile[Map.shrine_locations[i]].type == TileType.RUINED_SHRINE){
 							colors[i] = Color.DarkGray;
 						}
@@ -147,11 +147,11 @@ namespace Forays{
 							colors[i] = Color.Gray;
 						}
 					}
-					else{
+					else{*/
 						colors[i] = Color.DarkGray;
 						//shrines[i] = "    ---     ";
 						shrines[i] = "  -------   ";
-					}
+					//}
 				}
 				Screen.WriteStatsString(row,0,"            ");
 				++row;
@@ -176,22 +176,22 @@ namespace Forays{
 			case 0:
 				commandhints = new string[]{
 					"Look around [Tab]   ",
+					"[p]revious messages ",
 					"[a]pply item        ",
 					"[g]et item          ",
 					"[f]ling item        ",
 					"Wait a turn [.]     ",
-					"Travel somewhere [X]",
-					"Descend stairs [>]  ",
+					"Help [?]            ",
 					"[v]iew more         ",
 				};
 			break;
 			case 1:
 				commandhints = new string[]{
-					"[w]alk              ",
-					"[o]perate something ",
 					"View known items [\\]",
-					"[p]revious messages ",
-					"Help [?]            ",
+					"[o]perate something ",
+					"Travel somewhere [X]",
+					"Descend stairs [>]  ",
+					"[w]alk              ",
 					"Options [=]         ",
 					"[q]uit or save      ",
 					"[v]iew more         ",
@@ -219,10 +219,8 @@ namespace Forays{
 					Screen.WriteString(status_row_cutoff+i+1,0,commandhints[i].GetColorString(wordcolor,lettercolor));
 				}
 			}
-			if(draw_bottom_commands){
-				Screen.WriteString(Global.SCREEN_H - 3,Global.MAP_OFFSET_COLS,"You are in a maze of twisty passages, all alike. ".PadOuter(Global.COLS),wordcolor,Color.DarkerGray); //todo: fix this for terminal mode.
-				//so, darker gray looks pretty decent. Not sure what to do in 16 color mode.
-				//dark green is also not completely terrible.
+			if(draw_bottom_commands){ //todo: ---v--- on this line below, I replaced "wordcolor" as the first color argument, and darkergray as the 2nd
+				Screen.WriteString(Global.SCREEN_H - 3,Global.MAP_OFFSET_COLS,UI.GetEnvironmentalDescription().PadRight(Global.COLS),commands_darkened? Color.DarkEnvironmentDescription : Color.EnvironmentDescription,Color.Black);
 				Screen.WriteString(Global.SCREEN_H - 2,Global.MAP_OFFSET_COLS,"E[x]plore     [t]orch     [s]hoot bow    [r]est     Cast spell [z]".GetColorString(wordcolor,lettercolor));
 				Screen.WriteString(Global.SCREEN_H - 1,Global.MAP_OFFSET_COLS,"[i]nventory   [e]quipment [c]haracter    [m]ap              [Menu]".GetColorString(wordcolor,lettercolor));
 			}
@@ -1060,6 +1058,165 @@ namespace Forays{
 			UI.draw_bottom_commands = true;
 			UI.darken_status_bar = false;
 			return new int[]{(int)selectedWeapon,(int)selectedArmor};
+		}
+		public static string GetEnvironmentalDescription(){ //todo: fix all of these!
+			if(player.HasAttr(AttrType.BLIND)){ //todo: seriously, don't leave these unchecked.
+				//turn "123456789012345678901234567890123456789012345678901234567890123456";
+				return "Everything is pitch black. You strain to hear your surroundings."; //todo fix
+			}
+			Tile t = player.tile();
+			if(t.inv?.type == ConsumableType.BLAST_FUNGUS){
+				return "A hiss from the blast fungus signals its impending detonation!";
+			}
+			if(t.features.Count > 0){
+				foreach(FeatureType f in Tile.feature_priority){
+					if(t.Is(f)){
+						switch(f){
+						case FeatureType.GRENADE:
+						return "A grenade sits beneath you, moments from detonation!";
+						case FeatureType.TROLL_CORPSE:
+						case FeatureType.TROLL_BLOODWITCH_CORPSE:
+						{
+							string s = $"A mangled troll twitches on {t.the_name}.";
+							if(s.Length > COLS){
+								return "A mangled troll twitches here.";
+							}
+							return s;
+						}
+						case FeatureType.FOG:
+						return "Dense fog envelops you.";
+						case FeatureType.POISON_GAS:
+						return "Thick poisonous gas swirls around you, drifting slowly downward.";
+						case FeatureType.SLIME:
+						{
+							string s = $"A thick layer of slippery slime covers {t.the_name}.";
+							if(s.Length > COLS){
+								return "A thick layer of slippery slime covers every surface here.";
+							}
+							return s;
+						}
+						case FeatureType.OIL:
+						{
+							string s = $"Oil is puddled on {t.the_name} here, awaiting a spark.";
+							if(s.Length > COLS){
+								return "Oil is puddled here, awaiting a spark.";
+							}
+							return s;
+						}
+						case FeatureType.TELEPORTAL:
+						case FeatureType.STABLE_TELEPORTAL:
+						return "The teleportal crackles around you.";
+						case FeatureType.INACTIVE_TELEPORTAL:
+						return "A teleportal lies dormant here, waiting for a counterpart.";
+						case FeatureType.FIRE:
+						return "Flames leap around you.";
+						case FeatureType.BONES:
+						//turn "123456789012345678901234567890123456789012345678901234567890123456";
+						return "Threads of necromantic magic still snake through these bones."; //todo: ?
+						case FeatureType.WEB:
+						return "Sticky threads embrace you.";
+						case FeatureType.PIXIE_DUST:
+						return "Delicate clouds of pixie dust float here.";
+						case FeatureType.FORASECT_EGG:
+						return "A clutch of eggs quivers beneath you.";
+						case FeatureType.SPORES:
+						return "Foul fungal spores fill the air.";
+						case FeatureType.THICK_DUST:
+						return "Blinding dust hangs thickly in the air.";
+						case FeatureType.CONFUSION_GAS:
+						return "The air here is a multi-hued haze of psychotropic fumes.";
+						}
+					}
+				}
+			}
+			else{
+				switch(t.type){
+				case TileType.DOOR_O:
+				return "You pass through the doorway."; //todo - can i go in another direction with this?
+				case TileType.STAIRS:
+				return "Stone steps lead downward out of sight."; //todo?
+				case TileType.CHEST:
+				return "A hinged wooden box sits on the floor."; //todo
+				case TileType.FIREPIT:
+				return "You tread carefully over the fire pit."; //todo: make sure this matches the one in Actor - or remove that one.
+				case TileType.UNLIT_FIREPIT:
+				return "You tread over the cooling stones.";
+				case TileType.COMBAT_SHRINE:
+				case TileType.DEFENSE_SHRINE:
+				case TileType.MAGIC_SHRINE:
+				case TileType.SPIRIT_SHRINE:
+				case TileType.STEALTH_SHRINE:
+				case TileType.SPELL_EXCHANGE_SHRINE:
+				return $"The {t.name} glows faintly.";
+				case TileType.RUINED_SHRINE:
+				return $"The power has faded from the {t.name}.";
+				case TileType.FIRE_GEYSER:
+				return "An unbearable wave of heat heralds another spray of liquid fire.";
+				case TileType.POOL_OF_RESTORATION:
+				return "Ripples play across the surface of sweet-smelling water.";
+				case TileType.FOG_VENT:
+				return "Fog pours from a narrow crack in the stone."; //todo, make these override fog/poison respectively
+				case TileType.POISON_GAS_VENT:
+				return "Choking poison seeps from the porous stone.";
+				case TileType.STONE_SLAB:
+				case TileType.STONE_SLAB_OPEN:
+				return "The enormous slab hangs above you.";
+				case TileType.CHASM:
+				return "You fall...";
+				case TileType.BREACHED_WALL:
+				return "An ethereal outline of the displaced wall remains visible.";
+				case TileType.WATER:
+				return "Cool water sloshes around your legs."; //todo?
+				case TileType.ICE:
+				return "You tread over a thick layer of smooth ice."; //todo?
+				case TileType.BRUSH:
+				return "Dry grasses spring from the ground."; //todo? kinda sounds like they're jumping up right now.
+				case TileType.POPPY_FIELD:
+				return "Great clusters of scarlet poppies fill the air with a spicy scent.";
+				case TileType.GRAVEL:
+				return "Gravel crunches underfoot.";
+				case TileType.BLAST_FUNGUS:
+				return "You move carefully over the explosive fungus.";
+				case TileType.GLOWING_FUNGUS:
+				return "Patches of luminescent fungus emit a spectral glow."; //todo?
+				case TileType.TOMBSTONE:
+				return "A weathered grave marker rests here.";
+				case TileType.GRAVE_DIRT:
+				return "The loose soil of the grave looks recently disturbed.";
+				case TileType.VINE:
+				return "Burgeoning leafy vines crisscross and entwine."; //todo - definitely change this one
+				case TileType.FIRE_RIFT:
+				return "You fall..."; //todo needs to consider levitation
+				default:
+				break;
+				}
+			}
+			if(t.IsKnownTrap()){
+				if(t.name.Contains("(safe)")){ //this is the hacky way in which Disarm Trap is implemented
+					return $"You safely cross the {t.name}.";
+				}
+				string s = $"The trigger mechanism of a {t.name} waits beneath you.";
+				if(!t.revealed_by_light || s.Length > COLS){
+					return "The trigger mechanism of a dangerous trap waits beneath you.";
+				}
+				return s;
+			}
+			switch(M.aesthetics[t.p]){
+			case AestheticFeature.BloodDarkRed:
+			return "Blood is splashed across the floor.";
+			case AestheticFeature.BloodOther:
+			return "Strange ichor is splashed across the floor.";
+			case AestheticFeature.Charred:
+			return "The smell of smoke lingers over the charred floor."; //todo: is this good?
+			case AestheticFeature.None:
+			default:
+			break;
+			}
+			if(M.dungeon_description[t.p] != "") return M.dungeon_description[t.p];
+			//turn "123456789012345678901234567890123456789012345678901234567890123456";
+			//then check the dungeon description - can changes to tiles change these descriptions? (e.g. walls being knocked down) (todo)
+			//and this final message will probably never appear: (todo)
+			return "You are in a maze of twisty passages, all alike."; //todo: perhaps the returned string should be cached to prevent weird updates that happen too quickly.
 		}
 	}
 }

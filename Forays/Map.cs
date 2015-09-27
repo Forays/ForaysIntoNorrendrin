@@ -14,6 +14,7 @@ using PosArrays;
 using SchismExtensionMethods;
 namespace Forays{
 	public enum LevelType{Standard,Cave,Hive,Mine,Fortress,Slime,Garden,Crypt}; //rename slime --> sewer
+	public enum AestheticFeature{None,Charred,BloodDarkRed,BloodOther}; //todo: blood colors? smashed barrels? melted wax walls? crushed forasect eggs?
 	public class Map{
 		public PosArray<Tile> tile = new PosArray<Tile>(ROWS,COLS);
 		public PosArray<Actor> actor = new PosArray<Actor>(ROWS,COLS);
@@ -66,6 +67,8 @@ namespace Forays{
 		public PosArray<int> safetymap = null;
 		public PosArray<int> poppy_distance_map = null;
 		public PosArray<int> travel_map = null;
+		public PosArray<AestheticFeature> aesthetics = null;
+		public PosArray<string> dungeon_description = null;
 		//public int[,] row_displacement = null;
 		//public int[,] col_displacement = null;
 		public colorchar[,] last_seen = new colorchar[ROWS,COLS];
@@ -74,7 +77,7 @@ namespace Forays{
 		public int final_level_clock = 0;
 		public bool feat_gained_this_level = false;
 		public int extra_danger = 0; //used to eventually spawn more threatening wandering monsters
-		public static pos[] shrine_locations;
+		public List<CellType> nextLevelShrines = null;
 
 		private const int ROWS = Global.ROWS;
 		private const int COLS = Global.COLS;
@@ -2240,17 +2243,45 @@ namespace Forays{
 			}
 			return null;
 		}
-		public void GenerateLevel(){
-			if(current_level < 20){
-				++current_level;
+		private string GetDungeonDescription(){
+			switch(level_types[current_level-1]){
+			case LevelType.Standard:
+			return R.Choose("This place stinks of mildew.",
+				"Moss grows through every crack in the stones here.",
+				"A draft with no obvious source lends a chill to the air here.",
+				"Stagnant humidity clings to your skin.",
+				"Cold drops of water fall occasionally from the ceiling.",
+				"The air here is stale. Dust resettles quickly after each footfall.",
+				"Truly ancient glyphs decorate the walls, now barely discernible.",
+				"Gloom and dusty cobwebs obscure the dim corners above.",
+				"The shoddy stonework here is crumbling.",
+				"Vaulted ceilings create a cavernous echo.");
+			/*case LevelType.Cave:
+			return R.Choose("");
+			//__456789012345678901234567890123456789012345678901234567890123456
+			case LevelType.Crypt:
+			return R.Choose("");
+			case LevelType.Fortress:
+			return R.Choose("");
+			case LevelType.Garden:
+			return R.Choose("");
+			case LevelType.Hive:
+			return R.Choose("");
+			case LevelType.Mine:
+			return R.Choose("");
+			case LevelType.Slime:
+			return R.Choose("");*/
+			default:
+			return "";
 			}
+		}
+		private void InitializeNewLevel(){
 			for(int i=0;i<ROWS;++i){
 				for(int j=0;j<COLS;++j){
 					if(actor[i,j] != null){
 						if(actor[i,j] != player){
 							actor[i,j].inv.Clear();
 							actor[i,j].target = null;
-							//Q.KillEvents(actor[i,j],EventType.ANY_EVENT);
 							if(actor[i,j].group != null){
 								actor[i,j].group.Clear();
 								actor[i,j].group = null;
@@ -2266,15 +2297,15 @@ namespace Forays{
 			}
 			wiz_lite = false;
 			wiz_dark = false;
-			feat_gained_this_level = false;
+			if(current_level % 2 == 1){
+				feat_gained_this_level = false;
+			}
 			generated_this_level = new Dict<ActorType, int>();
 			monster_density = new PosArray<int>(ROWS,COLS);
+			aesthetics = new PosArray<AestheticFeature>(ROWS,COLS);
+			dungeon_description = new PosArray<string>(ROWS,COLS);
 			safetymap = null;
 			travel_map = null;
-			shrine_locations = new pos[5];
-			for(int i=0;i<5;++i){
-				shrine_locations[i] = new pos(-1,-1);
-			}
 			Q.ResetForNewLevel();
 			last_seen = new colorchar[ROWS,COLS];
 			Fire.fire_event = null;
@@ -2284,6 +2315,12 @@ namespace Forays{
 			}
 			Actor.tiebreakers = new List<Actor>{player};
 			Actor.interrupted_path = new pos(-1,-1);
+		}
+		public void GenerateLevel(){
+			if(current_level < 20){
+				++current_level;
+			}
+			InitializeNewLevel();
 			PosArray<CellType> map = GenerateMap(level_types[current_level-1]);
 			List<pos> interesting_tiles = new List<pos>();
 			for(int i=0;i<ROWS;++i){
@@ -2294,177 +2331,187 @@ namespace Forays{
 				}
 			}
 			int attempts = 0;
-			if(current_level%2 == 1){
-				List<CellType> shrines = new List<CellType>{CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5};
-				while(shrines.Count > 0){
-					attempts = 0;
-					for(bool done=false;!done;++attempts){
-						int rr = R.Roll(ROWS-4) + 1;
-						int rc = R.Roll(COLS-4) + 1;
-						//if(interesting_tiles.Count > 0 && attempts > 1000){
-						if(interesting_tiles.Count > 0){
-							pos p = interesting_tiles.RemoveRandom();
-							rr = p.row;
-							rc = p.col;
-							map[p] = CellType.RoomInterior;
-						}
-						pos temp = new pos(rr,rc);
-						if(shrines.Count > 1){
-							if(map[rr,rc].IsFloor()){
-								if(attempts > 1000){
-									bool good = true;
-									foreach(pos p in temp.PositionsWithinDistance(4,map)){
-										CellType ch = map[p];
-										if(ch.Is(CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5)){
-											good = false;
-										}
-									}
-									if(good){
-										List<pos> dist2 = new List<pos>();
-										foreach(pos p2 in temp.PositionsAtDistance(2,map)){
-											if(map[p2].IsFloor()){
-												dist2.Add(p2);
-											}
-										}
-										if(dist2.Count > 0){
-											map[rr,rc] = shrines.RemoveRandom();
-											pos p2 = dist2.Random();
-											map[p2.row,p2.col] = shrines.RemoveRandom();
-											done = true;
-											break;
-										}
-									}
-									else{
-										interesting_tiles.Remove(temp);
-									}
-								}
-								bool floors = true;
-								foreach(pos p in temp.PositionsAtDistance(1,map)){
-									if(!map[p.row,p.col].IsFloor()){
-										floors = false;
-									}
-								}
-								foreach(pos p in temp.PositionsWithinDistance(3,map)){
-									CellType ch = map[p];
-									if(ch.Is(CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5)){
-										floors = false;
-									}
-								}
-								if(floors){
-									if(R.CoinFlip()){
-										map[rr-1,rc] = shrines.RemoveRandom();
-										map[rr+1,rc] = shrines.RemoveRandom();
-									}
-									else{
-										map[rr,rc-1] = shrines.RemoveRandom();
-										map[rr,rc+1] = shrines.RemoveRandom();
-									}
-									CellType center = CellType.Wall;
-									while(center == CellType.Wall){
-										switch(R.Roll(5)){
-										case 1:
-											if(level_types[current_level-1] != LevelType.Hive && level_types[current_level-1] != LevelType.Garden){
-												center = CellType.Pillar;
-											}
-											break;
-										case 2:
-											center = CellType.Statue;
-											break;
-										case 3:
-											if(level_types[current_level-1] != LevelType.Garden){
-												center = CellType.FirePit;
-											}
-											break;
-										case 4:
-											center = CellType.ShallowWater;
-											break;
-										case 5:
-											if(level_types[current_level-1] != LevelType.Hive){
-												center = CellType.Torch;
-											}
-											break;
-										}
-									}
-									map[rr,rc] = center;
-									interesting_tiles.Remove(temp);
-									done = true;
-									break;
-								}
-							}
-						}
-						else{
-							if(map[rr,rc].IsFloor()){
+			List<CellType> shrines = null;
+			if(current_level % 2 == 1){
+				shrines = new List<CellType>{CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5};
+				shrines.Randomize(); // after this initialization step, shrines are only removed from the front of the list, to enable prediction of pairs.
+				nextLevelShrines = new List<CellType>();
+				int n = R.Between(0,5);
+				for(int i=0;i<n;++i){
+					nextLevelShrines.Add(shrines.RemoveLast());
+				}
+			}
+			else{
+				shrines = nextLevelShrines;
+				nextLevelShrines = null;
+			}
+			while(shrines.Count > 0){
+				attempts = 0;
+				for(bool done=false;!done;++attempts){
+					int rr = R.Roll(ROWS-4) + 1;
+					int rc = R.Roll(COLS-4) + 1;
+					if(interesting_tiles.Count > 0){
+						pos p = interesting_tiles.RemoveRandom();
+						rr = p.row;
+						rc = p.col;
+						map[p] = CellType.RoomInterior;
+					}
+					pos temp = new pos(rr,rc);
+					if(shrines.Count > 1){
+						if(map[rr,rc].IsFloor()){
+							if(attempts > 1000){
 								bool good = true;
-								foreach(pos p in temp.PositionsWithinDistance(2,map)){
+								foreach(pos p in temp.PositionsWithinDistance(4,map)){
 									CellType ch = map[p];
 									if(ch.Is(CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5)){
 										good = false;
 									}
 								}
 								if(good){
-									if(attempts > 1000){
-										map[rr,rc] = shrines.RemoveRandom();
+									List<pos> dist2 = new List<pos>();
+									foreach(pos p2 in temp.PositionsAtDistance(2,map)){
+										if(map[p2].IsFloor()){
+											dist2.Add(p2);
+										}
+									}
+									if(dist2.Count > 0){
+										map[rr,rc] = shrines.RemoveFirst();
+										pos p2 = dist2.Random();
+										map[p2.row,p2.col] = shrines.RemoveFirst();
+										done = true;
+										break;
+									}
+								}
+								else{
+									interesting_tiles.Remove(temp);
+								}
+							}
+							bool floors = true;
+							foreach(pos p in temp.PositionsAtDistance(1,map)){
+								if(!map[p.row,p.col].IsFloor()){
+									floors = false;
+								}
+							}
+							foreach(pos p in temp.PositionsWithinDistance(3,map)){
+								CellType ch = map[p];
+								if(ch.Is(CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5)){
+									floors = false;
+								}
+							}
+							if(floors){
+								if(R.CoinFlip()){
+									map[rr-1,rc] = shrines.RemoveFirst();
+									map[rr+1,rc] = shrines.RemoveFirst();
+								}
+								else{
+									map[rr,rc-1] = shrines.RemoveFirst();
+									map[rr,rc+1] = shrines.RemoveFirst();
+								}
+								CellType center = CellType.Wall;
+								while(center == CellType.Wall){
+									switch(R.Roll(5)){
+									case 1:
+										if(level_types[current_level-1] != LevelType.Hive && level_types[current_level-1] != LevelType.Garden){
+											center = CellType.Pillar;
+										}
+										break;
+									case 2:
+										center = CellType.Statue;
+										break;
+									case 3:
+										if(level_types[current_level-1] != LevelType.Garden){
+											center = CellType.FirePit;
+										}
+										break;
+									case 4:
+										center = CellType.ShallowWater;
+										break;
+									case 5:
+										if(level_types[current_level-1] != LevelType.Hive){
+											center = CellType.Torch;
+										}
+										break;
+									}
+								}
+								map[rr,rc] = center;
+								interesting_tiles.Remove(temp);
+								done = true;
+								break;
+							}
+						}
+					}
+					else{
+						if(map[rr,rc].IsFloor()){
+							bool good = true;
+							foreach(pos p in temp.PositionsWithinDistance(2,map)){
+								CellType ch = map[p];
+								if(ch.Is(CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5)){
+									good = false;
+								}
+							}
+							if(good){
+								if(attempts > 1000){
+									map[rr,rc] = shrines.RemoveFirst();
+									interesting_tiles.Remove(temp);
+									done = true;
+									break;
+								}
+								else{
+									bool floors = true;
+									foreach(pos p in temp.PositionsAtDistance(1,map)){
+										if(!map[p.row,p.col].IsFloor()){
+											floors = false;
+										}
+									}
+									if(floors){
+										map[rr,rc] = shrines.RemoveFirst();
 										interesting_tiles.Remove(temp);
 										done = true;
 										break;
 									}
-									else{
-										bool floors = true;
-										foreach(pos p in temp.PositionsAtDistance(1,map)){
-											if(!map[p.row,p.col].IsFloor()){
-												floors = false;
-											}
-										}
-										if(floors){
-											map[rr,rc] = shrines.RemoveRandom();
-											interesting_tiles.Remove(temp);
-											done = true;
-											break;
-										}
-									}
 								}
 							}
-							if(map[rr,rc].IsWall()){
-								if(!map[rr+1,rc].IsFloor() && !map[rr-1,rc].IsFloor() && !map[rr,rc-1].IsFloor() && !map[rr,rc+1].IsFloor()){
-									continue; //no floors? retry.
+						}
+						if(map[rr,rc].IsWall()){
+							if(!map[rr+1,rc].IsFloor() && !map[rr-1,rc].IsFloor() && !map[rr,rc-1].IsFloor() && !map[rr,rc+1].IsFloor()){
+								continue; //no floors? retry.
+							}
+							bool no_good = false;
+							foreach(pos p in temp.PositionsWithinDistance(2,map)){
+								CellType ch = map[p];
+								if(ch.Is(CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5)){
+									no_good = true;
 								}
-								bool no_good = false;
-								foreach(pos p in temp.PositionsWithinDistance(2,map)){
-									CellType ch = map[p];
-									if(ch.Is(CellType.SpecialFeature1,CellType.SpecialFeature2,CellType.SpecialFeature3,CellType.SpecialFeature4,CellType.SpecialFeature5)){
-										no_good = true;
+							}
+							if(no_good){
+								continue;
+							}
+							int walls = 0;
+							foreach(pos p in temp.PositionsAtDistance(1,map)){
+								if(map[p].IsWall()){
+									++walls;
+								}
+							}
+							if(walls >= 5){
+								int successive_walls = 0;
+								CellType[] rotated = new CellType[8];
+								for(int i=0;i<8;++i){
+									pos temp2;
+									temp2 = temp.PosInDir(8.RotateDir(true,i));
+									rotated[i] = map[temp2.row,temp2.col];
+								}
+								for(int i=0;i<15;++i){
+									if(rotated[i%8].IsWall()){
+										++successive_walls;
 									}
-								}
-								if(no_good){
-									continue;
-								}
-								int walls = 0;
-								foreach(pos p in temp.PositionsAtDistance(1,map)){
-									if(map[p].IsWall()){
-										++walls;
+									else{
+										successive_walls = 0;
 									}
-								}
-								if(walls >= 5){
-									int successive_walls = 0;
-									CellType[] rotated = new CellType[8];
-									for(int i=0;i<8;++i){
-										pos temp2;
-										temp2 = temp.PosInDir(8.RotateDir(true,i));
-										rotated[i] = map[temp2.row,temp2.col];
-									}
-									for(int i=0;i<15;++i){
-										if(rotated[i%8].IsWall()){
-											++successive_walls;
-										}
-										else{
-											successive_walls = 0;
-										}
-										if(successive_walls == 5){
-											done = true;
-											map[rr,rc] = shrines.RemoveRandom();
-											interesting_tiles.Remove(temp);
-											break;
-										}
+									if(successive_walls == 5){
+										done = true;
+										map[rr,rc] = shrines.RemoveFirst();
+										interesting_tiles.Remove(temp);
+										break;
 									}
 								}
 							}
@@ -2659,23 +2706,18 @@ namespace Forays{
 						break;
 					case CellType.SpecialFeature1:
 						Tile.Create(TileType.COMBAT_SHRINE,i,j);
-						shrine_locations[0] = new pos(i,j);
 						break;
 					case CellType.SpecialFeature2:
 						Tile.Create(TileType.DEFENSE_SHRINE,i,j);
-						shrine_locations[1] = new pos(i,j);
 						break;
 					case CellType.SpecialFeature3:
 						Tile.Create(TileType.MAGIC_SHRINE,i,j);
-						shrine_locations[2] = new pos(i,j);
 						break;
 					case CellType.SpecialFeature4:
 						Tile.Create(TileType.SPIRIT_SHRINE,i,j);
-						shrine_locations[3] = new pos(i,j);
 						break;
 					case CellType.SpecialFeature5:
 						Tile.Create(TileType.STEALTH_SHRINE,i,j);
-						shrine_locations[4] = new pos(i,j);
 						break;
 					case CellType.DeepWater:
 					case CellType.ShallowWater:
@@ -3508,6 +3550,19 @@ namespace Forays{
 					tile[p].color = Color.TerrainDarkGray;
 				}
 			}
+			string desc = GetDungeonDescription();
+			for(int i=0;i<ROWS;++i){
+				for(int j=0;j<COLS;++j){ //todo fix this!
+					if(!tile.BoundsCheck(i,j,false)) continue;
+					pos p = new pos(i,j);
+					if(SchismExtensionMethods.Extensions.ConsecutiveAdjacent(p,x=>!tile[x].BlocksConnectivityOfMap()) >= 3){ //todo, fix check!
+						dungeon_description[i,j] = desc;
+					}
+					else{
+						dungeon_description[i,j] = "You pass through a hallway of hewn stone."; //todo, fix message! 
+					}
+				}
+			}
 			if(poppy_event != null){
 				CalculatePoppyDistanceMap();
 			}
@@ -3637,45 +3692,7 @@ namespace Forays{
 			final_level_demon_count = 0;
 			final_level_clock = 0;
 			current_level = 21;
-			for(int i=0;i<ROWS;++i){
-				for(int j=0;j<COLS;++j){
-					if(actor[i,j] != null){
-						if(actor[i,j] != player){
-							actor[i,j].inv.Clear();
-							actor[i,j].target = null;
-							if(actor[i,j].group != null){
-								actor[i,j].group.Clear();
-								actor[i,j].group = null;
-							}
-						}
-						actor[i,j] = null;
-					}
-					if(tile[i,j] != null){
-						tile[i,j].inv = null;
-					}
-					tile[i,j] = null;
-				}
-			}
-			wiz_lite = false;
-			wiz_dark = false;
-			feat_gained_this_level = false;
-			generated_this_level = new Dict<ActorType, int>();
-			monster_density = new PosArray<int>(ROWS,COLS);
-			safetymap = null;
-			travel_map = null;
-			shrine_locations = new pos[5];
-			for(int i=0;i<5;++i){
-				shrine_locations[i] = new pos(-1,-1);
-			}
-			Q.ResetForNewLevel();
-			last_seen = new colorchar[ROWS,COLS];
-			Fire.fire_event = null;
-			Fire.burning_objects.Clear();
-			if(player.IsBurning()){
-				Fire.AddBurningObject(player);
-			}
-			Actor.tiebreakers = new List<Actor>{player};
-			Actor.interrupted_path = new pos(-1,-1);
+			InitializeNewLevel();
 			string[] final_map = FinalLevelLayout();
 			PosArray<CellType> map = new PosArray<CellType>(ROWS,COLS);
 			PosArray<bool> doors = new PosArray<bool>(ROWS,COLS);
@@ -3761,6 +3778,10 @@ namespace Forays{
 					tile[i,j].solid_rock = true;
 				}
 			}
+
+			//todo! add dungeon descriptions for final level.
+			//todo: ^^^ or else it crashes ^^^
+
 			player.ResetForNewLevel();
 			foreach(Tile t in AllTiles()){
 				if(t.light_radius > 0){
