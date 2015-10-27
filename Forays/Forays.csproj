@@ -67,9 +67,7 @@
     <Compile Include="Actor.cs" />
     <Compile Include="Buffer.cs" />
     <Compile Include="Effect.cs" />
-    <Compile Include="GameWindow.cs" />
     <Compile Include="GL.cs" />
-    <Compile Include="GLAnimation.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Help.cs" />
     <Compile Include="Item.cs" />

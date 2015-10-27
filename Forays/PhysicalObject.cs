@@ -632,7 +632,7 @@ namespace Forays{
 							}
 							a.CorpseCleanup();
 						}
-						if(t.inv != null){
+						if(t.inv != null && t.inv.type != ConsumableType.BLAST_FUNGUS){
 							if(t.inv.quantity > 1){
 								if(t.inv.IsBreakable()){
 									B.Add(t.inv.TheName(true) + " break! ",t);

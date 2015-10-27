@@ -347,7 +347,7 @@ namespace Forays{
 				int y_offset = i + 1;
 				int x_offset = (boxwidth - frames[i][0].Length()) / 2;
 				Screen.WriteList(y+y_offset,x+x_offset,frames[i]);
-				Game.GLUpdate();
+				Screen.GLUpdate();
 				Thread.Sleep(20);
 			}
 			foreach(colorstring s in box){
@@ -357,9 +357,12 @@ namespace Forays{
 			Screen.CursorVisible = false;
 			bool mouse_movement = MouseUI.IgnoreMouseMovement;
 			MouseUI.IgnoreMouseMovement = false;
-			Game.GLUpdate();
+			Screen.GLUpdate();
 			Thread.Sleep(500);
 			Input.FlushInput();
+			if(!Actor.player.HasAttr(AttrType.RESTING)){
+				Actor.player.Interrupt();
+			}
 			if(Input.ReadKey().KeyChar == '='){
 				Global.Options[OptionType.NEVER_DISPLAY_TIPS] = true;
 			}
@@ -376,7 +379,9 @@ namespace Forays{
 			return new string[]{
 				"Acid",
 				"",
-				"Acid can damage your metal equipment.",
+				"Acid can damage your metal equipment. (Your",
+				"sword, mace, dagger, chainmail, and plate can",
+				"be damaged by acid.)",
 				"",
 				"Acidic attacks will wear out your metal armor",
 				"first, and then damage it. (Damaged armor gives",
@@ -639,9 +644,9 @@ namespace Forays{
 				"thick, heavy gas (like poison and dust clouds)."};
 			case TutorialTopic.FirePit:
 			return new string[]{
-				"Fire pits",
+				"Firepits",
 				"",
-				"Fire pits are stone circles containing glowing",
+				"Firepits are stone circles containing glowing",
 				"embers. They're safe to walk over, but if",
 				"anything flammable is dropped or knocked in, it",
 				"will catch fire.",
@@ -839,7 +844,7 @@ namespace Forays{
 				"Poppies",
 				"",
 				"These bright red flowers are one of the",
-				"dungeon's many hazards. Those who remain",
+				"dungeon's many hazards. Those who breathe",
 				"in the poppies for 4 consecutive turns",
 				"will drift off into sleep, leaving",
 				"them helpless for several turns (or",

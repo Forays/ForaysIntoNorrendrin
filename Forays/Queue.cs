@@ -928,6 +928,9 @@ namespace Forays{
 						}
 						if(t != null && t.seen){
 							Screen.AnimateMapCell(t.row,t.col,new colorchar(i.other_data.ToString()[0],Color.Red),100);
+							if(player.CanSee(t)){
+								Help.TutorialTip(TutorialTopic.BlastFungus);
+							}
 						}
 						Q.Add(new Event(i,100,EventType.BLAST_FUNGUS));
 					}
@@ -1961,7 +1964,7 @@ namespace Forays{
 						}
 					}
 					if(R.OneIn(spawn_chance)){
-						if(M.extra_danger < 8 && R.CoinFlip() && M.current_level != 1){
+						if(M.extra_danger < 8 && R.CoinFlip() && M.Depth != 1){
 							M.extra_danger++;
 							B.Add("You sense danger. ");
 						}
@@ -2063,23 +2066,23 @@ namespace Forays{
 						}
 					}
 					foreach(Tile t in chance_to_die_out){
-						if(!t.Is(TileType.BARREL)){
+						if(!t.Is(TileType.BARREL,TileType.DEMONSTONE)){ //fire atop these types never goes out.
 							bool more_flammable_terrain = false;
 							bool more_fire = false;
-							bool final_level_demonic_idol_present = false; //this will soon become a check for any terrain that prevents fires from dying
+							bool demonic_idol_present = false;
 							foreach(Tile neighbor in t.TilesAtDistance(1)){
 								if(neighbor.IsCurrentlyFlammable()){
 									more_flammable_terrain = true;
 								}
 								if(neighbor.Is(TileType.DEMONIC_IDOL)){
-									final_level_demonic_idol_present = true;
+									demonic_idol_present = true;
 								}
 								if(neighbor.IsBurning()){
 									more_fire = true;
 								}
 							}
-							if(final_level_demonic_idol_present){
-								continue; //this fire never goes out
+							if(demonic_idol_present){
+								//continue; //changed: demonstone has replaced this ability.
 							}
 							int chance = 5;
 							if(more_fire){

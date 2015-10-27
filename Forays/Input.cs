@@ -1,14 +1,27 @@
-﻿using System;
+﻿/*Copyright (c) 2015  Derrick Creamer
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.IO;
+using OpenTK;
+using OpenTK.Graphics.OpenGL;
 using OpenTK.Input;
+using PosArrays;
+using Utilities;
+using GLDrawing;
 namespace Forays{
 	public static class Input{
 		public static bool KeyPressed = false;
 		public static ConsoleKeyInfo LastKey;
 
-		public static Dictionary<ConsoleKeyInfo,ConsoleKeyInfo> global_rebindings = new Dictionary<ConsoleKeyInfo,ConsoleKeyInfo>();
+		public static Dictionary<ConsoleKeyInfo,ConsoleKeyInfo> global_rebindings = new Dictionary<ConsoleKeyInfo,ConsoleKeyInfo>(); //todo: change these to Converters?
 		public static Dictionary<ConsoleKeyInfo,ConsoleKeyInfo> action_rebindings = new Dictionary<ConsoleKeyInfo,ConsoleKeyInfo>();
 
 		public static bool KeyIsAvailable(){
@@ -18,8 +31,14 @@ namespace Forays{
 			return Console.KeyAvailable;
 		}
 		public static void FlushInput(){
-			while(KeyIsAvailable()){
-				ReadKey();
+			if(Screen.GLMode){
+				Screen.gl.ProcessEvents();
+				KeyPressed = false;
+			}
+			else{
+				while(Console.KeyAvailable){
+					Console.ReadKey(true);
+				}
 			}
 		}
 		public static ConsoleKey GetConsoleKey(Key key){ //convert from openTK's key enum to System.Console's key enum
@@ -265,15 +284,15 @@ namespace Forays{
 			}
 			while(true){
 				//Animations.Update();
-				if(!Game.GLUpdate()){
+				if(!Screen.GLUpdate()){
 					Global.Quit();
 				}
 				if(Screen.CursorVisible){
-					TimeSpan time = GLGame.Timer.Elapsed;
+					TimeSpan time = Global.Timer.Elapsed;
 					if(time.Seconds >= 1){
 						Screen.UpdateCursor(true);
-						GLGame.Timer.Reset();
-						GLGame.Timer.Start();
+						Global.Timer.Reset();
+						Global.Timer.Start();
 					}
 					else{
 						if(time.Milliseconds >= 500){
@@ -735,6 +754,635 @@ namespace Forays{
 				}
 			}
 			return s;
+		}
+		//public static bool KeyIsDown(Key key){ return Screen.gl.KeyIsDown(key);}
+		private static bool AnyModifierHeld(){
+			return Screen.gl.KeyIsDown(Key.LAlt) || Screen.gl.KeyIsDown(Key.RAlt) || Screen.gl.KeyIsDown(Key.LControl) || Screen.gl.KeyIsDown(Key.RControl) || Screen.gl.KeyIsDown(Key.LShift) || Screen.gl.KeyIsDown(Key.RShift);
+		}
+		private static bool ModifierHeld(ConsoleModifiers mod){
+			switch(mod){
+			case ConsoleModifiers.Alt:
+			return Screen.gl.KeyIsDown(Key.LAlt) || Screen.gl.KeyIsDown(Key.RAlt);
+			case ConsoleModifiers.Control:
+			return Screen.gl.KeyIsDown(Key.LControl) || Screen.gl.KeyIsDown(Key.RControl);
+			case ConsoleModifiers.Shift:
+			return Screen.gl.KeyIsDown(Key.LShift) || Screen.gl.KeyIsDown(Key.RShift);
+			default:
+			return false;
+			}
+		}
+		public static void KeyDownHandler(object sender,KeyboardKeyEventArgs args){
+			if(!Input.KeyPressed){
+				ConsoleKey ck = Input.GetConsoleKey(args.Key);
+				if(ck != ConsoleKey.NoName){
+					bool alt = Screen.gl.KeyIsDown(Key.LAlt) || Screen.gl.KeyIsDown(Key.RAlt);
+					bool shift = Screen.gl.KeyIsDown(Key.LShift) || Screen.gl.KeyIsDown(Key.RShift);
+					bool ctrl = Screen.gl.KeyIsDown(Key.LControl) || Screen.gl.KeyIsDown(Key.RControl);
+					if(ck == ConsoleKey.Enter && alt){
+						if(Screen.gl.FullScreen){
+							Screen.gl.FullScreen = false;
+							Screen.gl.WindowState = WindowState.Normal;
+						}
+						else{
+							Screen.gl.FullScreen = true;
+							Screen.gl.WindowState = WindowState.Fullscreen;
+						}
+					}
+					else{
+						Input.KeyPressed = true;
+						Input.LastKey = new ConsoleKeyInfo(Input.GetChar(ck,shift),ck,shift,alt,ctrl);
+					}
+				}
+				MouseUI.RemoveHighlight();
+				MouseUI.RemoveMouseover();
+			}
+		}
+		public static void MouseMoveHandler(object sender,MouseMoveEventArgs args){
+			if(MouseUI.IgnoreMouseMovement){
+				return;
+			}
+			int row = (args.Y - Screen.gl.Viewport.Y) / Screen.cellHeight;
+			int col = (args.X - Screen.gl.Viewport.X) / Screen.cellWidth;
+			switch(MouseUI.Mode){
+			case MouseMode.Targeting:
+			{
+				int map_row = row - Global.MAP_OFFSET_ROWS;
+				int map_col = col - Global.MAP_OFFSET_COLS;
+				Button b = MouseUI.GetButton(row,col);
+				if(MouseUI.Highlighted != null && MouseUI.Highlighted != b){
+					MouseUI.RemoveHighlight();
+				}
+				if(args.XDelta == 0 && args.YDelta == 0){
+					return; //don't re-highlight immediately after a click
+				}
+				if(b != null){
+					if(b != MouseUI.Highlighted){
+						MouseUI.Highlighted = b;
+						colorchar[,] array = new colorchar[b.height,b.width];
+						for(int i=0;i<b.height;++i){
+							for(int j=0;j<b.width;++j){
+								array[i,j] = Screen.Char(i + b.row,j + b.col);
+								array[i,j].bgcolor = Color.Blue;
+							}
+						}
+						Screen.UpdateGLBuffer(b.row,b.col,array);
+					}
+				}
+				else{
+					if(!Input.KeyPressed){
+						if(!MouseUI.mouselook_objects.BoundsCheck(row,col)){
+							//UI.MapCursor = new pos(-1,-1);
+							Input.KeyPressed = true;
+							const ConsoleKey key = ConsoleKey.F22;
+							Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+						}
+						else{
+							if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
+								if(map_row != UI.MapCursor.row || map_col != UI.MapCursor.col){
+									UI.MapCursor = new pos(map_row,map_col);
+									Input.KeyPressed = true;
+									const ConsoleKey key = ConsoleKey.F21;
+									Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+								}
+							}
+							else{
+								PhysicalObject o = MouseUI.mouselook_objects[row,col];
+								if(o != null && !UI.viewing_map_shrine_info){
+									if(!o.p.Equals(UI.MapCursor)){
+										UI.SetMapCursor(o.p,map_col < 0);
+										Input.KeyPressed = true;
+										const ConsoleKey key = ConsoleKey.F21;
+										Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+									}
+								}
+								else{ // off the map, and not hovering over a status bar object
+									if(map_row != UI.MapCursor.row || map_col != UI.MapCursor.col){
+										//UI.MapCursor = new pos(map_row,map_col);
+										Input.KeyPressed = true;
+										const ConsoleKey key = ConsoleKey.F22;
+										Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+									}
+								}
+							}
+						}
+					}
+					/*if(!Input.KeyPressed && (map_row != UI.MapCursor.row || map_col != UI.MapCursor.col) && !KeyIsDown(Key.LControl) && !KeyIsDown(Key.RControl)){
+						UI.MapCursor = new pos(map_row,map_col);
+						Input.KeyPressed = true;
+						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
+							ConsoleKey key = ConsoleKey.F21;
+							Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+						}
+						else{
+							ConsoleKey key = ConsoleKey.F22;
+							Input.LastKey = new ConsoleKeyInfo(Input.GetChar(key,false),key,false,false,false);
+						}
+					}*/
+				}
+				break;
+			}
+			case MouseMode.Directional:
+			{
+				int map_row = row - Global.MAP_OFFSET_ROWS;
+				int map_col = col - Global.MAP_OFFSET_COLS;
+				if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
+					int dir = Actor.player.DirectionOf(new pos(map_row,map_col));
+					pos p = Actor.player.p.PosInDir(dir);
+					Button dir_b = MouseUI.GetButton(Global.MAP_OFFSET_ROWS + p.row,Global.MAP_OFFSET_COLS + p.col);
+					if(MouseUI.Highlighted != null && MouseUI.Highlighted != dir_b){
+						MouseUI.RemoveHighlight();
+					}
+					if(dir_b != null && dir_b != MouseUI.Highlighted){
+						MouseUI.Highlighted = dir_b;
+						colorchar[,] array = new colorchar[1,1];
+						array[0,0] = Screen.Char(Global.MAP_OFFSET_ROWS + p.row,Global.MAP_OFFSET_COLS + p.col);
+						array[0,0].bgcolor = Color.Blue;
+						Screen.UpdateGLBuffer(dir_b.row,dir_b.col,array);
+					}
+				}
+				else{
+					if(MouseUI.Highlighted != null){
+						MouseUI.RemoveHighlight();
+					}
+				}
+				break;
+			}
+			default:
+			{
+				Button b = MouseUI.GetButton(row,col);
+				if(MouseUI.Highlighted != null && MouseUI.Highlighted != b){
+					MouseUI.RemoveHighlight();
+				}
+				if(args.XDelta == 0 && args.YDelta == 0){
+					return; //don't re-highlight immediately after a click
+				}
+				if(b != null && b != MouseUI.Highlighted){
+					MouseUI.Highlighted = b;
+					colorchar[,] array = new colorchar[b.height,b.width];
+					for(int i=0;i<b.height;++i){
+						for(int j=0;j<b.width;++j){
+							array[i,j] = Screen.Char(i + b.row,j + b.col);
+							array[i,j].bgcolor = Color.Blue;
+						}
+					}
+					Screen.UpdateGLBuffer(b.row,b.col,array);
+				}
+				else{
+					if(MouseUI.Mode == MouseMode.Map){
+						if(!MouseUI.mouselook_objects.BoundsCheck(row,col)){
+							UI.MapCursor = new pos(-1,-1);
+							break;
+						}
+						PhysicalObject o = MouseUI.mouselook_objects[row,col];
+						int map_row = row - Global.MAP_OFFSET_ROWS;
+						int map_col = col - Global.MAP_OFFSET_COLS;
+						if(MouseUI.VisiblePath && o == null){
+							if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
+								o = Actor.M.tile[map_row,map_col];
+							}
+						}
+						if(MouseUI.mouselook_current_target != null && (o == null || !o.p.Equals(MouseUI.mouselook_current_target.p))){
+							MouseUI.RemoveMouseover();
+						}
+						if(o == null){
+							UI.MapCursor = new pos(-1,-1);
+						}
+						else{
+							if(MouseUI.mouselook_current_target == null || !o.p.Equals(MouseUI.mouselook_current_target.p)){
+								UI.SetMapCursor(o.p,map_col < 0);
+								MouseUI.mouselook_current_target = o;
+								bool description_on_right = false;
+								int max_length = MouseUI.MaxDescriptionBoxLength;
+								if(o.col <= 32){
+									description_on_right = true;
+								}
+								List<colorstring> desc_box = null;
+								Actor a = o as Actor;
+								if(a != null){
+									desc_box = Actor.MonsterDescriptionBox(a,true,max_length);
+								}
+								else{
+									Item i = o as Item;
+									if(i != null){
+										desc_box = UI.ItemDescriptionBox(i,true,true,max_length);
+									}
+								}
+								if(desc_box != null){
+									int h = desc_box.Count;
+									int w = desc_box[0].Length();
+									MouseUI.mouselook_current_desc_area = new System.Drawing.Rectangle(description_on_right? Global.COLS - w : 0,0,w,h);
+									int player_r = Actor.player.row;
+									int player_c = Actor.player.col;
+									colorchar[,] array = new colorchar[h,w];
+									if(description_on_right){
+										for(int i=0;i<h;++i){
+											for(int j=0;j<w;++j){
+												array[i,j] = desc_box[i][j];
+												if(i == player_r && j + Global.COLS - w == player_c){
+													Screen.CursorVisible = false;
+													player_r = -1; //to prevent further attempts to set CV to false
+												}
+											}
+										}
+										Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS + Global.COLS - w,array);
+									}
+									else{
+										for(int i=0;i<h;++i){
+											for(int j=0;j<w;++j){
+												array[i,j] = desc_box[i][j];
+												if(i == player_r && j == player_c){
+													Screen.CursorVisible = false;
+													player_r = -1;
+												}
+											}
+										}
+										Screen.UpdateGLBuffer(Global.MAP_OFFSET_ROWS,Global.MAP_OFFSET_COLS,array);
+									}
+								}
+								if(MouseUI.VisiblePath){
+									if(o != Actor.player && o.p.Equals(Actor.player.p)){
+										MouseUI.mouse_path = new List<pos>{o.p};
+									}
+									else{
+										MouseUI.mouse_path = Actor.player.GetPlayerTravelPath(o.p);
+										if(MouseUI.mouse_path.Count == 0){
+											foreach(Tile t in Actor.M.TilesByDistance(o.row,o.col,true,true)){
+												if(t.passable){
+													MouseUI.mouse_path = Actor.player.GetPlayerTravelPath(t.p);
+													break;
+												}
+											}
+										}
+									}
+									pos box_start = new pos(0,0);
+									int box_h = -1;
+									int box_w = -1;
+									if(desc_box != null){
+										box_h = desc_box.Count;
+										box_w = desc_box[0].Length();
+										if(description_on_right){
+											box_start = new pos(0,Global.COLS - box_w);
+										}
+									}
+									foreach(pos p in MouseUI.mouse_path){
+										if(desc_box != null && p.row < box_start.row + box_h && p.row >= box_start.row && p.col < box_start.col + box_w && p.col >= box_start.col){
+											continue;
+										}
+										colorchar cch = Screen.MapChar(p.row,p.col);
+										cch.bgcolor = Color.DarkGreen;
+										if(cch.color == Color.DarkGreen){
+											cch.color = Color.Black;
+										}
+										//Game.gl.UpdateVertexArray(p.row+Global.MAP_OFFSET_ROWS,p.col+Global.MAP_OFFSET_COLS,text_surface,0,(int)cch.c,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
+										Screen.gl.UpdateOtherSingleVertex(Screen.textSurface,U.Get1DIndex(p.row+Global.MAP_OFFSET_ROWS,p.col+Global.MAP_OFFSET_COLS,Global.SCREEN_W),(int)cch.c,0,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
+									}
+									if(MouseUI.mouse_path != null && MouseUI.mouse_path.Count == 0){
+										MouseUI.mouse_path = null;
+									}
+								}
+							}
+						}
+					}
+				}
+				break;
+			}
+			}
+		}
+		public static void MouseClickHandler(object sender,MouseButtonEventArgs args){
+			if(MouseUI.IgnoreMouseClicks){
+				return;
+			}
+			if(args.Button == MouseButton.Middle){
+				HandleMiddleClick();
+				return;
+			}
+			if(args.Button == MouseButton.Right){
+				HandleRightClick();
+				return;
+			}
+			int row = (args.Y - Screen.gl.Viewport.Y) / Screen.cellHeight;
+			int col = (args.X - Screen.gl.Viewport.X) / Screen.cellWidth;
+			if(!MouseUI.mouselook_objects.BoundsCheck(row,col)){
+				return;
+			}
+			Button b = MouseUI.GetButton(row,col);
+			if(!Input.KeyPressed){
+				Input.KeyPressed = true;
+				if(b != null){
+					bool shifted = (b.mods & ConsoleModifiers.Shift) == ConsoleModifiers.Shift;
+					Input.LastKey = new ConsoleKeyInfo(Input.GetChar(b.key,shifted),b.key,shifted,false,false);
+				}
+				else{
+					switch(MouseUI.Mode){
+					case MouseMode.Map:
+					{
+						int map_row = row - Global.MAP_OFFSET_ROWS;
+						int map_col = col - Global.MAP_OFFSET_COLS;
+						bool status_click = false;
+						if(MouseUI.mouselook_objects[row,col] != null){
+							if(map_col < 0){
+								status_click = true;
+							}
+							map_row = MouseUI.mouselook_objects[row,col].row;
+							map_col = MouseUI.mouselook_objects[row,col].col;
+						}
+						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
+							if(map_row == Actor.player.row && map_col == Actor.player.col){
+								bool done = false;
+								if(status_click){
+									done = true;
+									Tile t = Actor.M.tile[map_row,map_col];
+									if(t.inv != null || t.Is(TileType.CHEST) || t.IsShrine()){
+										Input.LastKey = new ConsoleKeyInfo('g',ConsoleKey.G,false,false,false);
+									}
+									else{
+										if(t.Is(TileType.STAIRS)){
+											Input.LastKey = new ConsoleKeyInfo('>',ConsoleKey.OemPeriod,true,false,false);
+										}
+										else{
+											done = false;
+										}
+									}
+								}
+								if(!done){
+									Input.LastKey = new ConsoleKeyInfo('5',ConsoleKey.NumPad5,false,false,false);
+								}
+							}
+							else{
+								if(ModifierHeld(ConsoleModifiers.Control) || (Math.Abs(map_row-Actor.player.row) <= 1 && Math.Abs(map_col-Actor.player.col) <= 1)){
+									int rowchange = 0;
+									int colchange = 0;
+									if(map_row > Actor.player.row){
+										rowchange = 1;
+									}
+									else{
+										if(map_row < Actor.player.row){
+											rowchange = -1;
+										}
+									}
+									if(map_col > Actor.player.col){
+										colchange = 1;
+									}
+									else{
+										if(map_col < Actor.player.col){
+											colchange = -1;
+										}
+									}
+									ConsoleKey dir_key = (ConsoleKey)(ConsoleKey.NumPad0 + Actor.player.DirectionOf(Actor.M.tile[Actor.player.row + rowchange,Actor.player.col + colchange]));
+									Input.LastKey = new ConsoleKeyInfo(Input.GetChar(dir_key,false),dir_key,false,false,false);
+								}
+								else{
+									Tile nearest = Actor.M.tile[map_row,map_col];
+									Actor.player.path = Actor.player.GetPlayerTravelPath(nearest.p);
+									if(Actor.player.path.Count > 0){
+										Actor.player.path.StopAtBlockingTerrain();
+										if(Actor.player.path.Count > 0){
+											Actor.interrupted_path = new pos(-1,-1);
+											ConsoleKey path_key = (ConsoleKey)(ConsoleKey.NumPad0 + Actor.player.DirectionOf(Actor.player.path[0]));
+											Input.LastKey = new ConsoleKeyInfo(Input.GetChar(path_key,false),path_key,false,false,false);
+											Actor.player.path.RemoveAt(0);
+											if(nearest.inv != null || nearest.Is(TileType.CHEST)){
+												Actor.grab_item_at_end_of_path = true;
+											}
+										}
+										else{
+											Input.LastKey = new ConsoleKeyInfo(' ',ConsoleKey.Spacebar,false,false,false);
+										}
+									}
+									else{
+										//int distance_of_first_passable = -1;
+										//List<Tile> passable_tiles = new List<Tile>();
+										foreach(Tile t in Actor.M.TilesByDistance(map_row,map_col,true,true)){
+											//if(distance_of_first_passable != -1 && nearest.DistanceFrom(t) > distance_of_first_passable){
+											//nearest = passable_tiles.Last();
+											if(t.passable){
+												nearest = t;
+												Actor.player.path = Actor.player.GetPath(nearest.row,nearest.col,-1,true,true,Actor.UnknownTilePathingPreference.UnknownTilesAreOpen);
+												Actor.player.path.StopAtBlockingTerrain();
+												break;
+											}
+											/*}
+											if(t.passable){
+												distance_of_first_passable = nearest.DistanceFrom(t);
+												passable_tiles.Add(t);
+											}*/
+										}
+										if(Actor.player.path.Count > 0){
+											Actor.interrupted_path = new pos(-1,-1);
+											ConsoleKey path_key = (ConsoleKey)(ConsoleKey.NumPad0 + Actor.player.DirectionOf(Actor.player.path[0]));
+											Input.LastKey = new ConsoleKeyInfo(Input.GetChar(path_key,false),path_key,false,false,false);
+											Actor.player.path.RemoveAt(0);
+											if(nearest.inv != null || nearest.Is(TileType.CHEST)){
+												Actor.grab_item_at_end_of_path = true;
+											}
+										}
+										else{
+											Input.LastKey = new ConsoleKeyInfo(' ',ConsoleKey.Spacebar,false,false,false);
+										}
+									}
+								}
+							}
+						}
+						else{
+							Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+						}
+						break;
+					}
+					case MouseMode.Directional:
+					{
+						int map_row = row - Global.MAP_OFFSET_ROWS;
+						int map_col = col - Global.MAP_OFFSET_COLS;
+						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
+							int dir = Actor.player.DirectionOf(new pos(map_row,map_col));
+							pos p = Actor.player.p.PosInDir(dir);
+							Button dir_b = MouseUI.GetButton(Global.MAP_OFFSET_ROWS + p.row,Global.MAP_OFFSET_COLS + p.col);
+							if(dir_b != null){
+								bool shifted = (dir_b.mods & ConsoleModifiers.Shift) == ConsoleModifiers.Shift;
+								Input.LastKey = new ConsoleKeyInfo(Input.GetChar(dir_b.key,shifted),dir_b.key,shifted,false,false);
+							}
+						}
+						else{
+							Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+						}
+						break;
+					}
+					case MouseMode.Targeting:
+					{
+						int map_row = row - Global.MAP_OFFSET_ROWS;
+						int map_col = col - Global.MAP_OFFSET_COLS;
+						if(map_row >= 0 && map_row < Global.ROWS && map_col >= 0 && map_col < Global.COLS){
+							Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+						}
+						else{
+							if(MouseUI.mouselook_objects.BoundsCheck(row,col) && MouseUI.mouselook_objects[row,col] != null){
+								Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+							}
+							else{
+								Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+							}
+						}
+						break;
+					}
+					case MouseMode.YesNoPrompt:
+					Input.LastKey = new ConsoleKeyInfo('y',ConsoleKey.Y,false,false,false);
+					break;
+					case MouseMode.Inventory:
+					Input.LastKey = new ConsoleKeyInfo('a',ConsoleKey.A,false,false,false);
+					break;
+					case MouseMode.ScrollableMenu:
+					if(AnyModifierHeld()){
+						Input.LastKey = new ConsoleKeyInfo((char)8,ConsoleKey.Backspace,false,false,false);
+					}
+					else{
+						Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+					}
+					break;
+					default:
+					Input.LastKey = new ConsoleKeyInfo((char)13,ConsoleKey.Enter,false,false,false);
+					break;
+					}
+				}
+			}
+			MouseUI.RemoveHighlight();
+			MouseUI.RemoveMouseover();
+		}
+		public static void HandleRightClick(){
+			if(!Input.KeyPressed){
+				Input.KeyPressed = true;
+				switch(MouseUI.Mode){
+				case MouseMode.YesNoPrompt:
+				Input.LastKey = new ConsoleKeyInfo('n',ConsoleKey.N,false,false,false);
+				break;
+				case MouseMode.Map:
+				Input.LastKey = new ConsoleKeyInfo('i',ConsoleKey.I,false,false,false);
+				break;
+				default:
+				Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+				break;
+				}
+			}
+			MouseUI.RemoveHighlight();
+			MouseUI.RemoveMouseover();
+		}
+		public static void HandleMiddleClick(){
+			if(!Input.KeyPressed){
+				Input.KeyPressed = true;
+				switch(MouseUI.Mode){
+				case MouseMode.Map:
+				Input.LastKey = new ConsoleKeyInfo('v',ConsoleKey.V,false,false,false);
+				break;
+				default:
+				Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
+				break;
+				}
+			}
+			MouseUI.RemoveHighlight();
+			MouseUI.RemoveMouseover();
+		}
+		public static void MouseWheelHandler(object sender,MouseWheelEventArgs args){
+			if(!Input.KeyPressed){
+				if(args.Delta > 0){
+					switch(MouseUI.Mode){
+					case MouseMode.ScrollableMenu:
+					Input.KeyPressed = true;
+					if(AnyModifierHeld()){
+						Input.LastKey = new ConsoleKeyInfo(Input.GetChar(ConsoleKey.PageUp,false),ConsoleKey.PageUp,false,false,false);
+					}
+					else{
+						Input.LastKey = new ConsoleKeyInfo('8',ConsoleKey.NumPad8,false,false,false);
+					}
+					break;
+					case MouseMode.Targeting:
+					Input.KeyPressed = true;
+					Input.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,true,false,false);
+					break;
+					case MouseMode.Map:
+					Input.KeyPressed = true;
+					Input.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
+					break;
+					}
+				}
+				if(args.Delta < 0){
+					switch(MouseUI.Mode){
+					case MouseMode.ScrollableMenu:
+					Input.KeyPressed = true;
+					if(AnyModifierHeld()){
+						Input.LastKey = new ConsoleKeyInfo(Input.GetChar(ConsoleKey.PageDown,false),ConsoleKey.PageDown,false,false,false);
+					}
+					else{
+						Input.LastKey = new ConsoleKeyInfo('2',ConsoleKey.NumPad2,false,false,false);
+					}
+					break;
+					case MouseMode.Targeting:
+					Input.KeyPressed = true;
+					Input.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
+					break;
+					case MouseMode.Map:
+					Input.KeyPressed = true;
+					Input.LastKey = new ConsoleKeyInfo((char)9,ConsoleKey.Tab,false,false,false);
+					break;
+					}
+				}
+			}
+			MouseUI.RemoveHighlight();
+			MouseUI.RemoveMouseover();
+		}
+		public static void MouseLeaveHandler(object sender,EventArgs args){
+			MouseUI.RemoveHighlight();
+		}
+		public static void OnClosing(object sender,System.ComponentModel.CancelEventArgs e){
+			if(Screen.gl.NoClose && !Input.KeyPressed && MouseUI.Mode == MouseMode.Map){
+				Input.KeyPressed = true;
+				Input.LastKey = new ConsoleKeyInfo('q',ConsoleKey.Q,false,false,false);
+			}
+		}
+		public static void HandleResize(){
+			int potentialWidth = Screen.gl.ClientRectangle.Width / Global.SCREEN_W;
+			int potentialHeight = Screen.gl.ClientRectangle.Height / Global.SCREEN_H;
+			int selectedIdx = 0;
+			int[] fontWidths = new int[]{  6, 8,12,16}; //since these are ordered by width, the greatest width will win in conflicts - for
+			int[] fontHeights = new int[]{12,16,24,32}; //  example, if 12x20 is the potential, then 12x18 will be selected over 10x20.
+			//int[] fontWidths = new int[]{  6, 8, 8,10,11,12,12,14,14,15,16,16,18,21}; //since these are ordered by width, the greatest width will win in conflicts - for
+			//int[] fontHeights = new int[]{12,12,16,20,27,18,24,28,36,27,24,32,36,38}; //  example, if 12x20 is the potential, then 12x18 will be selected over 10x20.
+			for(int i=0;i<fontWidths.GetLength(0);++i){
+				if(potentialWidth >= fontWidths[i] && potentialHeight >= fontHeights[i]){
+					selectedIdx = i;
+				}
+			}
+			if(Screen.cellHeight != fontHeights[selectedIdx] || Screen.cellWidth != fontWidths[selectedIdx]){ //change font if needed
+				Screen.cellHeight = fontHeights[selectedIdx];
+				Screen.cellWidth = fontWidths[selectedIdx];
+				string newFont = GetFontFilename(Screen.cellWidth,Screen.cellHeight);
+				int fontPadding = GetFontPadding(newFont);
+				Screen.textSurface.texture = Texture.Create(newFont,Screen.currentFont);
+				Screen.currentFont = newFont;
+				Screen.textSurface.texture.Sprite.Clear();
+				SpriteType.DefineSingleRowSprite(Screen.textSurface,Screen.cellWidth,fontPadding); // after making this work with multiple fonts, switch back and forth and resize and fullscreen like 20 times, to see if it crashes. todo todo todo.
+				Screen.textSurface.layouts.Clear();
+				CellLayout.CreateGrid(Screen.textSurface,Global.SCREEN_H,Global.SCREEN_W,Screen.cellHeight,Screen.cellWidth,0,0);
+				Screen.cursorSurface.layouts.Clear();
+				CellLayout.CreateGrid(Screen.cursorSurface,1,1,2,Screen.cellWidth,0,0);
+			}
+			if(Screen.gl.FullScreen){ //then, was fullscreen toggled?
+				int xOffset = (Screen.gl.ClientRectangle.Width - Screen.cellWidth*Global.SCREEN_W) / 2;
+				int yOffset = (Screen.gl.ClientRectangle.Height - Screen.cellHeight*Global.SCREEN_H) / 2;
+				Screen.gl.SetViewport(xOffset,yOffset,Screen.cellWidth*Global.SCREEN_W,Screen.cellHeight*Global.SCREEN_H);
+			}
+			else{
+				Screen.gl.ClientSize = new System.Drawing.Size(Screen.cellWidth * Global.SCREEN_W,Screen.cellHeight * Global.SCREEN_H);
+				Screen.gl.SetViewport(0,0,Screen.gl.ClientRectangle.Width,Screen.gl.ClientRectangle.Height);
+			}
+			Screen.cursorSurface.DefaultUpdatePositions();
+			Screen.UpdateCursor(Screen.CursorVisible);
+			Screen.textSurface.DefaultUpdatePositions();
+			Screen.UpdateGLBuffer(0,0,Global.SCREEN_H-1,Global.SCREEN_W-1);
+		}
+		private static string GetFontFilename(int w,int h){
+			return $"font{w}x{h}.bmp";
+		}
+		private static int GetFontPadding(string filename){ //todo
+			if(filename == "font8x16.bmp") return 1;
+			return 0;
 		}
 	}
 }

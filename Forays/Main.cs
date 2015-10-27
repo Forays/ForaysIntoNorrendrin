@@ -19,10 +19,10 @@ using Forays;
 using PosArrays;
 using GLDrawing;
 namespace Forays{
-	public enum TileType{WALL,FLOOR,DOOR_O,DOOR_C,STAIRS,CHEST,FIREPIT,UNLIT_FIREPIT,STALAGMITE,FIRE_TRAP,TELEPORT_TRAP,LIGHT_TRAP,SLIDING_WALL_TRAP,GRENADE_TRAP,SHOCK_TRAP,ALARM_TRAP,DARKNESS_TRAP,POISON_GAS_TRAP,BLINDING_TRAP,ICE_TRAP,PHANTOM_TRAP,SCALDING_OIL_TRAP,FLING_TRAP,STONE_RAIN_TRAP,HIDDEN_DOOR,COMBAT_SHRINE,DEFENSE_SHRINE,MAGIC_SHRINE,SPIRIT_SHRINE,STEALTH_SHRINE,RUINED_SHRINE,SPELL_EXCHANGE_SHRINE,RUBBLE,FIRE_GEYSER,STATUE,POOL_OF_RESTORATION,FOG_VENT,POISON_GAS_VENT,STONE_SLAB,STONE_SLAB_OPEN,CHASM,BREACHED_WALL,WATER,ICE,CRACKED_WALL,BRUSH,POPPY_FIELD,JUNGLE,GRAVEL,BLAST_FUNGUS,GLOWING_FUNGUS,TOMBSTONE,GRAVE_DIRT,BARREL,STANDING_TORCH,VINE,POISON_BULB,WAX_WALL,DEMONIC_IDOL,FIRE_RIFT};
+	public enum TileType{WALL,FLOOR,DOOR_O,DOOR_C,STAIRS,CHEST,FIREPIT,UNLIT_FIREPIT,STALAGMITE,FIRE_TRAP,TELEPORT_TRAP,LIGHT_TRAP,SLIDING_WALL_TRAP,GRENADE_TRAP,SHOCK_TRAP,ALARM_TRAP,DARKNESS_TRAP,POISON_GAS_TRAP,BLINDING_TRAP,ICE_TRAP,PHANTOM_TRAP,SCALDING_OIL_TRAP,FLING_TRAP,STONE_RAIN_TRAP,HIDDEN_DOOR,COMBAT_SHRINE,DEFENSE_SHRINE,MAGIC_SHRINE,SPIRIT_SHRINE,STEALTH_SHRINE,RUINED_SHRINE,SPELL_EXCHANGE_SHRINE,RUBBLE,FIRE_GEYSER,STATUE,POOL_OF_RESTORATION,FOG_VENT,POISON_GAS_VENT,STONE_SLAB,STONE_SLAB_OPEN,CHASM,BREACHED_WALL,WATER,ICE,CRACKED_WALL,BRUSH,POPPY_FIELD,JUNGLE,GRAVEL,BLAST_FUNGUS,GLOWING_FUNGUS,TOMBSTONE,GRAVE_DIRT,BARREL,STANDING_TORCH,VINE,POISON_BULB,WAX_WALL,DEMONIC_IDOL,FIRE_RIFT,DEMONSTONE};
 	public enum FeatureType{GRENADE,TROLL_CORPSE,TROLL_BLOODWITCH_CORPSE,FOG,POISON_GAS,SLIME,TELEPORTAL,INACTIVE_TELEPORTAL,STABLE_TELEPORTAL,OIL,FIRE,BONES,WEB,PIXIE_DUST,FORASECT_EGG,SPORES,THICK_DUST,CONFUSION_GAS};
 	public enum ActorType{PLAYER,SPECIAL,FIRE_DRAKE,GOBLIN,GIANT_BAT,LONE_WOLF,BLOOD_MOTH,DARKNESS_DWELLER,CARNIVOROUS_BRAMBLE,FROSTLING,SWORDSMAN,DREAM_WARRIOR,SPITTING_COBRA,KOBOLD,SPORE_POD,FORASECT,POLTERGEIST,CULTIST,GOBLIN_ARCHER,GOBLIN_SHAMAN,GOLDEN_DART_FROG,SKELETON,SHADOW,MIMIC,PHASE_SPIDER,ZOMBIE,BERSERKER,GIANT_SLUG,VULGAR_DEMON,BANSHEE,CAVERN_HAG,ROBED_ZEALOT,DIRE_RAT,SKULKING_KILLER,WILD_BOAR,TROLL,DREAM_SPRITE,CLOUD_ELEMENTAL,DERANGED_ASCETIC,ORC_GRENADIER,WARG,ALASI_SCOUT,CARRION_CRAWLER,MECHANICAL_KNIGHT,RUNIC_TRANSCENDENT,ALASI_BATTLEMAGE,ALASI_SOLDIER,SKITTERMOSS,STONE_GOLEM,MUD_ELEMENTAL,FLAMETONGUE_TOAD,ENTRANCER,OGRE_BARBARIAN,SNEAK_THIEF,LASHER_FUNGUS,CRUSADING_KNIGHT,TROLL_BLOODWITCH,LUMINOUS_AVENGER,MARBLE_HORROR,CORROSIVE_OOZE,PYREN_ARCHER,SPELLMUDDLE_PIXIE,ALASI_SENTINEL,NOXIOUS_WORM,CYCLOPEAN_TITAN,VAMPIRE,ORC_WARMAGE,NECROMANCER,STALKING_WEBSTRIDER,ORC_ASSASSIN,CORPSETOWER_BEHEMOTH,MACHINE_OF_WAR,IMPOSSIBLE_NIGHTMARE,DREAM_WARRIOR_CLONE,DREAM_SPRITE_CLONE,MUD_TENTACLE,MARBLE_HORROR_STATUE,GHOST,HOMUNCULUS,BLADE,FINAL_LEVEL_CULTIST,MINOR_DEMON,FROST_DEMON,BEAST_DEMON,DEMON_LORD,PHANTOM,PHANTOM_ZOMBIE,PHANTOM_CRUSADER,PHANTOM_TIGER,PHANTOM_WASP,PHANTOM_BEHEMOTH,PHANTOM_BLIGHTWING,PHANTOM_SWORDMASTER,PHANTOM_ARCHER,PHANTOM_CONSTRICTOR};
-	public enum AttrType{STEALTHY,NONLIVING,PLANTLIKE,MEDIUM_HUMANOID,HUMANOID_INTELLIGENCE,MINDLESS,AGGRESSIVE,TERRITORIAL,AVOIDS_LIGHT,KEEPS_DISTANCE,NONEUCLIDEAN_MOVEMENT,KEEN_SENSES,BLINDSIGHT,SMALL,FLYING,DESCENDING,WANDERING,IMMOBILE,CAN_DODGE,SHADOW_CLOAK,INVISIBLE,BRUTISH_STRENGTH,MYSTIC_MIND,VIGOR,FLYING_LEAP,SILENCED,NOTICED,PLAYER_NOTICED,DANGER_SENSED,SHINING,LOW_LIGHT_VISION,REGENERATING,REGENERATES_FROM_DEATH,REASSEMBLES,NO_ITEM,STUNNED,PARALYZED,BLIND,POISONED,FROZEN,CHILLED,SLIMED,OIL_COVERED,BURNING,SLOWED,BLEEDING,POPPY_COUNTER,ASLEEP,AGGRAVATING,DETECTING_MONSTERS,DETECTING_MOVEMENT,TELEPORTING,VULNERABLE,SUSCEPTIBLE_TO_CRITS,LIGHT_SENSITIVE,PSEUDO_VAMPIRIC,DESTROYED_BY_SUNLIGHT,STONEFORM,DIM_VISION,DIM_LIGHT,CONFUSED,ENRAGED,FIERY_ARROWS,DULLS_BLADES,IMMUNE_BURNING,IMMUNE_FIRE,IMMUNE_COLD,IMMUNE_ELECTRICITY,MENTAL_IMMUNITY,RESIST_WEAPONS,IMMUNE_ARROWS,RESIST_NECK_SNAP,COMBO_ATTACK,COOLDOWN_1,COOLDOWN_2,COOLDOWN_3,LIFESPAN,RADIANT_HALO,SPORE_BURST,CAN_POISON_WEAPONS,ACIDIFIED,SILENCE_AURA,TERRIFYING,DAMAGE_RESISTANCE,BLOCKING,SHIELDED,MINOR_IMMUNITY,MECHANICAL_SHIELD,TURNS_HERE,TURNS_VISIBLE,RESTING,RUNNING,WAITING,AUTOEXPLORE,TUMBLING,BLOOD_BOILED,SHADOWSIGHT,IN_COMBAT,CONVICTION,KILLSTREAK,EMPOWERED_SPELLS,BANDAGED,PERMANENT_DAMAGE,SWITCHING_ARMOR,JUST_GRABBED,JUST_TELEPORTED,JUST_FLUNG,JUST_BITTEN,JUST_SEARED,JUST_AWOKE,AGGRESSION_MESSAGE_PRINTED,NO_PLATE_ARMOR_NOISE,GRAVEL_MESSAGE_COOLDOWN,SILENCE_AURA_MESSAGE_COOLDOWN,TITAN_MESSAGE_COOLDOWN,LUNGING_AUTO_HIT,TELEKINETICALLY_THROWN,SELF_TK_NO_DAMAGE,BURROWING,ROOTS,DODGED,CHAIN_CAST,IGNORES_QUIET_SOUNDS,ALERTED,SEES_ADJACENT_PLAYER,DIRECTION_OF_PREVIOUS_TILE,FOLLOW_DIRECTION_EXITED,AMNESIA_STUN,GRABBED,GRABBING,BONUS_COMBAT,BONUS_DEFENSE,BONUS_MAGIC,BONUS_SPIRIT,BONUS_STEALTH,INVULNERABLE,SMALL_GROUP,MEDIUM_GROUP,LARGE_GROUP,TURN_INTO_CORPSE,CORPSE,NO_CORPSE_KNOCKBACK,BOSS_MONSTER,NUM_ATTRS,NO_ATTR};
+	public enum AttrType{STEALTHY,NONLIVING,PLANTLIKE,MEDIUM_HUMANOID,HUMANOID_INTELLIGENCE,MINDLESS,AGGRESSIVE,TERRITORIAL,AVOIDS_LIGHT,KEEPS_DISTANCE,NONEUCLIDEAN_MOVEMENT,KEEN_SENSES,BLINDSIGHT,SMALL,FLYING,DESCENDING,WANDERING,IMMOBILE,CAN_DODGE,SHADOW_CLOAK,INVISIBLE,BRUTISH_STRENGTH,MYSTIC_MIND,VIGOR,FLYING_LEAP,SILENCED,NOTICED,PLAYER_NOTICED,DANGER_SENSED,SHINING,LOW_LIGHT_VISION,REGENERATING,REGENERATES_FROM_DEATH,REASSEMBLES,NO_ITEM,STUNNED,PARALYZED,BLIND,POISONED,FROZEN,CHILLED,SLIMED,OIL_COVERED,BURNING,SLOWED,BLEEDING,POPPY_COUNTER,ASLEEP,AGGRAVATING,DETECTING_MONSTERS,DETECTING_MOVEMENT,TELEPORTING,VULNERABLE,SUSCEPTIBLE_TO_CRITS,LIGHT_SENSITIVE,PSEUDO_VAMPIRIC,DESTROYED_BY_SUNLIGHT,STONEFORM,DIM_VISION,DIM_LIGHT,CONFUSED,ENRAGED,FIERY_ARROWS,DULLS_BLADES,IMMUNE_BURNING,IMMUNE_FIRE,IMMUNE_COLD,IMMUNE_ELECTRICITY,MENTAL_IMMUNITY,RESIST_WEAPONS,IMMUNE_ARROWS,RESIST_NECK_SNAP,COMBO_ATTACK,COOLDOWN_1,COOLDOWN_2,COOLDOWN_3,LIFESPAN,RADIANT_HALO,SPORE_BURST,CAN_POISON_WEAPONS,ACIDIFIED,SILENCE_AURA,TERRIFYING,DAMAGE_RESISTANCE,BLOCKING,SHIELDED,MINOR_IMMUNITY,MECHANICAL_SHIELD,TURNS_HERE,TURNS_VISIBLE,RESTING,RUNNING,WAITING,AUTOEXPLORE,TUMBLING,BLOOD_BOILED,SHADOWSIGHT,IN_COMBAT,CONVICTION,KILLSTREAK,EMPOWERED_SPELLS,BANDAGED,PERMANENT_DAMAGE,SWITCHING_ARMOR,JUST_GRABBED,JUST_TELEPORTED,JUST_FLUNG,JUST_BITTEN,JUST_SEARED,JUST_AWOKE,JUST_LEARNED_FEEL_NO_PAIN,AGGRESSION_MESSAGE_PRINTED,NO_PLATE_ARMOR_NOISE,GRAVEL_MESSAGE_COOLDOWN,SILENCE_AURA_MESSAGE_COOLDOWN,TITAN_MESSAGE_COOLDOWN,LUNGING_AUTO_HIT,TELEKINETICALLY_THROWN,SELF_TK_NO_DAMAGE,BURROWING,ROOTS,DODGED,CHAIN_CAST,IGNORES_QUIET_SOUNDS,ALERTED,SEES_ADJACENT_PLAYER,DIRECTION_OF_PREVIOUS_TILE,FOLLOW_DIRECTION_EXITED,AMNESIA_STUN,GRABBED,GRABBING,BONUS_COMBAT,BONUS_DEFENSE,BONUS_MAGIC,BONUS_SPIRIT,BONUS_STEALTH,INVULNERABLE,SMALL_GROUP,MEDIUM_GROUP,LARGE_GROUP,TURN_INTO_CORPSE,CORPSE,NO_CORPSE_KNOCKBACK,BOSS_MONSTER,NUM_ATTRS,NO_ATTR};
 	public enum SpellType{RADIANCE,FORCE_PALM,DETECT_MOVEMENT,FLYING_LEAP,MERCURIAL_SPHERE,GREASE,BLINK,FREEZE,SCORCH,LIGHTNING_BOLT,MAGIC_HAMMER,PORTAL,PASSAGE,AMNESIA,STONE_SPIKES,SHADOWSIGHT,BLIZZARD,COLLAPSE,DOOM,TELEKINESIS,NUM_SPELLS,NO_SPELL};
 	public enum SkillType{COMBAT,DEFENSE,MAGIC,SPIRIT,STEALTH,NUM_SKILLS,NO_SKILL};
 	public enum FeatType{QUICK_DRAW,WHIRLWIND_STYLE,LUNGE,DRIVE_BACK,ARMOR_MASTERY,CUNNING_DODGE,DEFLECT_ATTACK,TUMBLE,MASTERS_EDGE,ARCANE_INTERFERENCE,CHAIN_CASTING,FORCE_OF_WILL,CONVICTION,ENDURING_SOUL,FEEL_NO_PAIN,BOILING_BLOOD,NECK_SNAP,DISARM_TRAP,CORNER_CLIMB,DANGER_SENSE,NUM_FEATS,NO_FEAT};
@@ -36,33 +36,13 @@ namespace Forays{
 	public enum DamageClass{PHYSICAL,MAGICAL,NO_TYPE};
 	public enum AttackEffect{STUN,ONE_TURN_STUN,MAX_DAMAGE,PERCENT_DAMAGE,WEAK_POINT,WORN_OUT,REDUCE_ACCURACY,DRAIN_LIFE,GRAB,CHILL,FREEZE,INFLICT_VULNERABILITY,TRIP,KNOCKBACK,STRONG_KNOCKBACK,IGNITE,DIM_VISION,SWAP_POSITIONS,SLIME,MAKE_NOISE,BLIND,PERMANENT_BLIND,SLOW,POISON,PARALYZE,ONE_TURN_PARALYZE,STALAGMITES,FLING,PULL,SILENCE,INFEST,DISRUPTION,VICTORY,ACID,CONFUSE,BLEED,ONE_HP,STEAL,EXHAUST,NO_CRIT};
 	public enum EventType{ANY_EVENT,MOVE,REMOVE_ATTR,REMOVE_GAS,CHECK_FOR_HIDDEN,RELATIVELY_SAFE,POLTERGEIST,MIMIC,REGENERATING_FROM_DEATH,REASSEMBLING,GRENADE,BLAST_FUNGUS,STALAGMITE,FIRE_GEYSER,FIRE_GEYSER_ERUPTION,FOG_VENT,POISON_GAS_VENT,STONE_SLAB,MARBLE_HORROR,FIRE,NORMAL_LIGHTING,TELEPORTAL,BREACH,GRAVE_DIRT,POPPIES,TOMBSTONE_GHOST,SHIELDING,BURROWING,FINAL_LEVEL_SPAWN_CULTISTS,SPAWN_WANDERING_MONSTER};
-	public enum OptionType{NO_WALL_SLIDING,AUTOPICKUP,TOP_ROW_MOVEMENT,CONFIRM_BEFORE_RESTING,NEVER_DISPLAY_TIPS,ALWAYS_RESET_TIPS,DARK_GRAY_UNSEEN,DISABLE_GRAPHICS};
+	public enum OptionType{NO_WALL_SLIDING,AUTOPICKUP,TOP_ROW_MOVEMENT,NO_CONFIRMATION_BEFORE_RESTING,NEVER_DISPLAY_TIPS,ALWAYS_RESET_TIPS,DARK_GRAY_UNSEEN,DISABLE_GRAPHICS};
 	public class Game{
 		public Map M;
 		public Queue Q;
 		public Buffer B;
 		public Actor player;
-		public static GLGame gl;
-		public static bool NoClose{
-			get{
-				if(gl != null){
-					return gl.NoClose;
-				}
-				return false;
-			}
-			set{
-				if(gl != null){
-					gl.NoClose = value;
-				}
-			}
-		}
-		public static bool GLUpdate(){
-			if(gl != null){
-				return gl.Update();
-			}
-			return true;
-		}
-		
+
 		static void Main(string[] args){
 			//Screen.GLMode = false;
 			{
@@ -113,50 +93,41 @@ namespace Forays{
 				ToolkitOptions.Default.EnableHighResolution = false;
 				int height_px = Global.SCREEN_H * 16;
 				int width_px = Global.SCREEN_W * 8;
-				gl = new GLGame(height_px,width_px,Global.SCREEN_H,Global.SCREEN_W,height_px,width_px,"Forays into Norrendrin");
-				GLGame.text_surface = new SpriteSurface(gl,Global.SCREEN_H,Global.SCREEN_W,16,8,0,0,"font8x16.bmp",1,128,0,0,1.0f,8.0f / 9.0f,
-					GLWindow.GetBasicVertexShader(),GLWindow.GetBasicFontFragmentShader(),GLWindow.GetBasicFontVertexAttributeSizes(),
-					GLWindow.GetBasicFontDefaultVertexAttributes(),GLWindow.GetBasicFontVertexAttributes());
-				/*GLGame.graphics_surface = new SpriteSurface(gl,22,33,16,16,16*3,8*13,"sprites.png",64,64,17,0,1.0f,1.0f,GLWindow.GetBasicVertexShader(),
-					GLWindow.GetBasicGraphicalFragmentShader(),GLWindow.GetBasicGraphicalVertexAttributeSizes(),GLWindow.GetBasicGraphicalDefaultVertexAttributes(),GLWindow.GetBasicGraphicalVertexAttributes());
-				gl.SpriteSurfaces.Add(GLGame.graphics_surface);
-				GLGame.actors_surface = new SpriteSurface(gl,22,33,16,16,16*3,8*13,"sprites.png",64,64,17,0,1.0f,1.0f,GLWindow.GetBasicVertexShader(),
-					GLWindow.GetBasicGraphicalFragmentShader(),GLWindow.GetBasicGraphicalVertexAttributeSizes(),GLWindow.GetBasicGraphicalDefaultVertexAttributes(),GLWindow.GetBasicGraphicalVertexAttributes());
-				gl.SpriteSurfaces.Add(GLGame.actors_surface);
-				GLGame.visibility_surface = new SpriteSurface(gl,22,33,16,16,16*3,8*13,"visibility.png",1,3,0,0,1.0f,1.0f,GLWindow.GetBasicVertexShader(),
-					GLWindow.GetBasicGraphicalFragmentShader(),GLWindow.GetBasicGraphicalVertexAttributeSizes(),GLWindow.GetBasicGraphicalDefaultVertexAttributes(),GLWindow.GetBasicGraphicalVertexAttributes());
-				gl.SpriteSurfaces.Add(GLGame.visibility_surface);*/
-				gl.SpriteSurfaces.Add(GLGame.text_surface);
-				GLGame.cursor_surface = new SpriteSurface(gl,1,1,2,8,-99,-99,"font6x12.bmp",1,128,0,0,1.0f,8.0f / 9.0f,
-					GLWindow.GetBasicVertexShader(),GLWindow.GetBasicFontFragmentShader(),GLWindow.GetBasicFontVertexAttributeSizes(),
-					GLWindow.GetBasicFontDefaultVertexAttributes(),GLWindow.GetBasicFontVertexAttributes());
-				gl.SpriteSurfaces.Add(GLGame.cursor_surface);
-				/*GLGame.particle_surface = new SpriteSurface(gl,22,33,16,16,16*3,8*13,"animations.png",128,128,0,0,1.0f,1.0f,GLWindow.GetBasicVertexShader(),
-					GLGame.GetParticleFragmentShader(),GLWindow.GetBasicFontVertexAttributeSizes(),GLWindow.GetBasicFontDefaultVertexAttributes(),GLWindow.GetBasicFontVertexAttributes());
-				gl.SpriteSurfaces.Add(GLGame.particle_surface);
-				GLGame.particle_surface.NumElements = 0;
-				float r1 = (float)(R.r.NextDouble() * 22);
-				float r2 = (float)(R.r.NextDouble() * 22);
-				float r3 = (float)(R.r.NextDouble() * 22);
-				float c1 = (float)(R.r.NextDouble() * 33);
-				float c2 = (float)(R.r.NextDouble() * 33);
-				float c3 = (float)(R.r.NextDouble() * 33);
-				int s1 = R.Roll(10) + 4;
-				int s2 = R.Roll(10) + 4;
-				int s3 = R.Roll(10) + 4;
-				Animations.Generators.Add(new ParticleGenerator(0,0,5,3,Color4.Magenta,Color4.White,r1,c1,FloatNumber.CreateRange(FloatNumber.CreateDelta(0.0f,0.001f * s1),FloatNumber.CreateDelta(0.1f,0.003f * s1)),FloatNumber.CreateValue(0.0f),FloatNumber.CreateValue(0.0f),Number.CreateValue(3),Number.CreateValue(5),500/s1));
-				Animations.Generators.Add(new ParticleGenerator(0,0,5,3,Color4.Yellow,Color4.Firebrick,r2,c2,FloatNumber.CreateRange(FloatNumber.CreateDelta(0.0f,0.001f * s2),FloatNumber.CreateDelta(0.01f,0.003f * s2)),FloatNumber.CreateValue(0.0f),FloatNumber.CreateValue(0.0f),Number.CreateValue(3),Number.CreateValue(5),500/s2));
-				Animations.Generators.Add(new ParticleGenerator(0,0,5,3,Color4.Cyan,Color4.Yellow,r3,c3,FloatNumber.CreateRange(FloatNumber.CreateDelta(0.0f,0.001f * s3),FloatNumber.CreateDelta(0.01f,0.003f * s3)),FloatNumber.CreateDelta(0.0f,0.01f),FloatNumber.CreateValue(0.0f),Number.CreateValue(3),Number.CreateValue(5),500/s3));
-				Animations.Generators.Add(new ParticleGenerator(0,0,5,3,Color4.Chocolate,Color4.Cyan,r1,c1,FloatNumber.CreateRange(FloatNumber.CreateDelta(0.0f,0.001f * s1),FloatNumber.CreateDelta(0.1f,0.003f * s1)),FloatNumber.CreateValue(0.0f),FloatNumber.CreateValue(0.0f),Number.CreateValue(3),Number.CreateValue(5),500/s1));*/
-				//GLGame.particle_surface.Disabled = true;
+				Screen.gl = new GLWindow(width_px,height_px,"Forays into Norrendrin");
+				Screen.gl.ResizingPreference = ResizeOption.SnapWindow;
+				Screen.gl.ResizingFullScreenPreference = ResizeOption.AddBorder;
+				Screen.gl.KeyDown += Input.KeyDownHandler;
+				Screen.gl.Mouse.Move += Input.MouseMoveHandler;
+				Screen.gl.Mouse.ButtonUp += Input.MouseClickHandler;
+				Screen.gl.Mouse.WheelChanged += Input.MouseWheelHandler;
+				Screen.gl.MouseLeave += Input.MouseLeaveHandler;
+				Screen.gl.Closing += Input.OnClosing;
+				Screen.gl.FinalResize += Input.HandleResize;
+				Screen.textSurface = Surface.Create(Screen.gl,"font8x16.bmp",Shader.FontFS(),false,2,4,4);
+				SpriteType.DefineSingleRowSprite(Screen.textSurface,8,1);
+				CellLayout.CreateGrid(Screen.textSurface,Global.SCREEN_H,Global.SCREEN_W,16,8,0,0);
+				Screen.textSurface.SetEasyLayoutCounts(Global.SCREEN_H * Global.SCREEN_W);
+				Screen.textSurface.DefaultUpdatePositions();
+				Screen.textSurface.SetDefaultSpriteType(0);
+				Screen.textSurface.SetDefaultSprite(32); //space
+				Screen.textSurface.SetDefaultOtherData(new List<float>(Color.Gray.GetFloatValues()),new List<float>(Color.Black.GetFloatValues()));
+				Screen.textSurface.DefaultUpdateOtherData();
+				Screen.gl.Surfaces.Add(Screen.textSurface);
+				Screen.cursorSurface = Surface.Create(Screen.gl,"font6x12.bmp",Shader.FontFS(),false,2,4,4);
+				SpriteType.DefineSingleRowSprite(Screen.cursorSurface,8,0);
+				CellLayout.CreateGrid(Screen.cursorSurface,1,1,2,8,0,0);
+				Screen.cursorSurface.SetEasyLayoutCounts(1);
+				Screen.cursorSurface.DefaultUpdatePositions();
+				Screen.cursorSurface.SetDefaultSpriteType(0);
+				Screen.cursorSurface.SetDefaultSprite(0);
+				Screen.cursorSurface.SetDefaultOtherData(new List<float>(Color.Gray.GetFloatValues()),new List<float>(Color.Black.GetFloatValues()));
+				Screen.cursorSurface.DefaultUpdateOtherData();
+				Screen.gl.Surfaces.Add(Screen.cursorSurface);
 				GL.Enable(EnableCap.Blend);
 				GL.BlendFunc(BlendingFactorSrc.SrcAlpha,BlendingFactorDest.OneMinusSrcAlpha);
-				gl.AllowScaling = false;
-				//GLGame.graphics_surface.Disabled = true;
-				//gl.ToggleFullScreen(true);
-				gl.Visible = true;
-				GLGame.Timer = new Stopwatch();
-				GLGame.Timer.Start();
+				Screen.gl.Visible = true;
+				Global.Timer = new Stopwatch();
+				Global.Timer.Start();
 				Screen.CursorVisible = false;
 			}
 			Input.LoadKeyRebindings();
@@ -426,7 +397,7 @@ namespace Forays{
 						Dict<PhysicalObject,int> missing_location_id = new Dict<PhysicalObject, int>();
 						List<Actor> need_location = new List<Actor>();
 						Actor.player_name = b.ReadString();
-						game.M.current_level = b.ReadInt32();
+						game.M.currentLevelIdx = b.ReadInt32();
 						game.M.level_types = new List<LevelType>();
 						for(int i=0;i<20;++i){
 							game.M.level_types.Add((LevelType)b.ReadInt32());
@@ -440,7 +411,7 @@ namespace Forays{
 								game.M.last_seen[i,j].bgcolor = (Color)b.ReadInt32();
 							}
 						}
-						if(game.M.current_level == 21){
+						if(game.M.CurrentLevelType == LevelType.Final){
 							game.M.final_level_cultist_count = new int[5];
 							for(int i=0;i<5;++i){
 								game.M.final_level_cultist_count[i] = b.ReadInt32();
@@ -823,16 +794,9 @@ namespace Forays{
 						game.M.CalculatePoppyDistanceMap();
 						game.M.UpdateDangerValues();
 						if(game.M.aesthetics == null) game.M.aesthetics = new PosArray<AestheticFeature>(Global.ROWS,Global.COLS); //todo! save these properly
-						if(game.M.dungeon_description == null){
-							game.M.dungeon_description = new PosArray<string>(Global.ROWS,Global.COLS);
-							for(int ii=0;ii<Global.ROWS;++ii){
-								for(int jj=0;jj<Global.COLS;++jj){
-									game.M.dungeon_description[ii,jj] = "";
-								}
-							}
-						} //todo fixme hack save properly
+						//todo: also dungeon desc.
 					}
-					Game.NoClose = true;
+					Screen.NoClose = true;
 					MouseUI.PushButtonMap(MouseMode.Map);
 					MouseUI.CreateStatsButtons();
 					try{
@@ -853,10 +817,10 @@ namespace Forays{
 					}
 					MouseUI.PopButtonMap();
 					MouseUI.IgnoreMouseMovement = false;
-					Game.NoClose = false;
+					Screen.NoClose = false;
 					Screen.CursorVisible = false;
 					Global.SaveOptions();
-					recentdepth = game.M.current_level;
+					recentdepth = game.M.Depth;
 					recentname = Actor.player_name;
 					recentwin = Global.BOSS_KILLED? 'W' : '-';
 					recentcause = Global.KILLED_BY;
@@ -878,7 +842,8 @@ namespace Forays{
 								if(s.Substring(0,2) == "--"){
 									if(!added && num_scores < Global.HIGH_SCORES){
 										char symbol = Global.BOSS_KILLED? 'W' : '-';
-										newhighscores.Add(game.M.current_level.ToString() + " " + symbol + " " + Actor.player_name + " -- " + Global.KILLED_BY);
+										newhighscores.Add($"{game.M.Depth} {symbol} {Actor.player_name} -- {Global.KILLED_BY}");
+										//newhighscores.Add(game.M.current_level.ToString() + " " + symbol + " " + Actor.player_name + " -- " + Global.KILLED_BY);
 										on_highscore_list = true;
 									}
 									newhighscores.Add(s);
@@ -887,10 +852,11 @@ namespace Forays{
 								if(num_scores < Global.HIGH_SCORES){
 									string[] tokens = s.Split(' ');
 									int dlev = Convert.ToInt32(tokens[0]);
-									if(dlev < game.M.current_level || (dlev == game.M.current_level && Global.BOSS_KILLED)){
+									if(dlev < game.M.Depth || (dlev == game.M.Depth && Global.BOSS_KILLED)){
 										if(!added){
 											char symbol = Global.BOSS_KILLED? 'W' : '-';
-											newhighscores.Add(game.M.current_level.ToString() + " " + symbol + " " + Actor.player_name + " -- " + Global.KILLED_BY);
+											newhighscores.Add($"{game.M.Depth} {symbol} {Actor.player_name} -- {Global.KILLED_BY}");
+											//newhighscores.Add(game.M.current_level.ToString() + " " + symbol + " " + Actor.player_name + " -- " + Global.KILLED_BY);
 											++num_scores;
 											added = true;
 											on_highscore_list = true;
@@ -912,7 +878,8 @@ namespace Forays{
 							newhighscores.Add("High scores:");
 							newhighscores.Add("--");
 							char symbol = Global.BOSS_KILLED? 'W' : '-';
-							newhighscores.Add(game.M.current_level.ToString() + " " + symbol + " " + Actor.player_name + " -- " + Global.KILLED_BY);
+							newhighscores.Add($"{game.M.Depth} {symbol} {Actor.player_name} -- {Global.KILLED_BY}");
+							//newhighscores.Add(game.M.current_level.ToString() + " " + symbol + " " + Actor.player_name + " -- " + Global.KILLED_BY);
 							newhighscores.Add("--");
 							on_highscore_list = true;
 						}
@@ -1055,14 +1022,14 @@ namespace Forays{
 			colorchar[,] mem = null;
 			UI.DisplayStats();
 			bool showed_IDed_tip = false;
-			if(Global.KILLED_BY != "giving up" && !Help.displayed[TutorialTopic.IdentifiedConsumables]){
+			if(Global.KILLED_BY != "gave up" && !Help.displayed[TutorialTopic.IdentifiedConsumables]){
 				if(game.player.inv.Where(item=>Item.identified[item.type] && item.Is(ConsumableType.HEALING,ConsumableType.TIME,ConsumableType.TELEPORTAL)).Count > 0){
 					Help.TutorialTip(TutorialTopic.IdentifiedConsumables);
 					Global.SaveOptions();
 					showed_IDed_tip = true;
 				}
 			}
-			if(!showed_IDed_tip && Global.KILLED_BY != "giving up" && !Help.displayed[TutorialTopic.UnidentifiedConsumables]){
+			if(!showed_IDed_tip && Global.KILLED_BY != "gave up" && !Help.displayed[TutorialTopic.UnidentifiedConsumables]){
 				int known_count = 0;
 				foreach(ConsumableType ct in Item.identified.d.Keys){
 					if(Item.identified[ct] && Item.NameOfItemType(ct) != "other"){

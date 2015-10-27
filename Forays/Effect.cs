@@ -697,7 +697,7 @@ namespace Forays{
 											Screen.WriteMapChar(current_row,current_col,mem[current_row,current_col]);
 											current_row = t2.row;
 											current_col = t2.col;
-											Game.GLUpdate();
+											Screen.GLUpdate();
 											Thread.Sleep(20);
 										}
 									}
@@ -788,7 +788,18 @@ namespace Forays{
 							else{
 								int cost = d[i,j] / default_cost;
 								if(cost < 10){
-									Screen.WriteMapChar(i,j,cost.ToString()[0],Color.Cyan);
+									if(cost < 0){
+										if(cost < -26){
+											Screen.WriteMapChar(i,j,'-',Color.DarkRed);
+										}
+										else{
+											char ch = (char)(Math.Abs(cost) + (int)('A') - 1);
+											Screen.WriteMapChar(i,j,ch,Color.Red);
+										}
+									}
+									else{
+										Screen.WriteMapChar(i,j,cost.ToString()[0],Color.Cyan);
+									}
 								}
 								else{
 									Screen.WriteMapChar(i,j,'+',Color.Blue);

@@ -31,6 +31,9 @@ namespace Forays{
 				if(value == true){
 					if(!internal_seen){
 						internal_seen = true;
+						if(IsShrine() && M.shrinesFound[(int)(type.GetAssociatedSkill())] < 1){
+							M.shrinesFound[(int)(type.GetAssociatedSkill())] = 1;
+						}
 						if(row > 0){
 							M.tile[row-1,col].CheckForSpriteUpdate();
 							if(col > 0){
@@ -63,14 +66,7 @@ namespace Forays{
 			set{
 				internal_light_value = value;
 				if(value > 0 && type == TileType.BLAST_FUNGUS && !M.wiz_dark){
-					B.Add("The blast fungus starts to smolder in the light. ",this);
-					Toggle(null);
-					if(inv == null){ //should always be true
-						Item.Create(ConsumableType.BLAST_FUNGUS,row,col);
-						inv.other_data = 3;
-						inv.revealed_by_light = true;
-					}
-					Q.Add(new Event(inv,100,EventType.BLAST_FUNGUS));
+					IgniteBlastFungus();
 				}
 			}
 		}
@@ -94,10 +90,10 @@ namespace Forays{
 			Define(TileType.STAIRS,"stairway",'>',Color.White,true,false,null);
 			proto[TileType.STAIRS].revealed_by_light = true;
 			Define(TileType.CHEST,"treasure chest",'=',Color.DarkYellow,true,false,null);
-			Define(TileType.FIREPIT,"fire pit",'0',Color.Red,true,false,null);
+			Define(TileType.FIREPIT,"firepit",'0',Color.Red,true,false,null);
 			proto[TileType.FIREPIT].light_radius = 1;
 			proto[TileType.FIREPIT].revealed_by_light = true;
-			Define(TileType.UNLIT_FIREPIT,"unlit fire pit",'0',Color.TerrainDarkGray,true,false,null);
+			Define(TileType.UNLIT_FIREPIT,"unlit firepit",'0',Color.TerrainDarkGray,true,false,null);
 			proto[TileType.UNLIT_FIREPIT].revealed_by_light = true;
 			Define(TileType.STALAGMITE,"stalagmite",'1',Color.White,false,true,TileType.FLOOR);
 			proto[TileType.STALAGMITE].revealed_by_light = true;
@@ -179,8 +175,11 @@ namespace Forays{
 			Prototype(TileType.WAX_WALL).revealed_by_light = true;
 			Define(TileType.DEMONIC_IDOL,"demonic idol",'2',Color.Red,false,false,null);
 			Prototype(TileType.DEMONIC_IDOL).revealed_by_light = true;
-			Define(TileType.FIRE_RIFT,"fire rift",'~',Color.Red,true,false,null);
+			Define(TileType.FIRE_RIFT,"bottomless pit of fire",'~',Color.RandomFire,true,false,null);
 			Prototype(TileType.FIRE_RIFT).revealed_by_light = true;
+			Define(TileType.DEMONSTONE,"demonstone",'~',Color.RandomDoom,true,false,null);
+			proto[TileType.DEMONSTONE].a_name = "demonstone";
+			Prototype(TileType.DEMONSTONE).revealed_by_light = true;
 
 			Define(FeatureType.GRENADE,"grenade",',',Color.Red);
 			Define(FeatureType.TROLL_CORPSE,"troll corpse",'%',Color.DarkGreen);
@@ -679,7 +678,10 @@ namespace Forays{
 							return new colorchar('0',Tile.Feature(ft).color);
 						}
 						if(type == TileType.FIRE_GEYSER){
-							return new colorchar('~',Tile.Feature(ft).color);
+							//return new colorchar('~',Tile.Feature(ft).color);
+						}
+						if(type == TileType.DEMONSTONE){
+							//return new colorchar('&',Color.RandomDoom);
 						}
 					}
 					if(ft == FeatureType.OIL && type == TileType.WATER){
@@ -1019,40 +1021,27 @@ namespace Forays{
 			case TileType.DEMONIC_IDOL:
 			{
 				TurnToFloor();
-				if(!TilesWithinDistance(3).Any(x=>x.type == TileType.DEMONIC_IDOL)){
-					foreach(Tile t2 in TilesWithinDistance(4)){
-						if(t2.color == Color.RandomDoom){
-							t2.color = Colors.ResolveColor(Color.RandomDoom);
+				foreach(Tile neighbor in TilesAtDistance(1)){
+					if(neighbor.name == "floor" && neighbor.color == Color.RandomDoom) neighbor.color = Color.White;
+					if(neighbor.Is(TileType.DEMONSTONE)) neighbor.TurnToFloor();
+				}
+				bool summoningCircle = (M.CurrentLevelType == LevelType.Final || (M.CurrentLevelType == LevelType.Hellish && col < 18));
+				if(summoningCircle){
+					if(!TilesWithinDistance(3).Any(x=>x.type == TileType.DEMONIC_IDOL)){
+						B.Add("You feel the power leave this summoning circle. ");
+						if(M.CurrentLevelType == LevelType.Final){
+							Global.CheckForVictory(true);
 						}
 					}
-					B.Add("You feel the power leave this summoning circle. ");
-					bool circles = false;
-					bool demons = false;
-					for(int i=0;i<5;++i){
-						Tile circle = M.tile[M.FinalLevelSummoningCircle(i)];
-						if(circle.TilesWithinDistance(3).Any(x=>x.type == TileType.DEMONIC_IDOL)){
-							circles = true;
+				}
+				if(!Global.GAME_OVER && !M.AllTiles().Any(x=>x.type == TileType.DEMONIC_IDOL)){
+					foreach(Tile t in M.AllTiles()){
+						if(t.Is(TileType.STAIRS) && t.color == Color.RandomDoom){
+							t.color = Color.White;
 							break;
 						}
 					}
-					foreach(Actor a in M.AllActors()){
-						if(a.Is(ActorType.MINOR_DEMON,ActorType.FROST_DEMON,ActorType.BEAST_DEMON,ActorType.DEMON_LORD)){
-							demons = true;
-							break;
-						}
-					}
-					if(!circles && !demons){ //victory
-						player.curhp = 100;
-						B.Add("As the last summoning circle is destroyed, your victory gives you a new surge of strength. ");
-						B.PrintAll();
-						B.Add("Kersai's summoning has been stopped. His cult will no longer threaten the area. ");
-						B.PrintAll();
-						B.Add("You begin the journey home to deliver the news. ");
-						B.PrintAll();
-						Global.GAME_OVER = true;
-						Global.BOSS_KILLED = true;
-						Global.KILLED_BY = "nothing";
-					}
+					B.Add("As the power leaves the last leering idol, the way opens. ");
 				}
 				break;
 			}
@@ -1292,7 +1281,7 @@ namespace Forays{
 					}
 				}
 				int count = R.OneIn(10)? 3 : 2;
-				for(;count>0 & valid.Count > 0;--count){
+				for(;count>0 && valid.Count > 0;--count){
 					Tile t = valid.Random();
 					if(t.actor() != null){
 						if(t.actor() == player){
@@ -1364,19 +1353,19 @@ namespace Forays{
 					}
 					first.TileInDirection(dir).TurnToFloor();
 					ActorType ac = ActorType.SKELETON;
-					if(M.current_level >= 3 && R.CoinFlip()){
+					if(M.Depth >= 3 && R.CoinFlip()){
 						ac = ActorType.ZOMBIE;
 					}
-					if(M.current_level >= 9 && R.OneIn(10)){
+					if(M.Depth >= 9 && R.OneIn(10)){
 						ac = ActorType.STONE_GOLEM;
 					}
-					if(M.current_level >= 7 && R.PercentChance(1)){
+					if(M.Depth >= 7 && R.PercentChance(1)){
 						ac = ActorType.MECHANICAL_KNIGHT;
 					}
-					if(M.current_level >= 15 && R.PercentChance(1)){
+					if(M.Depth >= 15 && R.PercentChance(1)){
 						ac = ActorType.CORPSETOWER_BEHEMOTH;
 					}
-					if(M.current_level >= 15 && R.PercentChance(1)){
+					if(M.Depth >= 15 && R.PercentChance(1)){
 						ac = ActorType.MACHINE_OF_WAR;
 					}
 					if(R.PercentChance(1)){
@@ -1614,7 +1603,7 @@ namespace Forays{
 			case TileType.POISON_GAS_TRAP:
 			{
 				bool spores = false;
-				if(M.current_level >= 5 && R.PercentChance((M.current_level - 4) * 3)){
+				if(M.Depth >= 5 && R.PercentChance((M.Depth - 4) * 3)){
 					//spores = true; //3% at level 5...33% at level 15...48% at level 20. - disabled for now
 				}
 				int num = R.Roll(5) + 8;
@@ -1871,8 +1860,28 @@ namespace Forays{
 				}
 			}
 		}
+		public void IgniteBlastFungus(){
+			if(type == TileType.BLAST_FUNGUS){
+				if(M.currentlyGeneratingLevel){
+					Toggle(null); //during levelgen, they simply turn to floor.
+				}
+				else{
+					B.Add("The blast fungus starts to smolder in the light. ",this);
+					Toggle(null);
+					if(inv == null){ //should always be true
+						Item.Create(ConsumableType.BLAST_FUNGUS,row,col);
+						inv.other_data = 3;
+						inv.revealed_by_light = true;
+					}
+					Q.Add(new Event(inv,100,EventType.BLAST_FUNGUS));
+					if(player.CanSee(this)){
+						Help.TutorialTip(TutorialTopic.BlastFungus);
+					}
+				}
+			}
+		}
 		public bool AppearsOnStatusBar(){
-			return IsShrine() || IsKnownTrap() || Is(TileType.STAIRS,TileType.CHEST,TileType.FIRE_GEYSER,TileType.FOG_VENT,TileType.POISON_GAS_VENT,TileType.POOL_OF_RESTORATION,TileType.BLAST_FUNGUS,TileType.DEMONIC_IDOL);
+			return IsShrine() || IsKnownTrap() || Is(TileType.STAIRS,TileType.CHEST,TileType.FIRE_GEYSER,TileType.FOG_VENT,TileType.POISON_GAS_VENT,TileType.POOL_OF_RESTORATION,TileType.BLAST_FUNGUS,TileType.DEMONIC_IDOL,TileType.FIRE_RIFT);
 		}
 		public void UpdateStatusBarWithTile(){
 			if(AppearsOnStatusBar()){
@@ -1978,15 +1987,19 @@ namespace Forays{
 			}
 			return false;
 		}
-		public bool IsShrine(){
+		public bool IsShrine(bool includeSpellExchange = false){
 			switch(type){
 			case TileType.COMBAT_SHRINE:
 			case TileType.DEFENSE_SHRINE:
 			case TileType.MAGIC_SHRINE:
 			case TileType.SPIRIT_SHRINE:
 			case TileType.STEALTH_SHRINE:
-			case TileType.SPELL_EXCHANGE_SHRINE:
 				return true;
+			case TileType.SPELL_EXCHANGE_SHRINE:
+			{
+				if(includeSpellExchange) return true;
+				return false;
+			}
 			default:
 				return false;
 			}
@@ -2172,6 +2185,18 @@ namespace Forays{
 				}
 			}
 			return result;
+		}
+		public void AddBlood(Color blood){
+			if(blood == Color.Black) return;
+			color = blood;
+			switch(blood){
+			case Color.DarkRed:
+			M.aesthetics[p] = AestheticFeature.BloodDarkRed;
+			break;
+			default:
+			M.aesthetics[p] = AestheticFeature.BloodOther;
+			break;
+			}
 		}
 		public List<Tile> AddGaseousFeature(FeatureType f,int num){
 			List<Tile> area = new List<Tile>();

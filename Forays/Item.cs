@@ -690,7 +690,7 @@ namespace Forays{
 					list.Add(item);
 				}
 			}
-			if(R.OneIn(player.magic_trinkets.Count + 1) && player.magic_trinkets.Count < 10){
+			if(R.OneIn(player.magic_trinkets.Count*2 + 1) && player.magic_trinkets.Count < 5){
 				for(int i=0;i<5;++i){
 					list.Add(ConsumableType.MAGIC_TRINKET);
 				}
@@ -1104,7 +1104,7 @@ namespace Forays{
 						tiles.Add(t);
 						memlist.Add(Screen.MapChar(t.row,t.col));
 						Screen.WriteMapChar(t.row,t.col,ch);
-						Game.GLUpdate();
+						Screen.GLUpdate();
 						Thread.Sleep(35);
 						last_wall = t;
 						t = t.TileInDirection(dir);
@@ -1119,7 +1119,7 @@ namespace Forays{
 						int idx = 0;
 						foreach(Tile tile in tiles){
 							Screen.WriteMapChar(tile.row,tile.col,memlist[idx++]);
-							Game.GLUpdate();
+							Screen.GLUpdate();
 							Thread.Sleep(35);
 						}
 						Input.FlushInput();
@@ -1148,7 +1148,7 @@ namespace Forays{
 							int idx = 0;
 							foreach(Tile tile in tiles){
 								Screen.WriteMapChar(tile.row,tile.col,memlist[idx++]);
-								Game.GLUpdate();
+								Screen.GLUpdate();
 								Thread.Sleep(35);
 							}
 							Input.FlushInput();
@@ -1239,7 +1239,7 @@ namespace Forays{
 							//Screen.WriteMapChar(t.row,t.col,M.VisibleColorChar(t.row,t.col));
 							if(user.DistanceFrom(t) > max_dist){
 								max_dist = user.DistanceFrom(t);
-								Game.GLUpdate();
+								Screen.GLUpdate();
 								Thread.Sleep(10);
 								while(last_tiles.Count > 0){
 									Tile t2 = last_tiles.RemoveRandom();
@@ -1511,7 +1511,7 @@ namespace Forays{
 							}
 						}
 					}
-					Game.GLUpdate();
+					Screen.GLUpdate();
 					Thread.Sleep(10);
 				}
 				List<Actor> actors = new List<Actor>();
@@ -1596,7 +1596,7 @@ namespace Forays{
 							Screen.WriteMapChar(t.row,t.col,cch);
 						}
 					}
-					Game.GLUpdate();
+					Screen.GLUpdate();
 					Thread.Sleep(5);
 				}
 				int actors_affected = 0;
@@ -1716,7 +1716,7 @@ namespace Forays{
 							Screen.WriteMapChar(t2.row,t2.col,t2.symbol,Color.RandomBreached);
 							if(t.DistanceFrom(t2) > max_dist){
 								max_dist = t.DistanceFrom(t2);
-								Game.GLUpdate(); //todo: stalagmites - if I add them to caves, they should no longer always vanish. check for an event, maybe?
+								Screen.GLUpdate(); //todo: stalagmites - if I add them to caves, they should no longer always vanish. check for an event, maybe?
 								Thread.Sleep(50);
 							}
 						}
@@ -2077,7 +2077,7 @@ namespace Forays{
 								t.AddFeature(FeatureType.WEB);
 								if(t.seen){
 									Screen.WriteMapChar(t.row,t.col,';',Color.White);
-									Game.GLUpdate();
+									Screen.GLUpdate();
 									Thread.Sleep(15);
 								}
 							}

@@ -289,6 +289,31 @@ namespace Forays{
 		private static bool cursor_visible = true; //these 3 values are only used in GL mode - in console mode, the Console values are used directly.
 		private static int cursor_top = 0;
 		private static int cursor_left = 0;
+		public static GLWindow gl = null;
+		public static Surface textSurface = null;
+		public static Surface cursorSurface = null;
+		public static int cellHeight = 16;
+		public static int cellWidth = 8;
+		public static string currentFont = "font8x16.bmp";
+		public static bool NoClose{
+			get{
+				if(gl != null){
+					return gl.NoClose;
+				}
+				return false;
+			}
+			set{
+				if(gl != null){
+					gl.NoClose = value;
+				}
+			}
+		}
+		public static bool GLUpdate(){
+			if(gl != null){
+				return gl.WindowUpdate();
+			}
+			return true;
+		}
 		public static bool CursorVisible{
 			get{
 				if(GLMode){
@@ -503,39 +528,21 @@ namespace Forays{
 			}
 			//int idx = (start_col + start_row*Global.SCREEN_W) * 48;
 			//GL.BufferSubData(BufferTarget.ArrayBuffer,new IntPtr(sizeof(float)*idx),new IntPtr(sizeof(float)*48*num_positions),values.ToArray());
-			Game.gl.UpdateVertexArray(start_row,start_col,GLGame.text_surface,sprite_rows,sprite_cols,color_info);
+			gl.UpdateOtherVertexArray(textSurface,U.Get1DIndex(start_row,start_col,Global.SCREEN_W),sprite_cols,null,color_info);
+			//Game.gl.UpdateVertexArray(start_row,start_col,GLGame.text_surface,sprite_rows,sprite_cols,color_info);
 		}
 		public static void UpdateGLBuffer(int row,int col){
 			colorchar cch = memory[row,col];
-			Game.gl.UpdateVertexArray(row,col,GLGame.text_surface,0,(int)cch.c,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
-			/*Color4 color = Colors.ConvertColor(memory[row,col].color);
-			Color4 bgcolor = Colors.ConvertColor(memory[row,col].bgcolor);
-			float[][] color_info = new float[2][];
-			color_info[0] = new float[4];
-			color_info[1] = new float[4];
-			color_info[0][0] = color.R;
-			color_info[0][1] = color.G;
-			color_info[0][2] = color.B;
-			color_info[0][3] = color.A;
-			color_info[1][0] = bgcolor.R;
-			color_info[1][1] = bgcolor.G;
-			color_info[1][2] = bgcolor.B;
-			color_info[1][3] = bgcolor.A;
-			Game.gl.UpdateVertexArray(row,col,GLGame.text_surface,0,(int)memory[row,col].c,color_info);*/
+			gl.UpdateOtherSingleVertex(textSurface,U.Get1DIndex(row,col,Global.SCREEN_W),(int)cch.c,0,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
+			//Game.gl.UpdateVertexArray(row,col,GLGame.text_surface,0,(int)cch.c,cch.color.GetFloatValues(),cch.bgcolor.GetFloatValues());
 		}
 		public static void UpdateCursor(bool make_visible){
-			if(make_visible && (!Global.GRAPHICAL || MouseUI.Mode != MouseMode.Map)){
-				float[] color_values = Colors.ConvertColor(Color.Gray).GetFloatValues();
-				SpriteSurface s = GLGame.cursor_surface;
-				s.Disabled = false;
-				s.PixelHeightOffset = cursor_top * GLGame.text_surface.TileHeight + GLGame.text_surface.TileHeight * 7 / 8;
-				s.PixelWidthOffset = cursor_left * GLGame.text_surface.TileWidth;
-				s.GLCoordHeightOffset = ((float)((Game.gl.GameAreaHeight - s.PixelHeightOffset) - s.Rows*s.TileHeight) / (float)Game.gl.GameAreaHeight) * 2.0f - 1.0f;
-				s.GLCoordWidthOffset = ((float)s.PixelWidthOffset / (float)Game.gl.GameAreaWidth) * 2.0f - 1.0f;
-				Game.gl.UpdateVertexArray(0,0,s,0,0,color_values,color_values);
+			if(make_visible && (!Global.GRAPHICAL || MouseUI.Mode != MouseMode.Map)){ //todo: this line probably breaks in graphical mode sometimes.
+				cursorSurface.Disabled = false;
+				cursorSurface.SetOffsetInPixels(cursor_left * cellWidth,cursor_top*cellHeight + cellHeight*7/8);
 			}
 			else{
-				GLGame.cursor_surface.Disabled = true;
+				cursorSurface.Disabled = true;
 			}
 		}
 		public static void UpdateGLBuffer(int start_row,int start_col,colorchar[,] array){
@@ -546,7 +553,7 @@ namespace Forays{
 			int count = (end_idx - start_idx) + 1;
 			int end_row = start_row + array_h - 1;
 			int end_col = start_col + array_w - 1;
-			int[] sprite_rows = new int[count];
+			//int[] sprite_rows = new int[count];
 			int[] sprite_cols = new int[count];
 			float[][] color_info = new float[2][];
 			color_info[0] = new float[4 * count];
@@ -569,14 +576,15 @@ namespace Forays{
 				color_info[1][idx4 + 2] = bgcolor.B;
 				color_info[1][idx4 + 3] = bgcolor.A;
 			}
-			Game.gl.UpdateVertexArray(start_row,start_col,GLGame.text_surface,sprite_rows,sprite_cols,color_info);
+			gl.UpdateOtherVertexArray(textSurface,start_idx,sprite_cols,null,color_info);
+			//Game.gl.UpdateVertexArray(start_row,start_col,GLGame.text_surface,sprite_rows,sprite_cols,color_info);
 		}
-		public static void UpdateSurface(int row,int col,SpriteSurface s,int sprite_row,int sprite_col){
+		/*public static void UpdateSurface(int row,int col,SpriteSurface s,int sprite_row,int sprite_col){
 			Game.gl.UpdateVertexArray(row,col,s,sprite_row,sprite_col,new float[][]{new float[]{1,1,1,1}});
 		}
 		public static void UpdateSurface(int row,int col,SpriteSurface s,int sprite_row,int sprite_col,float r,float g,float b){
 			Game.gl.UpdateVertexArray(row,col,s,sprite_row,sprite_col,new float[][]{new float[]{r,g,b,1}});
-		}
+		}*/
 		public static void WriteChar(int r,int c,char ch){
 			WriteChar(r,c,new colorchar(Color.Gray,ch));
 		}
@@ -1165,11 +1173,11 @@ namespace Forays{
 			WriteStatsString(r,c,cs);
 		}
 		public static void WriteStatsString(int r,int c,cstr s){
-			if(12 - c > s.s.Length){
-				//s.s = s.s.Substring(0); //don't move down to the next line - 12 is the width of the stats area
+			if(Global.STATUS_WIDTH - c > s.s.Length){
+				//s.s = s.s.Substring(0); //don't move down to the next line
 			}
 			else{
-				s.s = s.s.Substring(0,12 - c);
+				s.s = s.s.Substring(0,Global.STATUS_WIDTH - c);
 			}
 			if(s.s.Length > 0){
 				//++r;
@@ -1279,7 +1287,7 @@ namespace Forays{
 		public static void AnimateCell(int r,int c,colorchar ch,int duration){
 			colorchar prev = memory[r,c];
 			WriteChar(r,c,ch);
-			Game.GLUpdate();
+			Screen.GLUpdate();
 			Thread.Sleep(duration);
 			WriteChar(r,c,prev);
 		}
@@ -1308,7 +1316,7 @@ namespace Forays{
 				WriteMapChar(p.row,p.col,chars[idx]);
 				++idx;
 			}
-			Game.GLUpdate();
+			Screen.GLUpdate();
 			Thread.Sleep(duration);
 			idx = 0;
 			foreach(pos p in cells){
@@ -1325,7 +1333,7 @@ namespace Forays{
 				WriteMapChar(p.row,p.col,ch);
 				++idx;
 			}
-			Game.GLUpdate();
+			Screen.GLUpdate();
 			Thread.Sleep(duration);
 			idx = 0;
 			foreach(pos p in cells){
@@ -1397,7 +1405,7 @@ namespace Forays{
 					foreach(Tile t in obj.TilesAtDistance(i)){
 						WriteMapChar(t.row,t.col,ch);
 					}
-					Game.GLUpdate();
+					Screen.GLUpdate();
 					Thread.Sleep(duration);
 				}
 			}
@@ -1405,7 +1413,7 @@ namespace Forays{
 				foreach(Tile t in obj.TilesWithinDistance(radius)){
 					WriteMapChar(t.row,t.col,ch);
 				}
-				Game.GLUpdate();
+				Screen.GLUpdate();
 				Thread.Sleep(duration);
 			}
 			for(int i=0;i<=radius*2;++i){
@@ -1447,7 +1455,7 @@ namespace Forays{
 			foreach(Tile t in list){
 				memlist.Add(MapChar(t.row,t.col));
 				WriteMapChar(t.row,t.col,ch);
-				Game.GLUpdate();
+				Screen.GLUpdate();
 				Thread.Sleep(duration);
 			}
 			int i = 0;
@@ -1464,7 +1472,7 @@ namespace Forays{
 			foreach(Tile t in list){
 				memlist.Add(MapChar(t.row,t.col));
 				WriteMapChar(t.row,t.col,ch);
-				Game.GLUpdate();
+				Screen.GLUpdate();
 				Thread.Sleep(duration);
 			}
 			int i = 0;

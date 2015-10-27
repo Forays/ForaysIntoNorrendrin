@@ -1523,6 +1523,130 @@ namespace SchismDungeonGenerator{
 				}
 			}
 		}
+		private struct BSPCell{ //oughta bring Rectangle in here when I rewrite this thing.
+			public int r;
+			public int c;
+			public int h;
+			public int w;
+			public BSPCell(int r,int c,int h,int w){
+				this.r = r;
+				this.c = c;
+				this.h = h;
+				this.w = w;
+			}
+		}
+		public void BSPFill(int forcedSplitHeight,int forcedSplitWidth,int minHeight,int minWidth,bool proportionalSplitChance){ // forcedSplit_ must be no less than 2*min_ + 1.
+			for(int i=0;i<H;++i){
+				for(int j=0;j<W;++j){
+					map[i,j] = CellType.RoomInterior;
+				}
+			}
+			if(H < forcedSplitHeight || W < forcedSplitWidth) return;
+			List<BSPCell> cells = new List<BSPCell>{new BSPCell(0,0,H,W)};
+			for(int n=0;n<cells.Count;++n){
+				BSPCell cell = cells[n];
+				bool horiz = false;
+				if(proportionalSplitChance){
+					horiz = (R.Roll(cell.h + cell.w) > cell.w);
+				}
+				else{
+					horiz = R.CoinFlip();
+				}
+				if(horiz){ //a horizontal division, leaving a top and bottom.
+					int top = R.Between(0,cell.h - 1 - minHeight*2) + minHeight;
+					int bottom = cell.h - 1 - top;
+					if(top >= forcedSplitHeight){
+						cells.Add(new BSPCell(cell.r,cell.c,top,cell.w));
+					}
+					if(bottom >= forcedSplitHeight){
+						cells.Add(new BSPCell(cell.r + top + 1,cell.c,bottom,cell.w));
+					}
+					for(int j=cell.c;j<cell.c + cell.w;++j){
+						map[cell.r + top,j] = CellType.Wall;
+					}
+				}
+				else{ //a vertical division, leaving a left and right.
+					int left = R.Between(0,cell.w - 1 - minWidth*2) + minWidth;
+					int right = cell.w - 1 - left;
+					if(left >= forcedSplitWidth){
+						cells.Add(new BSPCell(cell.r,cell.c,cell.h,left));
+					}
+					if(right >= forcedSplitWidth){
+						cells.Add(new BSPCell(cell.r,cell.c + left + 1,cell.h,right));
+					}
+					for(int i=cell.r;i<cell.r + cell.h;++i){
+						map[i,cell.c + left] = CellType.Wall;
+					}
+				}
+			}
+		}
+		public void AttemptToConnectAllRooms(){
+			PosArray<int> twists = new PosArray<int>(H,W); //this code is good for connecting separate rooms (or other areas) with somewhat twisty corridors.
+			List<pos> frontier = new List<pos>();
+			Equivalizer<int> sections = new Equivalizer<int>();
+			int next = 1;
+			for(int i=0;i<H;++i){
+				for(int j=0;j<W;++j){
+					if(map[i,j] != CellType.Wall && twists[i,j] == 0){
+						var fill = twists.GetFloodFillPositions(new pos(i,j),false,x=>map[x] != CellType.Wall && twists[x] == 0);
+						foreach(pos p in fill){
+							twists[p] = next;
+							if(map[p] == CellType.RoomEdge){
+								frontier.Add(p);
+							}
+						}
+						++next;
+					}
+				}
+			}
+			while(frontier.Count > 0){
+				pos p = frontier.Random();
+				int section = sections[twists[p]];
+				List<int> dirs = new List<int>();
+				foreach(int dir in U.FourDirections){
+					pos neighbor = p.PosInDir(dir);
+					if(neighbor.BoundsCheck(twists,false) && twists[neighbor] == 0){
+						bool good = true;
+						foreach(int arcdir in dir.GetArc(2)){
+							if(twists[neighbor.PosInDir(arcdir)] != 0){
+								good = false;
+								break;
+							}
+						}
+						if(good){
+							dirs.Add(dir);
+						}
+						else{
+							if(twists[neighbor.PosInDir(dir.RotateDir(true,2))] == 0 && twists[neighbor.PosInDir(dir.RotateDir(false,2))] == 0){
+								if(twists[neighbor.PosInDir(dir)] != 0 && (sections[twists[neighbor.PosInDir(dir)]] != section || R.OneIn(200))){
+									dirs.Add(dir);
+								}
+							}
+						}
+					}
+				}
+				if(dirs.Count > 0){
+					int dir = dirs.Random();
+					pos added = p.PosInDir(dir);
+					pos added_neighbor = added.PosInDir(dir);
+					twists[added] = twists[p];
+					frontier.Add(added);
+					if(sections[twists[added_neighbor]] != 0){
+						sections.Join(twists[added_neighbor],section);
+					}
+				}
+				if(dirs.Count < 2){
+					frontier.Remove(p);
+				}
+			}
+			for(int i=0;i<H;++i){
+				for(int j=0;j<W;++j){
+					if(twists[i,j] != 0 && map[i,j] == CellType.Wall){
+						map[i,j] = CellType.CorridorIntersection;
+					}
+				}
+			}
+		}
 		/*public void FillUsingDiamondSquareAlgorithm(){
 			int[,] a = GetDiamondSquarePlasmaFractal(H,W);
 			for(int i=0;i<H;++i){
@@ -3120,6 +3244,28 @@ namespace SchismDungeonGenerator{
 					map[p] = old_map[p];
 				}
 			}
+		}
+		public void MakeRoomsElliptical(int percent_chance_per_room){
+			ForEachRectangularRoom((start_r,start_c,end_r,end_c) => {
+				if(PercentChance(percent_chance_per_room)){
+					float mid_x = (float)(end_c + start_c) / 2.0f;
+					float mid_y = (float)(end_r + start_r) / 2.0f;
+					float a = (float)end_c - mid_x + 0.5f;
+					float b = (float)end_r - mid_y + 0.5f;
+					for(int i=start_r;i<=end_r;++i){
+						for(int j=start_c;j<=end_c;++j){
+							float x = (float)j - mid_x;
+							float y = (float)i - mid_y;
+							float xoa = x / a;
+							float yob = y / b;
+							if(xoa*xoa + yob*yob > 1.0f){
+								map[i,j] = CellType.Wall;
+							}
+						}
+					}
+				}
+				return true;
+			});
 		}
 		public void ImproveMapEdges(int consecutive_floors_required){
 			List<pos> corners = new List<pos>{new pos(H-2,1),new pos(H-2,W-2),new pos(1,W-2),new pos(1,1)};

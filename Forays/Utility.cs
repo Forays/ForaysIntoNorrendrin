@@ -9,7 +9,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using PosArrays;
-//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v12)
+//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v13)
 namespace Utilities{
 	public class Dict<TKey,TValue>{ //a Dictionary that returns the default value for keys that haven't been added
 		public Dictionary<TKey,TValue> d;
@@ -24,23 +24,69 @@ namespace Utilities{
 		public Dict(){ d = new Dictionary<TKey,TValue>(); }
 		public Dict(Dict<TKey,TValue> d2){ d = new Dictionary<TKey, TValue>(d2.d); }
 	}
-	public class Cached<T> where T : class{
+	public class Cached<T>{
 		protected T value;
-		protected Action set;
-		public Cached(Action setValue){
-			set = setValue;
+		protected bool hasValue;
+		protected Func<T> newValue;
+		public Cached(Func<T> getNewValue){
+			newValue = getNewValue;
 		}
 		public static implicit operator T(Cached<T> t){ return t.Value; }
 		public T Value{
 			get{
-				if(value == null){
-					set();
+				if(!hasValue){
+					value = newValue();
+					hasValue = true;
 				}
 				return value;
 			} //design-wise, should set be allowed here?
 		}
-		public void Reset(){ value = null; }
-		public bool HasValue(){ return value != null; } // design-wise, should this be allowed, or should this be fully invisible?
+		public void Reset(){ hasValue = false; }
+	}
+	public class Equivalizer<T>{ // Equalizer works like a fancy T->T dictionary, joining values together as connections are made.
+		protected Dictionary<T,T> d = new Dictionary<T,T>();
+		public T this[T key]{
+			get{
+				if(d.ContainsKey(key)) return d[key];
+				return key;
+			}
+			set{
+				Join(key,value); // This allows something like this: eq[7] = 3;
+			}
+		}
+		public bool Join(T one,T two){ // Returns false if the 2 values were already joined.
+			one = this[one];
+			two = this[two];
+			if(Object.Equals(one,two)) return false;
+			List<T> keys = new List<T>(d.Keys);
+			foreach(T key in keys){
+				if(Object.Equals(d[key],one)) d[key] = two;
+			}
+			d.Add(one,two);
+			return true;
+		}
+		public bool AreEquivalent(T one,T two){
+			return Object.Equals(this[one],this[two]);
+		}
+	}
+	public class Converter<T>{ //todo: is this ready for use yet?
+		protected Dictionary<T,T> d = new Dictionary<T,T>();
+		public T this[T original]{
+			get{
+				if(d.ContainsKey(original)) return d[original];
+				return original;
+			}
+			set{
+				d.Remove(original);
+				d.Add(original,value); // converter["hello"] = "goodbye";
+			}
+		}
+		public void Add(T original,T converted){
+			this[original] = converted;
+		}
+		public void Remove(T original){
+			d.Remove(original);
+		}
 	}
 	public struct cell{ //a position that holds an integer value, useful with priority queues
 		public pos p;
@@ -736,6 +782,13 @@ namespace Utilities{
 			}
 			return i;
 		}
+		public static int Clamp(this int i,int firstLimit,int secondLimit){
+			int min = Math.Min(firstLimit,secondLimit);
+			int max = Math.Max(firstLimit,secondLimit);
+			if(i < min) return min;
+			if(i > max) return max;
+			return i;
+		}
 		public static string PadOuter(this string s,int totalWidth){ //here's the missing counterpart to PadRight and PadLeft.
 			return s.PadOuter(totalWidth,' ');
 		}
@@ -753,6 +806,13 @@ namespace Utilities{
 				right = right + paddingChar;
 			}
 			return left + s + right;
+		}
+		public static string PadBetween(this string s,string other,int totalWidth){
+			return s.PadBetween(other,totalWidth,' ');
+		}
+		public static string PadBetween(this string s,string other,int totalWidth,char paddingChar){ //example: "Status:".PadBetween("Disabled",20)  returns "Status:     Disabled"
+			int diff = (totalWidth - other.Length).Floor(0);
+			return s.PadRight(diff,paddingChar) + other;
 		}
 		public static string Capitalize(this string s){
 			if(s.Length == 0){
@@ -1336,6 +1396,24 @@ namespace Utilities{
 				throw new ArgumentException("The Choose method requires at least one argument.");
 			}
 			return choices[R.Between(0,len-1)];
+		}
+		public static int WeightedChoiceIndex(IList<int> weights){
+			int total = 0;
+			foreach(int n in weights) total += n;
+			int idx = 0;
+			for(int roll = R.Roll(total);roll>0;){
+				roll -= weights[idx++];
+			}
+			return idx - 1;
+		}
+		public static T WeightedChoice<T>(IList<int> weights,IList<T> choices){
+			int total = 0;
+			foreach(int n in weights) total += n;
+			int idx = 0;
+			for(int roll = R.Roll(total);roll>0;){
+				roll -= weights[idx++];
+			}
+			return choices[idx - 1];
 		}
 	}
 	public enum NumberType{Value,Range,Sequence,Delta};

@@ -1,4 +1,11 @@
-﻿//
+﻿/*Copyright (c) 2015  Derrick Creamer
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
 using System;
 using System.Collections.Generic;
 using PosArrays;
@@ -46,7 +53,8 @@ namespace Forays{
 			AttrType.VULNERABLE,AttrType.SUSCEPTIBLE_TO_CRITS,AttrType.SWITCHING_ARMOR,AttrType.CHILLED, //extra damage opportunities
 
 			AttrType.PARALYZED,AttrType.ASLEEP,AttrType.STUNNED,AttrType.BLIND,AttrType.CONFUSED,AttrType.ENRAGED,AttrType.SLOWED,AttrType.AMNESIA_STUN,
-			AttrType.DIM_VISION,AttrType.IMMOBILE,AttrType.AGGRAVATING,AttrType.POPPY_COUNTER,AttrType.GRABBED,AttrType.GRABBING, //'typical' statuses
+			AttrType.DIM_VISION,AttrType.IMMOBILE,AttrType.AGGRAVATING,AttrType.POPPY_COUNTER,AttrType.GRABBED,AttrType.GRABBING,
+			AttrType.LIGHT_SENSITIVE, //'typical' statuses
 
 			AttrType.TELEPORTING,AttrType.SLIMED,AttrType.OIL_COVERED,AttrType.SHINING,AttrType.ROOTS,AttrType.PSEUDO_VAMPIRIC,AttrType.STONEFORM,
 			AttrType.SILENCED,AttrType.SILENCE_AURA,AttrType.FROZEN, //'neutral' statuses
@@ -68,7 +76,7 @@ namespace Forays{
 			bool commands_darkened = MouseUI.Mode != MouseMode.Map;
 			Screen.CursorVisible = false;
 			int row = 0;
-			if(!viewing_map_shrine_info){ //todo: make this shrine stuff a separate method or something.
+			if(!viewing_map_shrine_info){
 				string s = ("Health: " + player.curhp.ToString()).PadOuter(Global.STATUS_WIDTH);
 				int idx = GetStatusBarIndex(player.curhp,player.maxhp);
 				StatusWriteString(ref row,new colorstring(new cstr(s.SafeSubstring(0,idx),Color.Gray,Color.DarkRed),new cstr(s.SafeSubstring(idx),Color.Gray,Color.Black)));
@@ -99,8 +107,12 @@ namespace Forays{
 						StatusWriteString(ref row,new colorstring(new cstr(attr_name.SafeSubstring(0,attr_idx),Color.Gray,Color.DarkMagenta),new cstr(attr_name.SafeSubstring(attr_idx),Color.Gray)));
 					}
 				}
-				if(player.tile().Is(FeatureType.WEB) && !player.HasAttr(AttrType.BURNING,AttrType.SLIMED,AttrType.OIL_COVERED)){
-					StatusWriteString(ref row,new colorstring("Webbed".PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkMagenta));
+				if(player.tile().Is(FeatureType.WEB) && !player.HasAttr(AttrType.BURNING)){
+					string webbed = "Webbed";
+					if(player.HasAttr(AttrType.SLIMED,AttrType.OIL_COVERED)){
+						webbed = "In a web";
+					}
+					StatusWriteString(ref row,new colorstring(webbed.PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkMagenta));
 				}
 				if(player.IsSilencedHere() && !player.HasAttr(AttrType.SILENCED,AttrType.SILENCE_AURA)){
 					StatusWriteString(ref row,new colorstring(AttrType.SILENCED.StatusName(player).PadOuter(Global.STATUS_WIDTH),Color.Gray,Color.DarkMagenta));
@@ -119,7 +131,7 @@ namespace Forays{
 					}
 				}
 				depth_row = row;
-				StatusWriteString(ref row,("Depth: " + M.current_level.ToString()).PadOuter(Global.STATUS_WIDTH));
+				StatusWriteString(ref row,$"Depth: {M.Depth}".PadOuter(Global.STATUS_WIDTH));
 				if(M.wiz_dark || M.wiz_lite){
 					Event e = Q.LightingEvent;
 					if(e != null){
@@ -135,40 +147,42 @@ namespace Forays{
 				MouseUI.CreatePlayerStatsButtons();
 				DisplayStatusBarObjects();
 			}
-			else{ //todo fix this:
-				Color[] colors = new Color[5];
-				string[] shrines = new string[]{"  Combat    ","  Defense   ","  Magic     ","  Spirit    ","  Stealth   "};
+			else{
+				for(int i=0;i<UI.status_row_cutoff;++i){
+					Screen.WriteStatsString(i,0,"".PadRight(Global.STATUS_WIDTH));
+				}
+				const int distFromTop = 5;
+				Screen.WriteStatsString(distFromTop,6,"Shrines:",Color.Yellow);
 				for(int i=0;i<5;++i){
-					/*if(Map.shrine_locations[i].BoundsCheck(M.tile,true) && M.tile[Map.shrine_locations[i]].seen){
-						if(M.tile[Map.shrine_locations[i]].type == TileType.RUINED_SHRINE){
-							colors[i] = Color.DarkGray;
-						}
-						else{
-							colors[i] = Color.Gray;
-						}
+					string name = Skill.Name(i) + ":";
+					string status;
+					Color color;
+					switch(M.shrinesFound[i]){
+					case 1:
+					status = "Found";
+					color = Color.Gray;
+					break;
+					case 2:
+					status = "Missed";
+					color = Color.Red;
+					break;
+					case 3:
+					status = "Depleted";
+					color = Color.DarkGreen;
+					break;
+					case 4:
+					status = "Used";
+					color = Color.Cyan;
+					break;
+					case 0:
+					default:
+					status = "Not found";
+					color = Color.DarkGray;
+					break;
 					}
-					else{*/
-						colors[i] = Color.DarkGray;
-						//shrines[i] = "    ---     ";
-						shrines[i] = "  -------   ";
-					//}
+					Screen.WriteStatsString(distFromTop + 2 + i*2,0,name.PadBetween(status,Global.STATUS_WIDTH),color);
+					Screen.WriteStatsString(distFromTop + 2 + i*2,0,name);
 				}
-				Screen.WriteStatsString(row,0,"            ");
-				++row;
-				Screen.WriteStatsString(row,0,"            ");
-				++row;
-				Screen.WriteStatsString(row,0," -Shrines-  ",Color.Yellow);
-				for(int i=0;i<5;++i){
-					Screen.WriteStatsString(row,0,shrines[i],colors[i]);
-					++row;
-				}
-				/*Screen.WriteStatsString(5,0,"  Combat    ",colors[0]);
-				Screen.WriteStatsString(6,0,"  Defense   ",colors[1]);
-				Screen.WriteStatsString(7,0,"  Magic     ",colors[2]);
-				Screen.WriteStatsString(8,0,"  Spirit    ",colors[3]);
-				Screen.WriteStatsString(9,0,"  Stealth   ",colors[4]);*/
-				++row;
-				Screen.WriteStatsString(row,0,"            "); //todo test
 			}
 			string[] commandhints = null;
 			List<int> blocked_commands = new List<int>();
@@ -241,6 +255,7 @@ namespace Forays{
 		public static int depth_row = 3;
 		public static int status_row_cutoff = Global.SCREEN_H - 9;
 		public static void DisplayStatusBarObjects(){
+			if(UI.viewing_map_shrine_info) return;
 			int row = status_row_start;
 			List<PhysicalObject> objs = null;
 			List<List<colorstring>> names = null;
@@ -361,13 +376,26 @@ namespace Forays{
 				return "Chilled " + a.attrs[attr].ToString();
 			}
 			break;
+			case AttrType.CONVICTION:
+			if(a != null && a.attrs[attr] > 1){
+				return "Conviction " + a.attrs[attr].ToString();
+			}
+			break;
 			case AttrType.DETECTING_MONSTERS:
 			if(a != null && a.type == ActorType.ROBED_ZEALOT){
 				return "Praying";
 			}
 			break;
-			//case AttrType.IMMOBILE:
-			//return "Immobilized";
+			case AttrType.IMMOBILE:
+			if(a != null){
+				Actor proto = Actor.Prototype(a.type);
+				if(a == player || (proto != null && !proto.HasAttr(AttrType.IMMOBILE))){
+					return "Immobilized";
+				}
+			}
+			break;
+			case AttrType.LIGHT_SENSITIVE:
+			return "Allergic to light";
 			}
 			return attr.ToString().ToLower().Capitalize().Replace('_',' ');
 		}
@@ -388,6 +416,8 @@ namespace Forays{
 			return a.HasAttr(AttrType.MYSTIC_MIND);
 			case AttrType.MENTAL_IMMUNITY:
 			return a.HasAttr(AttrType.MYSTIC_MIND);
+			case AttrType.LIGHT_SENSITIVE:
+			return (a != player || a.HasAttr(AttrType.PSEUDO_VAMPIRIC));
 			default:
 			return false;
 			}
@@ -546,7 +576,7 @@ namespace Forays{
 			return box;
 		}
 		public static int DisplayCharacterInfo(){ return DisplayCharacterInfo(true); }
-		public static int DisplayCharacterInfo(bool readkey){ //todo remove old version in Actor
+		public static int DisplayCharacterInfo(bool readkey){
 			MouseUI.PushButtonMap();
 			UI.DisplayStats();
 			UI.draw_bottom_commands = false;
@@ -1060,6 +1090,9 @@ namespace Forays{
 			return new int[]{(int)selectedWeapon,(int)selectedArmor};
 		}
 		public static string GetEnvironmentalDescription(){ //todo: fix all of these!
+			if(player.HasAttr(AttrType.FROZEN)){
+				return "You're stuck in the ice! ";
+			}
 			if(player.HasAttr(AttrType.BLIND)){ //todo: seriously, don't leave these unchecked.
 				//turn "123456789012345678901234567890123456789012345678901234567890123456";
 				return "Everything is pitch black. You strain to hear your surroundings."; //todo fix
@@ -1138,7 +1171,7 @@ namespace Forays{
 				case TileType.CHEST:
 				return "A hinged wooden box sits on the floor."; //todo
 				case TileType.FIREPIT:
-				return "You tread carefully over the fire pit."; //todo: make sure this matches the one in Actor - or remove that one.
+				return "You tread carefully over the firepit."; //todo: make sure this matches the one in Actor - or remove that one.
 				case TileType.UNLIT_FIREPIT:
 				return "You tread over the cooling stones.";
 				case TileType.COMBAT_SHRINE:
@@ -1212,9 +1245,9 @@ namespace Forays{
 			default:
 			break;
 			}
-			if(M.dungeon_description[t.p] != "") return M.dungeon_description[t.p];
+			if(M.dungeonDescription != "") return M.dungeonDescription;
 			//turn "123456789012345678901234567890123456789012345678901234567890123456";
-			//then check the dungeon description - can changes to tiles change these descriptions? (e.g. walls being knocked down) (todo)
+			//can changes to tiles change these descriptions? (e.g. walls being knocked down) (todo) that'd be aesthetic changes, right?
 			//and this final message will probably never appear: (todo)
 			return "You are in a maze of twisty passages, all alike."; //todo: perhaps the returned string should be cached to prevent weird updates that happen too quickly.
 		}

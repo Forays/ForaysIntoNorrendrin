@@ -8,6 +8,7 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTH
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
 using System;
 using System.IO;
+using System.Diagnostics;
 using System.Collections.Generic;
 using OpenTK.Graphics;
 using Utilities;
@@ -32,6 +33,8 @@ namespace Forays{
 		public static bool QUITTING = false;
 		public static bool SAVING = false;
 		public static string KILLED_BY = "debugged to death";
+
+		public static Stopwatch Timer;
 
 		public static Dictionary<OptionType,bool> Options = new Dictionary<OptionType, bool>();
 		public static bool Option(OptionType option){
@@ -126,6 +129,44 @@ namespace Forays{
 			result = result.Substring(0,1).ToUpper() + result.Substring(1);
 			return result;
 		}
+		public static void CheckForVictory(bool circleDestroyed){
+			Map M = Actor.M;
+			Actor player = Actor.player; // can't wait to change this setup.
+			Buffer B = Actor.B;
+			if(M.CurrentLevelType != LevelType.Final) return;
+			bool circles = false;
+			bool demons = false;
+			for(int i=0;i<5;++i){
+				Tile circle = M.tile[M.FinalLevelSummoningCircle(i)];
+				if(circle.TilesWithinDistance(3).Any(x=>x.type == TileType.DEMONIC_IDOL)){
+					circles = true;
+					break;
+				}
+			}
+			foreach(Actor a in M.AllActors()){
+				if(a.IsFinalLevelDemon()){
+					demons = true;
+					break;
+				}
+			}
+			if(!circles && !demons){ //victory
+				player.curhp = 100;
+				if(circleDestroyed){
+					B.Add("As the last summoning circle is destroyed, your victory gives you a new surge of strength. ");
+				}
+				else{
+					B.Add("As the last demon falls, your victory gives you a new surge of strength. ");
+				}
+				B.PrintAll();
+				B.Add("Kersai's summoning has been stopped. His cult will no longer threaten the area. ");
+				B.PrintAll();
+				B.Add("You begin the journey home to deliver the news. ");
+				B.PrintAll();
+				Global.GAME_OVER = true;
+				Global.BOSS_KILLED = true;
+				Global.KILLED_BY = "nothing";
+			}
+		}
 		public static void LoadOptions(){
 			if(!File.Exists("options.txt")){
 				return;
@@ -141,12 +182,21 @@ namespace Forays{
 				if(tokens[0].Length == 1){
 					char c = Char.ToUpper(tokens[0][0]);
 					if(c == 'F' || c == 'T'){
-						OptionType option = (OptionType)Enum.Parse(typeof(OptionType),tokens[1],true);
-						if(c == 'F'){
-							Options[option] = false;
+						OptionType option = (OptionType)(-1);
+						bool valid = true;
+						try{
+							option = (OptionType)Enum.Parse(typeof(OptionType),tokens[1],true);
 						}
-						else{
-							Options[option] = true;
+						catch(ArgumentException){
+							valid = false;
+						}
+						if(valid){
+							if(c == 'F'){
+								Options[option] = false;
+							}
+							else{
+								Options[option] = true;
+							}
 						}
 					}
 				}
@@ -161,7 +211,7 @@ namespace Forays{
 				if(tokens[0].Length == 1){
 					char c = Char.ToUpper(tokens[0][0]);
 					if(c == 'F' || c == 'T'){
-						TutorialTopic topic = TutorialTopic.Movement;
+						TutorialTopic topic = (TutorialTopic)(-1);
 						bool valid = true;
 						try{
 							topic = (TutorialTopic)Enum.Parse(typeof(TutorialTopic),tokens[1],true);
@@ -225,7 +275,7 @@ namespace Forays{
 				return id[o];
 			};
 			b.Write(Actor.player_name);
-			b.Write(M.current_level);
+			b.Write(M.currentLevelIdx);
 			for(int i=0;i<20;++i){
 				b.Write((int)M.level_types[i]);
 			}
@@ -238,7 +288,7 @@ namespace Forays{
 					b.Write((int)M.last_seen[i,j].bgcolor);
 				}
 			}
-			if(M.current_level == 21){
+			if(M.CurrentLevelType == LevelType.Final){
 				for(int i=0;i<5;++i){
 					b.Write(M.final_level_cultist_count[i]);
 				}
