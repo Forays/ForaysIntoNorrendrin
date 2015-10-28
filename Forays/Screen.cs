@@ -1490,7 +1490,7 @@ namespace Forays{
 				List<pos> nearby = origin.PositionsWithinDistance(radius);
 				for(int j=0;j<num_per_frame;++j){
 					pos p = nearby.RemoveRandom();
-					if(BoundsCheck(p.row,p.col)){ //the ones that are out of bounds still count toward the total, so they don't become more dense as you get near edges.
+					if(MapBoundsCheck(p.row,p.col)){ //the ones that are out of bounds still count toward the total, so they don't become more dense as you get near edges.
 						cells.Add(p);
 					}
 				}

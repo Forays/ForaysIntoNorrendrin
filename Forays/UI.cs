@@ -1195,9 +1195,9 @@ namespace Forays{
 				case TileType.STONE_SLAB_OPEN:
 				return "The enormous slab hangs above you.";
 				case TileType.CHASM:
-				return "You fall...";
+				return "You fall..."; //todo, flight?
 				case TileType.BREACHED_WALL:
-				return "An ethereal outline of the displaced wall remains visible.";
+				return "The ethereal outline of the displaced wall remains visible.";
 				case TileType.WATER:
 				return "Cool water sloshes around your legs."; //todo?
 				case TileType.ICE:

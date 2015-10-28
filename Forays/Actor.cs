@@ -3649,6 +3649,7 @@ namespace Forays{
 						if(i.IsBreakable()){
 							B.Add("It breaks! ",t);
 							i.CheckForMimic();
+							t.MakeNoise(4);
 						}
 						else{
 							bool broken = false;
@@ -3830,6 +3831,7 @@ namespace Forays{
 					Help.displayed[TutorialTopic.SwitchingEquipment] = true;
 					if(weapon_changed){
 						EquippedWeapon = new_weapon;
+						MakeNoise(1);
 						if(HasFeat(FeatType.QUICK_DRAW) && !armor_changed && old_weapon != Bow){
 							B.Add("You quickly ready your " + EquippedWeapon + ". ");
 						}
@@ -3845,6 +3847,7 @@ namespace Forays{
 					}
 					if(armor_changed){
 						EquippedArmor = new_armor;
+						MakeNoise(3);
 						//UpdateOnEquip(old_armor,EquippedArmor);
 						if(TotalProtectionFromArmor() == 0){
 							if(EquippedArmor.status[EquipmentStatus.DAMAGED]){
@@ -3918,6 +3921,7 @@ namespace Forays{
 						}
 						Help.displayed[TutorialTopic.SwitchingEquipment] = true;
 						EquippedWeapon = new_weapon;
+						MakeNoise(1);
 						if(HasFeat(FeatType.QUICK_DRAW) && old_weapon != Bow){
 							B.Add("You quickly ready your " + EquippedWeapon + ". ");
 							Q0();
@@ -3970,6 +3974,7 @@ namespace Forays{
 						}
 						Help.displayed[TutorialTopic.SwitchingEquipment] = true;
 						EquippedArmor = new_armor;
+						MakeNoise(3);
 						if(TotalProtectionFromArmor() == 0){
 							if(EquippedArmor.status[EquipmentStatus.DAMAGED]){
 								B.Add("You wear your damaged " + EquippedArmor + ". ");
@@ -4733,6 +4738,12 @@ namespace Forays{
 							GainSpell(sp);
 							spells_in_order.Add(sp);
 						}
+						if(skills[SkillType.MAGIC] == 10){
+							skills[SkillType.COMBAT] = 10;
+							skills[SkillType.DEFENSE] = 10;
+							skills[SkillType.SPIRIT] = 10;
+							skills[SkillType.STEALTH] = 10;
+						}
 						IsHiddenFrom(this);
 						/*M.UpdateSafetyMap(player);
 						var dijk = U.GetDijkstraMap(M.tile,x=>M.tile[x].BlocksConnectivityOfMap(),new List<pos>{this.p});
@@ -4790,7 +4801,7 @@ namespace Forays{
 								t.AddOpaqueFeature(FeatureType.FOG);
 							}
 						}*/
-						Actor a = M.SpawnMob(ActorType.CYCLOPEAN_TITAN);
+						Actor a = M.SpawnMob(ActorType.SNEAK_THIEF);
 						/*foreach(Actor a in M.AllActors()){
 							if(a.type == ActorType.WARG){
 								a.attrs[AttrType.WANDERING] = 1;
@@ -6135,19 +6146,20 @@ namespace Forays{
 			}
 			bool message_printed = false;
 			if(within_aggression_range){
+				const int monsterVolume = 6;
 				message_printed = true;
 				switch(type){
 				case ActorType.SPECIAL:
 				case ActorType.DIRE_RAT:
 					//B.Add(TheName(true) + " squeaks at you. ");
 					B.Add(TheName(true) + " squeaks at " + target.TheName(true) + ". ",this,target);
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.GOBLIN:
 				case ActorType.GOBLIN_ARCHER:
 				case ActorType.GOBLIN_SHAMAN:
 					B.Add(TheName(true) + " growls. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.BLOOD_MOTH:
 					if(target == player && !M.wiz_lite && !M.wiz_dark && player.LightRadius() > 0 && HasLOS(player)){
@@ -6159,26 +6171,26 @@ namespace Forays{
 						break;
 					}
 					B.Add(TheName(true) + " yells. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.ROBED_ZEALOT:
 					B.Add(TheName(true) + " yells. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.FINAL_LEVEL_CULTIST:
 					B.Add(TheName(true) + " yells. ");
 					break;
 				case ActorType.ZOMBIE:
 					B.Add(TheName(true) + " moans. Uhhhhhhghhh. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.LONE_WOLF:
 					B.Add(TheName(true) + " snarls at " + target.TheName(true) + ". ",this,target);
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.FROSTLING:
 					B.Add(TheName(true) + " makes a chittering sound. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.SWORDSMAN:
 				case ActorType.BERSERKER:
@@ -6188,30 +6200,30 @@ namespace Forays{
 				case ActorType.ALASI_SENTINEL:
 				case ActorType.ALASI_SOLDIER:
 					B.Add(TheName(true) + " shouts. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.BANSHEE:
 					B.Add(TheName(true) + " shrieks. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.WARG:
 					B.Add(TheName(true) + " snarls viciously. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.DERANGED_ASCETIC:
 					B.Add(the_name + " adopts a fighting stance. ",this);
 					break;
 				case ActorType.CAVERN_HAG:
 					B.Add(TheName(true) + " cackles. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.OGRE_BARBARIAN:
 					B.Add(TheName(true) + " bellows at " + target.TheName(true) + ". ",this,target);
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.CYCLOPEAN_TITAN:
 					B.Add(TheName(true) + " roars. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.GIANT_SLUG:
 				case ActorType.MUD_ELEMENTAL:
@@ -6227,7 +6239,7 @@ namespace Forays{
 				case ActorType.ORC_GRENADIER:
 				case ActorType.ORC_WARMAGE:
 					B.Add(TheName(true) + " snarls loudly. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.ENTRANCER:
 					B.Add(the_name + " stares at " + target.TheName(true) + " for a moment. ",this);
@@ -6242,20 +6254,20 @@ namespace Forays{
 				case ActorType.TROLL:
 				case ActorType.TROLL_BLOODWITCH:
 					B.Add(TheName(true) + " growls viciously. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.FORASECT:
 					B.Add(TheName(true) + " makes a clicking sound. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.GOLDEN_DART_FROG:
 				case ActorType.FLAMETONGUE_TOAD:
 					B.Add(TheName(true) + " croaks. ");
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.WILD_BOAR:
 					B.Add(TheName(true) + " grunts at " + target.TheName(true) + ". ",this,target);
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				case ActorType.VULGAR_DEMON:
 					B.Add(the_name + " flicks its forked tongue. ",this);
@@ -6287,7 +6299,7 @@ namespace Forays{
 					else{
 						B.Add("You hear a peal of thunder. ");
 					}
-					MakeNoise(4);
+					MakeNoise(monsterVolume);
 					break;
 				default:
 					message_printed = false;
@@ -6445,6 +6457,9 @@ namespace Forays{
 					if(type == ActorType.ORC_WARMAGE && HasAttr(AttrType.DETECTING_MOVEMENT) && !player.HasAttr(AttrType.TURNS_HERE) && DistanceFrom(player) <= 12 && HasLOS(player)){
 						noticed = true;
 					}
+					if(HasAttr(AttrType.HEARD_PLAYER)){ //this flag is set when a noise originates at the (stealthy) player's position
+						noticed = true;
+					}
 					if(stealth * DistanceFrom(player) * multiplier - player_visibility_duration++*5 < R.Roll(1,100)){
 						noticed = true;
 					}
@@ -6494,6 +6509,7 @@ namespace Forays{
 					}
 				}
 			}
+			attrs[AttrType.HEARD_PLAYER] = 0;
 			if(target != null && !HasAttr(AttrType.AGGRESSIVE) && curhp == maxhp){
 				if(HasAttr(AttrType.TERRITORIAL) && DistanceFrom(target) > 3){
 					target = null;
@@ -11057,6 +11073,7 @@ namespace Forays{
 		public bool Attack(int attack_idx,Actor a){ return Attack(attack_idx,a,false); }
 		public bool Attack(int attack_idx,Actor a,bool attack_is_part_of_another_action){ //returns true if attack hit
 			AttackInfo info = attack[type][attack_idx];
+			const int combatVolume = 8;
 			pos original_pos = p;
 			pos target_original_pos = a.p;
 			if(EquippedWeapon.type != WeaponType.NO_WEAPON){
@@ -11436,7 +11453,8 @@ namespace Forays{
 							break;
 						}
 						Help.TutorialTip(TutorialTopic.InstantKills);
-						MakeNoise(6);
+						MakeNoise(combatVolume);
+						M.tile[target_original_pos].MakeNoise(combatVolume);
 						if(HasAttr(AttrType.PSEUDO_VAMPIRIC)){
 							if(curhp < maxhp){
 								curhp += 10;
@@ -12193,7 +12211,8 @@ namespace Forays{
 				B.Add("Attacking with your heavy " + EquippedWeapon.NameWithoutEnchantment() + " exhausts you. ");
 				IncreaseExhaustion(5);
 			}
-			MakeNoise(6);
+			MakeNoise(combatVolume);
+			M.tile[target_original_pos].MakeNoise(combatVolume);
 			if(!attack_is_part_of_another_action){
 				Q.Add(new Event(this,info.cost));
 			}
@@ -13673,6 +13692,7 @@ namespace Forays{
 				t = M.tile[obj.row,obj.col];
 				line = GetBestLineOfEffect(t);
 			}
+			const int spellVolume = 6; // spells make noise both before & after their effect happens, so that movement spells work as expected.
 			if(exhaustion > 0){
 				int fail = Spell.FailRate(spell,exhaustion);
 				if(R.PercentChance(fail)){
@@ -13680,13 +13700,15 @@ namespace Forays{
 						B.Add("You focus your will. ");
 					}
 					else{
+						MakeNoise(spellVolume);
 						if(player.CanSee(this)){
 							B.Add("Sparks fly from " + Your() + " fingers. ",this);
 						}
 						else{
-							if(player.DistanceFrom(this) <= 4 || (player.DistanceFrom(this) <= 12 && player.HasLOE(row,col))){
+							if(U.PathingDistanceFrom(M.tile,player.p,this.p,x=>M.tile[x].passable) <= spellVolume){
 								B.Add("You hear words of magic, but nothing happens. ");
 							}
+							//if(player.DistanceFrom(this) <= 6 || (player.DistanceFrom(this) <= 12 && player.HasLOE(row,col))){
 						}
 						if(this == player){
 							Help.TutorialTip(TutorialTopic.SpellFailure);
@@ -13725,6 +13747,7 @@ namespace Forays{
 				}
 				if(t != null){
 					B.Add(You("cast") + " radiance. ",this);
+					MakeNoise(spellVolume);
 					PhysicalObject o = null;
 					int rad = -1;
 					if(t.actor() != null){
@@ -13780,6 +13803,7 @@ namespace Forays{
 				if(t != null){
 					Actor a = M.actor[t.row,t.col];
 					B.Add(You("cast") + " force palm. ",this);
+					MakeNoise(spellVolume);
 					B.DisplayNow();
 					Screen.AnimateMapCell(t.row,t.col,new colorchar('*',Color.Blue),100);
 					bool self_knockback = false;
@@ -13855,6 +13879,7 @@ namespace Forays{
 				break;
 			case SpellType.DETECT_MOVEMENT:
 				B.Add(You("cast") + " detect movement. ",this);
+				MakeNoise(spellVolume);
 				if(this == player){
 					B.Add("Your senses sharpen. ");
 					if(!HasAttr(AttrType.DETECTING_MOVEMENT)){
@@ -13868,6 +13893,7 @@ namespace Forays{
 				break;
 			case SpellType.FLYING_LEAP:
 				B.Add(You("cast") + " flying leap. ",this);
+				MakeNoise(spellVolume);
 				RefreshDuration(AttrType.FLYING_LEAP,250);
 				RefreshDuration(AttrType.FLYING,250);
 				attrs[AttrType.DESCENDING] = 0;
@@ -13885,6 +13911,7 @@ namespace Forays{
 				}
 				if(t != null){
 					B.Add(You("cast") + " mercurial sphere. ",this);
+					MakeNoise(spellVolume);
 					Actor a = FirstActorInLine(line);
 					line = line.ToFirstSolidTileOrActor();
 					M.Draw();
@@ -13958,6 +13985,7 @@ namespace Forays{
 						LOE_tile = prev;
 					}
 					B.Add(You("cast") + " grease. ",this);
+					MakeNoise(spellVolume);
 					B.Add("Oil covers the floor. ",t);
 					foreach(Tile neighbor in t.TilesWithinDistance(1)){
 						if(neighbor.passable && LOE_tile.HasLOE(neighbor)){
@@ -13978,6 +14006,7 @@ namespace Forays{
 					}
 					else{
 						B.Add(You("cast") + " blink. ",this);
+						MakeNoise(spellVolume);
 						B.Add("The spell fails. ",this);
 						Q1();
 						return true;
@@ -13991,6 +14020,7 @@ namespace Forays{
 						b += col;
 						if(M.BoundsCheck(a,b) && M.tile[a,b].passable && M.actor[a,b] == null){
 							B.Add(You("cast") + " blink. ",this);
+							MakeNoise(spellVolume);
 							B.Add(You("step") + " through a rip in reality. ",this);
 							if(player.CanSee(this)){
 								AnimateStorm(2,3,4,'*',Color.DarkMagenta);
@@ -14014,6 +14044,7 @@ namespace Forays{
 				}
 				if(t != null){
 					B.Add(You("cast") + " freeze. ",this);
+					MakeNoise(spellVolume);
 					Actor a = FirstActorInLine(line);
 					AnimateBoltBeam(line.ToFirstSolidTileOrActor(),Color.Cyan);
 					foreach(Tile t2 in line){
@@ -14036,6 +14067,7 @@ namespace Forays{
 				}
 				if(t != null){
 					B.Add(You("cast") + " scorch. ",this);
+					MakeNoise(spellVolume);
 					Actor a = FirstActorInLine(line);
 					line = line.ToFirstSolidTileOrActor();
 					AnimateProjectile(line,'*',Color.RandomFire);
@@ -14070,6 +14102,7 @@ namespace Forays{
 				}
 				if(t != null){
 					B.Add(You("cast") + " lightning bolt. ",this);
+					MakeNoise(spellVolume);
 					PhysicalObject bolt_target = null;
 					List<Actor> damage_targets = new List<Actor>();
 					foreach(Tile t2 in line){
@@ -14221,6 +14254,7 @@ namespace Forays{
 				if(t != null){
 					Actor a = t.actor();
 					B.Add(You("cast") + " magic hammer. ",this);
+					MakeNoise(spellVolume);
 					M.Draw();
 					B.DisplayNow();
 					Screen.AnimateMapCell(t.row,t.col,new colorchar('*',Color.Magenta),100);
@@ -14248,6 +14282,7 @@ namespace Forays{
 					return false;
 				}
 				B.Add("You cast portal. ");
+				MakeNoise(spellVolume);
 				List<Tile> other_portals = M.AllTiles().Where(x=>x.Is(FeatureType.INACTIVE_TELEPORTAL,FeatureType.STABLE_TELEPORTAL));
 				if(other_portals.Count == 0){
 					B.Add("You create a dormant portal. ");
@@ -14294,6 +14329,7 @@ namespace Forays{
 				if(t != null){
 					if(t.Is(TileType.WALL,TileType.CRACKED_WALL,TileType.WAX_WALL,TileType.DOOR_C,TileType.HIDDEN_DOOR,TileType.STONE_SLAB)){
 						B.Add(You("cast") + " passage. ",this);
+						MakeNoise(spellVolume);
 						colorchar ch = new colorchar(Color.Cyan,'!');
 						if(this == player){
 							Screen.CursorVisible = false;
@@ -14422,6 +14458,7 @@ namespace Forays{
 				}
 				if(t != null){
 					B.Add(You("cast") + " doom. ",this);
+					MakeNoise(spellVolume);
 					Actor a = FirstActorInLine(line);
 					if(a != null){
 						AnimateProjectile(line.ToFirstSolidTileOrActor(),'*',Color.RandomDoom);
@@ -14460,6 +14497,7 @@ namespace Forays{
 					Actor a = t.actor();
 					if(a != null && (CanSee(a) || a.HasAttr(AttrType.DANGER_SENSED))){
 						B.Add(You("cast") + " amnesia. ",this);
+						MakeNoise(spellVolume);
 						a.AnimateStorm(2,4,4,'*',Color.RandomRainbow);
 						if(a.ResistedBySpirit() || a.HasAttr(AttrType.MENTAL_IMMUNITY)){
 							B.Add(a.You("resist") + "! ",a);
@@ -14483,6 +14521,7 @@ namespace Forays{
 				break;
 			case SpellType.SHADOWSIGHT:
 				B.Add("You cast shadowsight. ");
+				MakeNoise(spellVolume);
 				B.Add("Your eyes pierce the darkness. ");
 				int duration = (R.Roll(2,20) + 60) * 100;
 				RefreshDuration(AttrType.SHADOWSIGHT,duration,"Your shadowsight wears off. ");
@@ -14492,6 +14531,7 @@ namespace Forays{
 			{
 				List<Actor> targets = ActorsWithinDistance(5,true).Where(x=>HasLOE(x));
 				B.Add(You("cast") + " blizzard. ",this);
+				MakeNoise(spellVolume);
 				AnimateStorm(5,8,24,'*',Color.RandomIce);
 				B.Add("An ice storm surrounds " + the_name + ". ",this);
 				foreach(Tile t2 in TilesWithinDistance(5).Where(x=>HasLOE(x))){
@@ -14540,6 +14580,7 @@ namespace Forays{
 				}
 				if(t != null){
 					B.Add(You("cast") + " collapse. ",this);
+					MakeNoise(spellVolume);
 					B.DisplayNow();
 					for(int dist=2;dist>0;--dist){
 						List<pos> cells = new List<pos>();
@@ -14628,7 +14669,7 @@ namespace Forays{
 							a.TakeDamage(DamageType.NORMAL,DamageClass.PHYSICAL,R.Roll(3+bonus,6),this,"falling rubble");
 						}
 					}
-					t.MakeNoise(6);
+					t.MakeNoise(8);
 				}
 				else{
 					return false;
@@ -14650,6 +14691,7 @@ namespace Forays{
 						LOE_tile = prev;
 					}
 					B.Add(You("cast") + " stone spikes. ",this);
+					MakeNoise(spellVolume);
 					B.Add("Stalagmites shoot up from the ground! ");
 					List<Tile> deleted = new List<Tile>();
 					while(true){
@@ -14747,7 +14789,7 @@ namespace Forays{
 			if(HasFeat(FeatType.CHAIN_CASTING)){
 				RefreshDuration(AttrType.CHAIN_CAST,100);
 			}
-			MakeNoise(4);
+			MakeNoise(spellVolume);
 			if(this == player && !Help.displayed[TutorialTopic.CastingWithoutMana]){
 				int max_tier = spells_in_order.Greatest(x=>Spell.Tier(x));
 				if(curmp < max_tier){

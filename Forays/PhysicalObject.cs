@@ -224,11 +224,16 @@ namespace Forays{
 			foreach(Actor a in actors){
 				if(!a.IsSilencedHere()){
 					if(a != player){ //let the player hear sounds with a message?
-						if(a.target_location == null && !a.CanSee(player) && (!a.CanSee(tile()) || actor() == null) && !a.HasAttr(AttrType.AMNESIA_STUN)){ //if they already have an idea of where the player is/was, they won't bother
+						if(a.target_location == null && !a.CanSee(player) && (actor() == null || !a.CanSee(actor())) && !a.HasAttr(AttrType.AMNESIA_STUN)){ //if they already have an idea of where the player is/was, they won't bother
 							if(volume > 2 || !a.HasAttr(AttrType.IGNORES_QUIET_SOUNDS)){ //(and amnesia stun makes them ignore all sounds)
 								a.FindPath(this);
-								if(R.CoinFlip()){
+								if(volume <= 2 && R.CoinFlip()){
 									a.attrs[AttrType.IGNORES_QUIET_SOUNDS]++; //repeated quiet sounds are ignored, eventually...
+								}
+								if(actor() == player
+									&& (a.IsWithinSightRangeOf(player) || (tile().IsLit() && !a.HasAttr(AttrType.BLINDSIGHT))) //copied from the stealth-check code...
+									&& a.HasLOS(player) && (!player.IsInvisibleHere() || a.HasAttr(AttrType.BLINDSIGHT))){
+									a.attrs[AttrType.HEARD_PLAYER] = 1;
 								}
 							}
 						}
@@ -696,7 +701,7 @@ namespace Forays{
 					}
 				}
 			}
-			MakeNoise(8);
+			MakeNoise(12);
 		}
 		public string YouAre(){
 			if(name == "you"){

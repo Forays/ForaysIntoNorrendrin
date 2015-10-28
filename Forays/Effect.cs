@@ -305,6 +305,7 @@ namespace Forays{
 						}
 						if(cast){
 							B.Add(user.You("cast") + " telekinesis. ",user);
+							user.MakeNoise(6); //should match spellVolume, hack
 							if(a.type == ActorType.ALASI_BATTLEMAGE && !a.HasSpell(SpellType.TELEKINESIS)){
 								a.curmp += Spell.Tier(SpellType.TELEKINESIS);
 								if(a.curmp > a.maxmp){
@@ -393,6 +394,7 @@ namespace Forays{
 							}
 							if(cast){
 								B.Add(user.You("cast") + " telekinesis. ",user);
+								user.MakeNoise(6); //should match spellVolume
 							}
 							if(blast_fungus){
 								B.Add("The blast fungus is pulled from the floor. ",t);
@@ -485,6 +487,7 @@ namespace Forays{
 									else{
 										i.CheckForMimic();
 									}
+									t2.MakeNoise(4);
 								}
 								else{
 									t2.GetItem(i);
@@ -512,6 +515,7 @@ namespace Forays{
 						if(!t.Is(FeatureType.GRENADE) && (t.Is(TileType.DOOR_C,TileType.DOOR_O,TileType.POISON_BULB) || t.Is(FeatureType.WEB,FeatureType.FORASECT_EGG,FeatureType.BONES))){
 							if(cast){
 								B.Add(user.You("cast") + " telekinesis. ",user);
+								user.MakeNoise(6); //should match spellVolume
 							}
 							if(t.Is(TileType.DOOR_C)){
 								B.Add("The door slams open. ",t);
@@ -603,6 +607,7 @@ namespace Forays{
 							if(line != null){
 								if(cast){
 									B.Add(user.You("cast") + " telekinesis. ",user);
+									user.MakeNoise(6); //should match spellVolume
 								}
 								if(line.Count == 1){
 									B.Add(user.YouVisible("throw") + " the " + feature_name + " into the ceiling. ",user,t);

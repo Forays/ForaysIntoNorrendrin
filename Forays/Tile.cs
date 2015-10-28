@@ -1240,6 +1240,7 @@ namespace Forays{
 				TransformTo(TileType.FLOOR);
 				return;
 			}
+			MakeNoise(1);
 			if(click){
 				if(actor() == player || (actor() == null && player.CanSee(this))){
 					B.Add("*CLICK* ",this);
@@ -1739,6 +1740,7 @@ namespace Forays{
 						if(i.IsBreakable()){
 							B.Add("It breaks! ",t);
 							i.CheckForMimic();
+							t.MakeNoise(4);
 						}
 						else{
 							t.GetItem(i);
@@ -2369,6 +2371,7 @@ namespace Forays{
 							B.Add(inv.TheName(true) + " breaks! ",this);
 						}
 						inv = null;
+						MakeNoise(4);
 					}
 				}
 				break;
@@ -2403,6 +2406,7 @@ namespace Forays{
 						B.Add(inv.TheName(true) + " breaks! ",this);
 					}
 					inv = null;
+					MakeNoise(4);
 				}
 				else{
 					if(inv.NameOfItemType() == "orb"){
@@ -2415,6 +2419,7 @@ namespace Forays{
 						Item i = inv;
 						inv = null;
 						i.Use(null,new List<Tile>{this});
+						MakeNoise(4);
 					}
 				}
 			}

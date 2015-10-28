@@ -826,6 +826,13 @@ namespace Forays{
 		public bool Use(Actor user,List<Tile> line){
 			bool used = true;
 			bool IDed = true;
+			if(NameOfItemType(type) == "scroll"){
+				B.Add(user.You("read") + " the " + SingularName(false) + ". ",user);
+				user.MakeNoise(6);
+			}
+			if(NameOfItemType(type) == "potion"){
+				B.Add(user.You("drink") + " the " + SingularName(false) + ". ",user);
+			}
 			switch(type){
 			case ConsumableType.HEALING:
 				user.curhp = user.maxhp;
@@ -1615,7 +1622,7 @@ namespace Forays{
 						B.Add(name_is + " enraged! ");
 					}
 					else{
-						B.Add("Bloodlust fills the air. ");
+						B.Add("Bloodlust fills the air! ");
 					}
 				}
 				break;
@@ -2203,6 +2210,14 @@ namespace Forays{
 						unIDed_name[type] = unIDed_name[type] + " {tried}";
 					}
 				}
+				if(user != null){
+					if(NameOfItemType(type) == "scroll"){
+						user.MakeNoise(6);
+					}
+					else{
+						user.MakeNoise(1);
+					}
+				}
 				if(quantity > 1){
 					--quantity;
 				}
@@ -2313,7 +2328,7 @@ namespace Forays{
 					LOE_tile = prev;
 				}
 				orb_effect(t,LOE_tile,result);
-				t.MakeNoise(2);
+				t.MakeNoise(4);
 				if(trigger_trap && t.IsTrap()){
 					t.TriggerTrap();
 				}
@@ -2381,6 +2396,7 @@ namespace Forays{
 						}
 						prev = t;
 					}
+					B.Add(user.You("aim") + " the " + SingularName(false) + ". ",user);
 					wand_effect(LOE_tile,info,result);
 				}
 			}
