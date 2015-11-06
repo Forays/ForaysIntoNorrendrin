@@ -1092,7 +1092,7 @@ namespace Forays{
 								if(status_click){
 									done = true;
 									Tile t = Actor.M.tile[map_row,map_col];
-									if(t.inv != null || t.Is(TileType.CHEST) || t.IsShrine()){
+									if(t.inv != null || t.Is(TileType.CHEST,TileType.BLAST_FUNGUS) || t.IsShrine()){
 										Input.LastKey = new ConsoleKeyInfo('g',ConsoleKey.G,false,false,false);
 									}
 									else{
@@ -1100,7 +1100,12 @@ namespace Forays{
 											Input.LastKey = new ConsoleKeyInfo('>',ConsoleKey.OemPeriod,true,false,false);
 										}
 										else{
-											done = false;
+											if(t.Is(TileType.POOL_OF_RESTORATION)){
+												Input.LastKey = new ConsoleKeyInfo('d',ConsoleKey.D,false,false,false);
+											}
+											else{
+												done = false;
+											}
 										}
 									}
 								}
@@ -1271,6 +1276,9 @@ namespace Forays{
 				case MouseMode.Map:
 				Input.LastKey = new ConsoleKeyInfo('v',ConsoleKey.V,false,false,false);
 				break;
+				case MouseMode.Targeting:
+				Input.LastKey = new ConsoleKeyInfo('X',ConsoleKey.X,true,false,false);
+				break;
 				default:
 				Input.LastKey = new ConsoleKeyInfo((char)27,ConsoleKey.Escape,false,false,false);
 				break;
@@ -1336,14 +1344,15 @@ namespace Forays{
 				Input.LastKey = new ConsoleKeyInfo('q',ConsoleKey.Q,false,false,false);
 			}
 		}
-		public static void HandleResize(){
+		public static void HandleResize(){ HandleResize(false); }
+		public static void HandleResize(bool forceBorder = false){
 			int potentialWidth = Screen.gl.ClientRectangle.Width / Global.SCREEN_W;
 			int potentialHeight = Screen.gl.ClientRectangle.Height / Global.SCREEN_H;
 			int selectedIdx = 0;
-			int[] fontWidths = new int[]{  6, 8,12,16}; //since these are ordered by width, the greatest width will win in conflicts - for
-			int[] fontHeights = new int[]{12,16,24,32}; //  example, if 12x20 is the potential, then 12x18 will be selected over 10x20.
-			//int[] fontWidths = new int[]{  6, 8, 8,10,11,12,12,14,14,15,16,16,18,21}; //since these are ordered by width, the greatest width will win in conflicts - for
-			//int[] fontHeights = new int[]{12,12,16,20,27,18,24,28,36,27,24,32,36,38}; //  example, if 12x20 is the potential, then 12x18 will be selected over 10x20.
+			int[] fontWidths = new int[]{  6, 8, 8,10,12,12,14,15,16,18,21}; //since these are ordered by width, the greatest width will win in conflicts - for
+			int[] fontHeights = new int[]{12,12,16,20,18,24,28,27,32,36,38}; //  example, if 12x20 is the potential, then 12x18 will be selected over 10x20.
+			//t[] fontWidths = new int[]{  6, 8, 8,10,11,12,12,14,14,15,16,16,18,21}; //since these are ordered by width, the greatest width will win in conflicts - for
+			//t[] fontHeights = new int[]{12,12,16,20,27,18,24,28,36,27,24,32,36,38}; //  example, if 12x20 is the potential, then 12x18 will be selected over 10x20.
 			for(int i=0;i<fontWidths.GetLength(0);++i){
 				if(potentialWidth >= fontWidths[i] && potentialHeight >= fontHeights[i]){
 					selectedIdx = i;
@@ -1354,16 +1363,17 @@ namespace Forays{
 				Screen.cellWidth = fontWidths[selectedIdx];
 				string newFont = GetFontFilename(Screen.cellWidth,Screen.cellHeight);
 				int fontPadding = GetFontPadding(newFont);
-				Screen.textSurface.texture = Texture.Create(newFont,Screen.currentFont);
+				Screen.textSurface.texture = Texture.Create(newFont,Screen.currentFont,true);
 				Screen.currentFont = newFont;
 				Screen.textSurface.texture.Sprite.Clear();
-				SpriteType.DefineSingleRowSprite(Screen.textSurface,Screen.cellWidth,fontPadding); // after making this work with multiple fonts, switch back and forth and resize and fullscreen like 20 times, to see if it crashes. todo todo todo.
+				SpriteType.DefineSingleRowSprite(Screen.textSurface,Screen.cellWidth,fontPadding);
+				Screen.cursorSurface.texture = Screen.textSurface.texture;
 				Screen.textSurface.layouts.Clear();
 				CellLayout.CreateGrid(Screen.textSurface,Global.SCREEN_H,Global.SCREEN_W,Screen.cellHeight,Screen.cellWidth,0,0);
 				Screen.cursorSurface.layouts.Clear();
 				CellLayout.CreateGrid(Screen.cursorSurface,1,1,2,Screen.cellWidth,0,0);
 			}
-			if(Screen.gl.FullScreen){ //then, was fullscreen toggled?
+			if(Screen.gl.FullScreen || forceBorder){ //then, was fullscreen toggled?
 				int xOffset = (Screen.gl.ClientRectangle.Width - Screen.cellWidth*Global.SCREEN_W) / 2;
 				int yOffset = (Screen.gl.ClientRectangle.Height - Screen.cellHeight*Global.SCREEN_H) / 2;
 				Screen.gl.SetViewport(xOffset,yOffset,Screen.cellWidth*Global.SCREEN_W,Screen.cellHeight*Global.SCREEN_H);
@@ -1378,10 +1388,10 @@ namespace Forays{
 			Screen.UpdateGLBuffer(0,0,Global.SCREEN_H-1,Global.SCREEN_W-1);
 		}
 		private static string GetFontFilename(int w,int h){
-			return $"font{w}x{h}.bmp";
+			return $"Forays.font{w}x{h}.png";
 		}
-		private static int GetFontPadding(string filename){ //todo
-			if(filename == "font8x16.bmp") return 1;
+		private static int GetFontPadding(string filename){
+			if(filename == "Forays.font8x16.png") return 1;
 			return 0;
 		}
 	}

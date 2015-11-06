@@ -9,7 +9,7 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using PosArrays;
-//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v13)
+//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v14)
 namespace Utilities{
 	public class Dict<TKey,TValue>{ //a Dictionary that returns the default value for keys that haven't been added
 		public Dictionary<TKey,TValue> d;
@@ -1074,7 +1074,7 @@ namespace Utilities{
 		}
 		public delegate int IntegerPositionDelegate(pos p);
 		public delegate int EdgeCostDelegate(pos start,pos end);
-		public delegate bool EdgeBlockedDelegate(pos start,pos end); //todo: really, all of these should be changed so they don't need a PosArray<T>
+		public delegate bool EdgeBlockedDelegate(pos start,pos end); //todo: really, all of these should be changed so they don't need a PosArray<T>. (what about system.rectangle?)
 		public static PosArray<int> GetDijkstraMap<T>(this PosArray<T> array,List<pos> sources,BooleanPositionDelegate is_blocked){
 			return array.GetDijkstraMap(sources,x=>0,(p1,p2)=>is_blocked(p2),(p1,p2)=>1);
 		}
@@ -1386,6 +1386,10 @@ namespace Utilities{
 		}
 		public static bool OneIn(int x){
 			return r.Next(1,x+1) == x;
+		}
+		public static bool FractionalChance(int x,int outOfY){
+			if(x >= outOfY) return true;
+			return r.Next(1,outOfY+1) <= x;
 		}
 		public static bool PercentChance(int x){
 			return r.Next(1,101) <= x;

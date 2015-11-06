@@ -701,6 +701,11 @@ namespace Forays{
 					}
 				}
 			}
+			if(!Help.displayed[TutorialTopic.MakingNoise] && M.Depth >= 3){
+				if(player.CanSee(tile())){
+					Help.TutorialTip(TutorialTopic.MakingNoise);
+				}
+			}
 			MakeNoise(12);
 		}
 		public string YouAre(){
@@ -3006,8 +3011,8 @@ compare this number to 1/2:  if less than 1/2, major.
 					result = TilesWithinDistance(distance).Where(x=>target.ManhattanDistanceFromX10(x.p) <= 60);
 				}
 				else{
-					result = TilesWithinDistance(distance).Where(x=>target.ChebyshevDistanceFromX10(x.p) <= 60);
-				}
+					result = TilesWithinDistance(distance).Where(x=>target.ChebyshevDistanceFromX10(x.p) <= 60);// this would be more conelike if it picked tiles within (dist) in *manhattan* distance from
+				} //  this tile, but the current method does make the number of tiles equal between cardinal & diagonal cones. Hmm.
 				if(exclude_origin){
 					result.Remove(tile());
 				}
@@ -3360,6 +3365,9 @@ compare this number to 1/2:  if less than 1/2, major.
 									break;
 									case TileType.POOL_OF_RESTORATION:
 									Help.TutorialTip(TutorialTopic.PoolOfRestoration,true);
+									break;
+									case TileType.DEMONSTONE:
+									Help.TutorialTip(TutorialTopic.Demonstone,true);
 									break;
 									case TileType.STONE_SLAB:
 									case TileType.STONE_SLAB_OPEN:

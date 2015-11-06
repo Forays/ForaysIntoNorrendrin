@@ -29,7 +29,7 @@ Freeze -- Encases your target in ice until they can break out.
 Spell tier 3:
 
 Scorch -- Sets your target on fire. (Burning lasts for several
-          turns and deals 1d6 damage each turn.)
+          turns and deals 2 or 3 damage each turn.)
 
 Lightning bolt -- A bolt leaps between foes (and some types of
                   terrain), dealing 3d6 damage.
@@ -76,4 +76,24 @@ Doom -- Deals 4d6 magic damage and leaves the target vulnerable
 Telekinesis -- Target and throw enemies, items, many terrain
                features, or yourself. Most objects (except for
                items) will deal 3d6 damage on impact.
+
+
+
+Spell failure:
+
+The chance for a spell to fail depends upon your exhaustion and
+the spell's tier. The percentage is equal to:
+
+Exhaustion - 20 * (6 - Tier)
+
+Therefore:
+Every point of exhaustion above 20% adds to the failure rate of
+tier 5 spells.
+Every point of exhaustion above 40% adds to the failure rate of
+tier 4 spells.
+Every point of exhaustion above 60% adds to the failure rate of
+tier 3 spells.
+Every point of exhaustion above 80% adds to the failure rate of
+tier 2 spells.
+And tier 1 spells never fail, even at 100% exhaustion.
 

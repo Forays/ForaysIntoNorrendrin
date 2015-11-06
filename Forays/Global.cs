@@ -15,7 +15,7 @@ using Utilities;
 using PosArrays;
 namespace Forays{
 	public static class Global{
-		public const string VERSION = "0.8.X";
+		public const string VERSION = "0.8.4";
 		public static bool LINUX = false;
 		public static bool GRAPHICAL = false;
 		public const int SCREEN_H = 28;
@@ -32,7 +32,7 @@ namespace Forays{
 		public static bool BOSS_KILLED = false;
 		public static bool QUITTING = false;
 		public static bool SAVING = false;
-		public static string KILLED_BY = "debugged to death";
+		public static string KILLED_BY = "";
 
 		public static Stopwatch Timer;
 
@@ -144,34 +144,42 @@ namespace Forays{
 				}
 			}
 			foreach(Actor a in M.AllActors()){
-				if(a.IsFinalLevelDemon()){
+				if(a.IsFinalLevelDemon() && a.curhp > 0){
 					demons = true;
 					break;
 				}
 			}
-			if(!circles && !demons){ //victory
-				player.curhp = 100;
-				if(circleDestroyed){
-					B.Add("As the last summoning circle is destroyed, your victory gives you a new surge of strength. ");
+			if(!circles){
+				if(!demons){ //victory
+					player.curhp = 100;
+					if(circleDestroyed){
+						B.Add("As the last summoning circle is destroyed, your victory gives you a new surge of strength. ");
+					}
+					else{
+						B.Add("As the last demon falls, your victory gives you a new surge of strength. ");
+					}
+					B.PrintAll();
+					B.Add("Kersai's summoning has been stopped. His cult will no longer threaten the area. ");
+					B.PrintAll();
+					B.Add("You begin the journey home to deliver the news. ");
+					B.PrintAll();
+					Global.GAME_OVER = true;
+					Global.BOSS_KILLED = true;
+					Global.KILLED_BY = "nothing";
 				}
 				else{
-					B.Add("As the last demon falls, your victory gives you a new surge of strength. ");
+					if(circleDestroyed){
+						B.Add("The summoning circles have been destroyed, but demons yet remain! ");
+						B.PrintAll();
+					}
 				}
-				B.PrintAll();
-				B.Add("Kersai's summoning has been stopped. His cult will no longer threaten the area. ");
-				B.PrintAll();
-				B.Add("You begin the journey home to deliver the news. ");
-				B.PrintAll();
-				Global.GAME_OVER = true;
-				Global.BOSS_KILLED = true;
-				Global.KILLED_BY = "nothing";
 			}
 		}
 		public static void LoadOptions(){
 			if(!File.Exists("options.txt")){
 				return;
 			}
-			StreamReader file = new StreamReader("options.txt");
+			using(StreamReader file = new StreamReader("options.txt")){
 			string s = "";
 			while(s.Length < 2 || s.Substring(0,2) != "--"){
 				s = file.ReadLine();
@@ -230,20 +238,29 @@ namespace Forays{
 					}
 				}
 			}
+			}
 		}
 		public static void SaveOptions(){
-			StreamWriter file = new StreamWriter("options.txt",false);
+			using(StreamWriter file = new StreamWriter("options.txt",false)){
 			file.WriteLine("Options:");
 			file.WriteLine("Any line that starts with [TtFf] and a space MUST be one of the valid options(or, in the 2nd part, one of the valid tutorial tips):");
-			file.WriteLine("no_wall_sliding autopickup top_row_movement never_display_tips always_reset_tips dark_gray_unseen");
+			string optionNames = "";
 			foreach(OptionType op in Enum.GetValues(typeof(OptionType))){
-				if(Option(op)){
-					file.Write("t ");
+				if(op != OptionType.DISABLE_GRAPHICS){
+					optionNames += op.ToString().ToLower() + " ";
 				}
-				else{
-					file.Write("f ");
+			}
+			file.WriteLine(optionNames);
+			foreach(OptionType op in Enum.GetValues(typeof(OptionType))){
+				if(op != OptionType.DISABLE_GRAPHICS){
+					if(Option(op)){
+						file.Write("t ");
+					}
+					else{
+						file.Write("f ");
+					}
+					file.WriteLine(Enum.GetName(typeof(OptionType),op).ToLower());
 				}
-				file.WriteLine(Enum.GetName(typeof(OptionType),op).ToLower());
 			}
 			file.WriteLine("-- Tracking which tutorial tips have been displayed:");
 			foreach(TutorialTopic topic in Enum.GetValues(typeof(TutorialTopic))){
@@ -253,10 +270,10 @@ namespace Forays{
 				else{
 					file.Write("f ");
 				}
-				file.WriteLine(Enum.GetName(typeof(TutorialTopic),topic).ToLower());
+				file.WriteLine(Enum.GetName(typeof(TutorialTopic),topic));
 			}
 			file.WriteLine("--");
-			file.Close();
+			}
 		}
 		public delegate int IDMethod(PhysicalObject o);
 		public static void SaveGame(Buffer B,Map M,Queue Q){ //games are loaded in Main.cs
@@ -276,8 +293,9 @@ namespace Forays{
 			};
 			b.Write(Actor.player_name);
 			b.Write(M.currentLevelIdx);
-			for(int i=0;i<20;++i){
-				b.Write((int)M.level_types[i]);
+			b.Write(M.level_types.Count);
+			foreach(LevelType lt in M.level_types){
+				b.Write((int)lt);
 			}
 			b.Write(M.wiz_lite);
 			b.Write(M.wiz_dark);
@@ -348,19 +366,6 @@ namespace Forays{
 				}
 				if(t.inv != null){
 					SaveItem(t.inv,b,GetID);
-					/*b.Write(t.inv.name);
-					b.Write(t.inv.the_name);
-					b.Write(t.inv.a_name);
-					b.Write(t.inv.symbol);
-					b.Write((int)t.inv.color);
-					b.Write(t.inv.light_radius);
-					b.Write((int)t.inv.type);
-					b.Write(t.inv.quantity);
-					b.Write(t.inv.charges);
-					b.Write(t.inv.other_data);
-					b.Write(t.inv.ignored);
-					b.Write(t.inv.do_not_stack);
-					b.Write(t.inv.revealed_by_light);*/
 				}
 				else{
 					b.Write(GetID(null));
@@ -454,6 +459,27 @@ namespace Forays{
 			foreach(PhysicalObject o in Fire.burning_objects){
 				b.Write(GetID(o));
 			}
+			for(int i=0;i<ROWS;++i){
+				for(int j=0;j<COLS;++j){
+					b.Write((int)M.aesthetics[i,j]);
+				}
+			}
+			b.Write(M.dungeonDescription);
+			if(M.nextLevelShrines == null){
+				b.Write(false);
+			}
+			else{
+				b.Write(true);
+				b.Write(M.nextLevelShrines.Count);
+				foreach(SchismDungeonGenerator.CellType ct in M.nextLevelShrines){
+					b.Write((int)ct);
+				}
+			}
+			for(int i=0;i<5;++i){
+				b.Write(M.shrinesFound[i]);
+			}
+			b.Write(Tile.spellbooks_generated);
+			b.Write(UI.viewing_commands_idx);
 			int num_messages = B.SaveNumMessages();
 			b.Write(num_messages);
 			string[] messages = B.SaveMessages();
@@ -484,19 +510,6 @@ namespace Forays{
 			b.Write(a.inv.Count);
 			foreach(Item i in a.inv){
 				SaveItem(i,b,get_id);
-				/*b.Write(i.name);
-				b.Write(i.the_name);
-				b.Write(i.a_name);
-				b.Write(i.symbol);
-				b.Write((int)i.color);
-				b.Write(i.light_radius);
-				b.Write((int)i.type);
-				b.Write(i.quantity);
-				b.Write(i.charges);
-				b.Write(i.other_data);
-				b.Write(i.ignored);
-				b.Write(i.do_not_stack);
-				b.Write(i.revealed_by_light);*/
 			}
 			b.Write(a.attrs.d.Count);
 			foreach(AttrType at in a.attrs.d.Keys){
@@ -558,6 +571,8 @@ namespace Forays{
 		}
 		private static void SaveItem(Item i,BinaryWriter b,IDMethod get_id){
 			b.Write(get_id(i));
+			b.Write(i.row);
+			b.Write(i.col);
 			b.Write(i.name);
 			b.Write(i.the_name);
 			b.Write(i.a_name);

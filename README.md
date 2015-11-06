@@ -20,5 +20,5 @@ OpenTK. To make it run in a terminal, follow these steps:
    the main Forays.sln solution.
 2. Change the first line of the Main method (in Main.cs)
    by uncommenting "Screen.GLMode = false;".
-3. Compile!
+3. Compile in Debug mode! Then run ConsoleForays.exe.
 

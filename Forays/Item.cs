@@ -1003,10 +1003,11 @@ namespace Forays{
 			{
 				B.Add(user.You("start") + " moving with extraordinary speed. ",user);
 				int duration = (R.Roll(2,10) + 10) * 100;
-				user.RefreshDuration(AttrType.CAN_DODGE,duration); //todo: dodging tip goes here
+				user.RefreshDuration(AttrType.CAN_DODGE,duration);
 				user.RefreshDuration(AttrType.VIGOR,duration,user.Your() + " extraordinary speed fades. ",user);
 				if(user == player){
 					Help.TutorialTip(TutorialTopic.IncreasedSpeed);
+					Help.TutorialTip(TutorialTopic.Dodging);
 				}
 				break;
 			}
@@ -1538,6 +1539,11 @@ namespace Forays{
 					}
 				}
 				user.MakeNoise(12);
+				if(!Help.displayed[TutorialTopic.MakingNoise] && M.Depth >= 3){
+					if(user == player){
+						Help.TutorialTip(TutorialTopic.MakingNoise);
+					}
+				}
 				break;
 			}
 			case ConsumableType.FIRE_RING:
@@ -2213,6 +2219,11 @@ namespace Forays{
 				if(user != null){
 					if(NameOfItemType(type) == "scroll"){
 						user.MakeNoise(6);
+						if(!Help.displayed[TutorialTopic.MakingNoise] && M.Depth >= 3){
+							if(user == player){
+								Help.TutorialTip(TutorialTopic.MakingNoise);
+							}
+						}
 					}
 					else{
 						user.MakeNoise(1);
@@ -2440,7 +2451,6 @@ namespace Forays{
 				switch(type){
 				case ConsumableType.BANDAGES:
 					return "A bandage's effect will last for 20 turns, restoring 1 HP per turn and preventing bleed damage. However, taking any major damage will end its effect.";
-					//return "Applying a bandage will slowly restore 10 HP.";
 				case ConsumableType.BLAST_FUNGUS:
 					return "This blast fungus is about to explode!";
 				case ConsumableType.BLINKING:
@@ -2449,7 +2459,6 @@ namespace Forays{
 					return "This orb will temporarily lower nearby walls, which will slowly return to their original state.";
 				case ConsumableType.BRUTISH_STRENGTH:
 					return "Drinking this potion grants the strength of a juggernaut. For a short time you'll be able to smash through various dungeon features. Additionally, your attacks will deal maximum damage and knock foes back 5 spaces, and you'll keep moving afterward if possible.";
-					//return "Drinking this potion grants the strength of a juggernaut. For a short time you'll be able to smash through various dungeon features. Additionally, you'll still move after making an attack, which will deal maximum damage and knock foes back 5 spaces.";
 				case ConsumableType.CALLING:
 					return "This scroll's magic will find the nearest foe and transport it next to you. Immobile creatures are immune to this effect.";
 				case ConsumableType.CLOAKING:
@@ -2458,7 +2467,6 @@ namespace Forays{
 					return "This scroll covers the dungeon in a blanket of darkness that suppresses all light.";
 				case ConsumableType.MYSTIC_MIND:
 					return "This potion will expand your mind, allowing you to sense foes no matter where they are, and granting immunity to stuns, sleep, rage, confusion, and fear.";
-					//return "This scroll reveals the location of foes on the current dungeon level for a while.";
 				case ConsumableType.DETONATION:
 					return "On impact, this orb will explode violently, inflicting great damage on its surroundings.";
 				case ConsumableType.ENCHANTMENT:
@@ -2475,7 +2483,6 @@ namespace Forays{
 					return "This invaluable elixir will instantly restore you to full health.";
 				case ConsumableType.KNOWLEDGE:
 					return "Reading this scroll will grant knowledge of the items in your pack, and of the current level, including secret doors and traps.";
-					//return "This scroll will show you the layout of the current level, including secret doors and traps.";
 				case ConsumableType.PAIN:
 					return "Anything caught in this orb's area of effect will become vulnerable to extra damage.";
 				case ConsumableType.PASSAGE:
@@ -2484,14 +2491,12 @@ namespace Forays{
 					return "The potent healing magic in this potion will steadily grant you health for 100 turns.";
 				case ConsumableType.RENEWAL:
 					return "This scroll's magic will strip negative effects from your weapons & armor, charge any wands in your possession, and remove any slime or oil covering you.";
-					//return "This scroll's power will strip negative effects from your weapons & armor, and will remove any slime or oil covering you.";
 				case ConsumableType.ROOTS:
 					return "Drinking this potion will cause thick roots to grow from you, holding you tightly to the ground and providing defense against attacks.";
 				case ConsumableType.SHIELDING:
 					return "This orb will create a zone of protection, shielding entities within for several turns.";
 				case ConsumableType.SILENCE:
 					return "This potion will cause you to radiate an aura of silence, preventing all sounds within 2 spaces. This can help you remain stealthy, but leaves you unable to speak words of magic.";
-					//return "This potion will cause your actions to become entirely soundless. You'll attract less attention, but you'll be unable to speak words of magic.";
 				case ConsumableType.STONEFORM:
 					return "This potion will change you temporarily to unliving stone, granting a slight resistance to all damage. You'll no longer be able to catch fire, and no toxin, gas, or potion will affect you.";
 				case ConsumableType.SUNLIGHT:
@@ -2515,7 +2520,7 @@ namespace Forays{
 				case ConsumableType.BLADES:
 					return "This orb's magic manifests in the form of several flying blades. These animated weapons fly quickly and attack anything nearby.";
 				case ConsumableType.CONFUSION:
-					return "Breaking this orb will release a befuddling gas, causing those affected to move and attack in random directions.";
+					return "Breaking this orb will release a befuddling gas, causing those who breathe it to move and attack in random directions.";
 				case ConsumableType.DUST_STORM:
 					return "When zapped, this wand creates a billowing cloud of thick blinding dust, so heavy that it can extinguish flames.";
 				case ConsumableType.INVISIBILITY:
@@ -2532,7 +2537,7 @@ namespace Forays{
 					return "After zapping this wand at your target, you can throw it forcefully. You can throw items, monsters, terrain features, and even yourself.";
 				}
 			}
-			return "Unknown item.";
+			return "What is this thing?";
 		}
 	}
 	public abstract class Equipment{

@@ -76,11 +76,11 @@ namespace Forays{
 		public Item inv;
 		public List<FeatureType> features = new List<FeatureType>();
 		public static List<FeatureType> feature_priority = new List<FeatureType>{FeatureType.GRENADE,FeatureType.FIRE,FeatureType.SPORES,FeatureType.POISON_GAS,FeatureType.PIXIE_DUST,FeatureType.CONFUSION_GAS,FeatureType.THICK_DUST,FeatureType.TELEPORTAL,FeatureType.STABLE_TELEPORTAL,FeatureType.FOG,FeatureType.WEB,FeatureType.TROLL_BLOODWITCH_CORPSE,FeatureType.TROLL_CORPSE,FeatureType.BONES,FeatureType.INACTIVE_TELEPORTAL,FeatureType.OIL,FeatureType.SLIME,FeatureType.FORASECT_EGG};
-		private static int spellbooks_generated = 0;
+		public static int spellbooks_generated = 0;
 		
-		private static Dictionary<TileType,Tile> proto= new Dictionary<TileType, Tile>();
+		private static Dictionary<TileType,Tile> proto = new Dictionary<TileType,Tile>();
 		public static Tile Prototype(TileType type){ return proto[type]; }
-		private static Dictionary<FeatureType,PhysicalObject> proto_feature = new Dictionary<FeatureType, PhysicalObject>();
+		private static Dictionary<FeatureType,PhysicalObject> proto_feature = new Dictionary<FeatureType,PhysicalObject>();
 		public static PhysicalObject Feature(FeatureType type){ return proto_feature[type]; }
 		static Tile(){
 			Define(TileType.FLOOR,"floor",'.',Color.White,true,false,null);
@@ -1034,7 +1034,7 @@ namespace Forays{
 						}
 					}
 				}
-				if(!Global.GAME_OVER && !M.AllTiles().Any(x=>x.type == TileType.DEMONIC_IDOL)){
+				if(M.CurrentLevelType != LevelType.Final && !M.AllTiles().Any(x=>x.type == TileType.DEMONIC_IDOL)){
 					foreach(Tile t in M.AllTiles()){
 						if(t.Is(TileType.STAIRS) && t.color == Color.RandomDoom){
 							t.color = Color.White;
@@ -1530,12 +1530,7 @@ namespace Forays{
 						B.Add("You hear a high-pitched ringing sound. ");
 					}
 				}
-				foreach(Actor a in ActorsWithinDistance(12,true)){
-					if(a.type != ActorType.GIANT_BAT && a.type != ActorType.BLOOD_MOTH && a.type != ActorType.CARNIVOROUS_BRAMBLE
-					&& a.type != ActorType.LASHER_FUNGUS && a.type != ActorType.PHASE_SPIDER){
-						a.FindPath(this);
-					}
-				}
+				MakeNoise(12);
 				Toggle(actor());
 				break;
 			case TileType.BLINDING_TRAP:
@@ -1629,7 +1624,7 @@ namespace Forays{
 			{
 				if(actor_here){
 					B.Add("Scalding oil pours over " + actor().TheName(true) + "! ",this);
-					if(actor().TakeDamage(DamageType.FIRE,DamageClass.PHYSICAL,R.Roll(3,6),null,"a scalding oil trap")){
+					if(actor().TakeDamage(DamageType.NORMAL,DamageClass.PHYSICAL,R.Roll(3,6),null,"a scalding oil trap")){
 						if(!actor().HasAttr(AttrType.BURNING,AttrType.SLIMED) && !IsBurning()){
 							actor().attrs[AttrType.OIL_COVERED] = 1;
 							B.Add(actor().YouAre() + " covered in oil. ",actor());

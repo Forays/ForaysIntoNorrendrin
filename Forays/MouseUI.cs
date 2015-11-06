@@ -211,8 +211,13 @@ namespace Forays{
 			CreateStatsButton(ConsoleKey.V,false,Global.SCREEN_H-1,1); //view more
 			break;
 			case 2:
-			UI.status_row_cutoff = Global.SCREEN_H - 2;
-			CreateStatsButton(ConsoleKey.V,false,Global.SCREEN_H-1,1); //view more
+			if(Global.Option(OptionType.HIDE_VIEW_MORE)){
+				UI.status_row_cutoff = Global.SCREEN_H - 1;
+			}
+			else{
+				UI.status_row_cutoff = Global.SCREEN_H - 2;
+				CreateStatsButton(ConsoleKey.V,false,Global.SCREEN_H-1,1); //view more
+			}
 			break;
 			}
 

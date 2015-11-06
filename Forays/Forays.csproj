@@ -27,9 +27,9 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <UseMSBuildEngine>False</UseMSBuildEngine>
+    <ApplicationIcon>forays.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -98,18 +98,6 @@
     <Content Include="feat_help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="font12x24.bmp">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="font16x32.bmp">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="font6x12.bmp">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="font8x16.bmp">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -143,4 +131,19 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <ItemGroup>
+    <EmbeddedResource Include="forays.ico" />
+    <EmbeddedResource Include="logo.png" />
+    <EmbeddedResource Include="font6x12.png" />
+    <EmbeddedResource Include="font8x16.png" />
+    <EmbeddedResource Include="font10x20.png" />
+    <EmbeddedResource Include="font12x24.png" />
+    <EmbeddedResource Include="font16x32.png" />
+    <EmbeddedResource Include="font12x18.png" />
+    <EmbeddedResource Include="font18x36.png" />
+    <EmbeddedResource Include="font21x38.png" />
+    <EmbeddedResource Include="font8x12.png" />
+    <EmbeddedResource Include="font15x27.png" />
+    <EmbeddedResource Include="font14x28.png" />
+  </ItemGroup>
 </Project>

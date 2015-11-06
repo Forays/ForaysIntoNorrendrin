@@ -12,6 +12,8 @@ using System.Drawing.Imaging;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.IO;
+using System.Reflection;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
@@ -248,8 +250,6 @@ namespace GLDrawing{
 			}
 			float width_ratio = 2.0f / (float)Viewport.Width;
 			float height_ratio = 2.0f / (float)Viewport.Height;
-			//float width_ratio = 2.0f / (float)ClientRectangle.Width; //todo: eventually this part might not be based on the current window. Seems like a good idea.
-			//float height_ratio = 2.0f / (float)ClientRectangle.Height;
 			int current_total = 0;
 			foreach(int i in index_list){
 				float x_offset = (float)s.layouts[layout_list[current_total]].HorizontalOffsetPx;
@@ -316,8 +316,6 @@ namespace GLDrawing{
 			float[] values = new float[4 * s.vbo.PositionDimensions]; //2 or 3 dimensions for 4 vertices
 			float width_ratio = 2.0f / (float)Viewport.Width;
 			float height_ratio = 2.0f / (float)Viewport.Height;
-			//float width_ratio = 2.0f / (float)ClientRectangle.Width; //todo: eventually this part might not be based on the current window. Seems like a good idea.
-			//float height_ratio = 2.0f / (float)ClientRectangle.Height;
 			float x_offset = (float)s.layouts[layout].HorizontalOffsetPx;
 			float y_offset = (float)s.layouts[layout].VerticalOffsetPx;
 			float x_w = (float)s.layouts[layout].CellWidthPx;
@@ -562,16 +560,16 @@ namespace GLDrawing{
 		public SurfaceUpdateMethod UpdateOtherDataOnlyMethod = null;
 		protected Surface(){}
 		public static Surface Create(GLWindow window_,string texture_filename,params int[] vertex_attrib_counts){
-			return Create(window_,texture_filename,Shader.DefaultFS(),false,vertex_attrib_counts);
+			return Create(window_,texture_filename,false,Shader.DefaultFS(),false,vertex_attrib_counts);
 		}
-		public static Surface Create(GLWindow window_,string texture_filename,string frag_shader,bool has_depth,params int[] vertex_attrib_counts){
+		public static Surface Create(GLWindow window_,string texture_filename,bool loadTextureFromEmbeddedResource,string frag_shader,bool has_depth,params int[] vertex_attrib_counts){
 			Surface s = new Surface();
 			s.window = window_;
 			int dims = has_depth? 3 : 2;
 			s.UseDepthBuffer = has_depth;
 			VertexAttributes attribs = VertexAttributes.Create(vertex_attrib_counts);
 			s.vbo = VBO.Create(dims,attribs);
-			s.texture = Texture.Create(texture_filename);
+			s.texture = Texture.Create(texture_filename,null,loadTextureFromEmbeddedResource);
 			s.shader = Shader.Create(frag_shader);
 			if(window_ != null){
 				window_.Surfaces.Add(s);
@@ -781,19 +779,19 @@ namespace GLDrawing{
 		protected static int next_texture = 0;
 		protected static int max_textures = -1; //Currently, max_textures serves only to crash in a better way. Eventually I'll figure out how to swap texture units around, todo!
 		protected static Dictionary<string,Texture> texture_info = new Dictionary<string,Texture>(); //the Textures contained herein are used only to store index/height/width
-		public static Texture Create(string filename,string textureToReplace = null){
+		public static Texture Create(string filename,string textureToReplace = null,bool loadFromEmbeddedResource = false){
 			Texture t = new Texture();
 			t.Sprite = new List<SpriteType>();
 			if(textureToReplace != null){
-				t.ReplaceTexture(filename,textureToReplace);
+				t.ReplaceTexture(filename,textureToReplace,loadFromEmbeddedResource);
 			}
 			else{
-				t.LoadTexture(filename);
+				t.LoadTexture(filename,loadFromEmbeddedResource);
 			}
 			return t;
 		}
 		protected Texture(){}
-		protected void LoadTexture(string filename){
+		protected void LoadTexture(string filename,bool loadFromEmbeddedResource = false){
 			if(String.IsNullOrEmpty(filename)){
 				throw new ArgumentException(filename);
 			}
@@ -814,7 +812,13 @@ namespace GLDrawing{
 				GL.ActiveTexture(TextureUnit.Texture0 + num);
 				int id = GL.GenTexture(); //todo: eventually i'll want to support more than 16 or 32 textures. At that time I'll need to store this ID somewhere.
 				GL.BindTexture(TextureTarget.Texture2D,id); //maybe a list of Scenes which are lists of textures needed, and then i'll bind all those and make sure to track their texture units.
-				Bitmap bmp = new Bitmap(filename);
+				Bitmap bmp;
+				if(loadFromEmbeddedResource){
+					bmp = new Bitmap(Assembly.GetExecutingAssembly().GetManifestResourceStream(filename));
+				}
+				else{
+					bmp = new Bitmap(filename);
+				}
 				BitmapData bmp_data = bmp.LockBits(new Rectangle(0,0,bmp.Width,bmp.Height),ImageLockMode.ReadOnly,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 				GL.TexImage2D(TextureTarget.Texture2D,0,PixelInternalFormat.Rgba,bmp_data.Width,bmp_data.Height,0,OpenTK.Graphics.OpenGL.PixelFormat.Bgra,PixelType.UnsignedByte,bmp_data.Scan0);
 				bmp.UnlockBits(bmp_data);
@@ -830,7 +834,7 @@ namespace GLDrawing{
 				texture_info.Add(filename,t);
 			}
 		}
-		protected void ReplaceTexture(string filename,string replaced){
+		protected void ReplaceTexture(string filename,string replaced,bool loadFromEmbeddedResource = false){
 			if(String.IsNullOrEmpty(filename)){
 				throw new ArgumentException(filename);
 			}
@@ -858,7 +862,13 @@ namespace GLDrawing{
 				GL.ActiveTexture(TextureUnit.Texture0 + num);
 				int id = GL.GenTexture(); //todo: eventually i'll want to support more than 16 or 32 textures. At that time I'll need to store this ID somewhere.
 				GL.BindTexture(TextureTarget.Texture2D,id); //maybe a list of Scenes which are lists of textures needed, and then i'll bind all those and make sure to track their texture units.
-				Bitmap bmp = new Bitmap(filename);
+				Bitmap bmp;
+				if(loadFromEmbeddedResource){
+					bmp = new Bitmap(Assembly.GetExecutingAssembly().GetManifestResourceStream(filename));
+				}
+				else{
+					bmp = new Bitmap(filename);
+				}
 				BitmapData bmp_data = bmp.LockBits(new Rectangle(0,0,bmp.Width,bmp.Height),ImageLockMode.ReadOnly,System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 				GL.TexImage2D(TextureTarget.Texture2D,0,PixelInternalFormat.Rgba,bmp_data.Width,bmp_data.Height,0,OpenTK.Graphics.OpenGL.PixelFormat.Bgra,PixelType.UnsignedByte,bmp_data.Scan0);
 				bmp.UnlockBits(bmp_data);

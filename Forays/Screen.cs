@@ -263,9 +263,6 @@ namespace Forays{
 						if(second_start < s.s.Length){
 							result[1].strings.Add(new cstr(s.s.Substring(idx - len_0),s.color,s.bgcolor));
 						}
-						if(result[0].Length() != idx){
-							throw new Exception("whoops"); //todo, remove this after it works.
-						}
 					}
 					else{
 						result[0].strings.Add(s);
@@ -294,7 +291,7 @@ namespace Forays{
 		public static Surface cursorSurface = null;
 		public static int cellHeight = 16;
 		public static int cellWidth = 8;
-		public static string currentFont = "font8x16.bmp";
+		public static string currentFont = "Forays.font8x16.png";
 		public static bool NoClose{
 			get{
 				if(gl != null){

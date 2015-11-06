@@ -15,8 +15,8 @@ namespace Forays{
 	public enum HelpTopic{Overview,Skills,Feats,Spells,Items,Commands,Advanced,Tips};
 	public enum TutorialTopic{Movement,Attacking,Torch,Fire,Exhaustion,Recovery,SwitchingEquipment,RangedAttacks,Shrines,DistributionOfShrines,
 		Feats,ActiveFeats,Combat,Defense,Magic,Spirit,Stealth,FindingConsumables,IdentifiedConsumables,UnidentifiedConsumables,MagicTrinkets,
-		SpellTiers,SpellFailure,CastingWithoutMana,ExhaustionAndArmor,ShinyPlateArmor,HeavyPlateArmor,CriticalHits,InstantKills,Dodging,
-		FightingTheUnseen,NotRevealedByLight,Traps,CrackedWall,FirePit,Poppies,StoneSlab,BlastFungus,PoolOfRestoration,IncreasedSpeed,
+		SpellTiers,SpellFailure,CastingWithoutMana,ExhaustionAndArmor,ShinyPlateArmor,HeavyPlateArmor,MakingNoise,CriticalHits,InstantKills,Dodging,
+		FightingTheUnseen,NotRevealedByLight,Traps,CrackedWall,FirePit,Poppies,StoneSlab,BlastFungus,PoolOfRestoration,Demonstone,IncreasedSpeed,
 		Stunned,Frozen,Slimed,Oiled,Vulnerable,Silenced,Confusion,Bleeding,Immobilized,Acidified,Afraid,Grabbed,Dulled,Possessed,Heavy,
 		Merciful,Negated,Stuck,Infested,WeakPoint,WornOut,Damaged,Stoneform,Vampirism,Roots,BrutishStrength,MysticMind};
 	public static class Help{
@@ -424,9 +424,6 @@ namespace Forays{
 				"",
 				"The fuse of a blast fungus also ignites",
 				"as it gets pulled out of the ground."};
-				/*"Until lit, it is rooted firmly to the ground by",
-				"its fuse. After being lit, it can be picked up",
-				"and thrown - quickly!"};*/
 			case TutorialTopic.Bleeding:
 			return new string[]{
 				"Bleeding",
@@ -508,16 +505,6 @@ namespace Forays{
 				"",
 				"Like all equipment damage, this effect will end",
 				"when you [r]est to repair your equipment."};
-			/*case TutorialTopic.Drowsiness:
-			return new string[]{
-				"Drowsiness",
-				"",
-				"Being drowsy causes you to fall asleep",
-				"when you're not in combat (attacking or",
-				"being attacked).",
-				"",
-				"While you're asleep, you can't see or",
-				"defend against attacks."};*/
 			case TutorialTopic.Defense:
 			return new string[]{
 				"Defense skill",
@@ -527,11 +514,21 @@ namespace Forays{
 				"",
 				"(Without any Defense skill, most enemies",
 				"have a 75% chance to hit you.)"};
+			case TutorialTopic.Demonstone:
+			return new string[]{
+				"Demonstone",
+				"",
+				"Any fire ignited on demonstone will burn",
+				"forever, never dying out on its own."
+			};
 			case TutorialTopic.DistributionOfShrines:
 			return new string[]{
 				"Distribution of shrines",
 				"",
-				"Shrines appear on each odd-numbered level.",
+				"Five shrines will appear somewhere on each",
+				"pair of levels. (Depths 1 & 2 will have five",
+				"shrines between them, as will depths 3 & 4,",
+				"depths 5 & 6, and so on.)",
 				"",
 				"If you feel an ancient power calling you back,",
 				"it means there's a shrine on this level",
@@ -544,11 +541,11 @@ namespace Forays{
 				"them. (Potions of haste will temporarily",
 				"give you this ability, too.)",
 				"",
-				"When you attack one of these enemies, they",
-				"have a chance to leap into an adjacent space,",
-				"causing your attack to miss. More open space",
-				"means a better chance to dodge, so fight these",
-				"enemies in a confined space!"};
+				"When attacked, a defender with this ability",
+				"has a chance to leap into an adjacent space,",
+				"causing the attack to miss. More open space",
+				"means a better chance to dodge, so consider",
+				"this when choosing your battleground!"};
 			case TutorialTopic.Dulled:
 			return new string[]{
 				"Dulled",
@@ -595,12 +592,11 @@ namespace Forays{
 				"Feats are special abilities",
 				"you can learn at shrines.",
 				"",
-				"One of the shrines on each",
-				"(odd-numbered) dungeon level",
-				"will grant you a feat when you",
-				"activate it. (Therefore, you'll",
-				"learn a new feat every other",
-				"dungeon level.)",
+				"For each set of five shrines,",
+				"one of them will grant you a",
+				"feat when you activate it.",
+				"(Therefore, you'll learn one new",
+				"feat per two dungeon levels.)",
 				"",
 				"(The feat starts working immediately",
 				"upon choosing it.)"};
@@ -757,6 +753,30 @@ namespace Forays{
 				"",
 				"(You'll automatically wear all of the",
 				"magic trinkets you find.)"};
+			case TutorialTopic.MakingNoise:
+			return new string[]{
+				"Making noise",
+				"",
+				"Noises can draw nearby enemies to investigate.",
+				"",
+				"The loudest noises (like explosions) can be heard",
+				"from 12 spaces away, while the quietest (like chugging",
+				"a potion, or the *CLICK* of a trap) can only be heard",
+				"from adjacent spaces.",
+				"",
+				"Combat will draw attention to both parties from up to 8",
+				"spaces, and words of magic (scrolls & spells) from 6.",
+				"(A complete list of noise volumes is available in Help,",
+				"in the Advanced section.)",
+				"",
+				"If you make a noise while in plain sight of an enemy,",
+				"you'll lose the advantage of stealth and immediately be",
+				"spotted. However, if you weren't in plain sight (perhaps",
+				"you were around a corner, out of sight range, or invisible)",
+				"then enemies won't automatically know where you are.",
+				"(This can give you an opportunity to",
+				"sneak attack when they come to investigate!)"
+			};
 			case TutorialTopic.Merciful:
 			return new string[]{
 				"Merciful",
@@ -947,14 +967,9 @@ namespace Forays{
 				"fail when you try to cast them. Your turn will",
 				"be used up, but you won't lose any mana.",
 				"",
-				/*"Above 20% exhaustion, tier 5 spells have a chance",
-				"to fail. Above 40%, tier 4 is affected (and so on).",
-				"(Tier 1 spells never fail because your exhaustion",
-				"can't exceed 100%.)",
-				"",*/
-				"Each point of exhaustion above 20% will add to",
+				"Each point of exhaustion above 20% adds to",
 				"the failure rate of a tier 5 spell. Each point",
-				"above 40% will affect tier 4 spells, and so on.",
+				"above 40% affects tier 4 spells, and so on.",
 				"",
 				"(Therefore, at 45% exhaustion a tier 5 spell",
 				"has a 25% chance to fail, a tier 4 spell has",

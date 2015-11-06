@@ -353,8 +353,18 @@ namespace Forays{
 			MouseUI.PushButtonMap(MouseMode.YesNoPrompt);
 			MouseUI.CreateButton(ConsoleKey.Y,false,2,Global.MAP_OFFSET_COLS + s.Length + 1,1,2);
 			MouseUI.CreateButton(ConsoleKey.N,false,2,Global.MAP_OFFSET_COLS + s.Length + 4,1,2);
-			if(MouseUI.descend_hack && UI.viewing_commands_idx == 0){ //todo hack fixme - this moved, so double check its new position.
-				MouseUI.CreateStatsButton(ConsoleKey.N,false,16,1);
+			if(MouseUI.descend_hack){
+				for(int i=0;i<Global.SCREEN_H;++i){
+					if(MouseUI.mouselook_objects[i,0] != null){
+						Tile t = MouseUI.mouselook_objects[i,0] as Tile;
+						if(t?.type == TileType.STAIRS){
+							MouseUI.CreateStatsButton(ConsoleKey.N,false,i,1);
+						}
+					}
+				}
+				if(UI.viewing_commands_idx == 1){
+					MouseUI.CreateStatsButton(ConsoleKey.N,false,Global.SCREEN_H-5,1);
+				}
 				MouseUI.descend_hack = false;
 			}
 			DisplayNow(s + " (y/n): ");

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Reflection;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
@@ -36,7 +37,7 @@ namespace Forays{
 	public enum DamageClass{PHYSICAL,MAGICAL,NO_TYPE};
 	public enum AttackEffect{STUN,ONE_TURN_STUN,MAX_DAMAGE,PERCENT_DAMAGE,WEAK_POINT,WORN_OUT,REDUCE_ACCURACY,DRAIN_LIFE,GRAB,CHILL,FREEZE,INFLICT_VULNERABILITY,TRIP,KNOCKBACK,STRONG_KNOCKBACK,IGNITE,DIM_VISION,SWAP_POSITIONS,SLIME,MAKE_NOISE,BLIND,PERMANENT_BLIND,SLOW,POISON,PARALYZE,ONE_TURN_PARALYZE,STALAGMITES,FLING,PULL,SILENCE,INFEST,DISRUPTION,VICTORY,ACID,CONFUSE,BLEED,ONE_HP,STEAL,EXHAUST,NO_CRIT};
 	public enum EventType{ANY_EVENT,MOVE,REMOVE_ATTR,REMOVE_GAS,CHECK_FOR_HIDDEN,RELATIVELY_SAFE,POLTERGEIST,MIMIC,REGENERATING_FROM_DEATH,REASSEMBLING,GRENADE,BLAST_FUNGUS,STALAGMITE,FIRE_GEYSER,FIRE_GEYSER_ERUPTION,FOG_VENT,POISON_GAS_VENT,STONE_SLAB,MARBLE_HORROR,FIRE,NORMAL_LIGHTING,TELEPORTAL,BREACH,GRAVE_DIRT,POPPIES,TOMBSTONE_GHOST,SHIELDING,BURROWING,FINAL_LEVEL_SPAWN_CULTISTS,SPAWN_WANDERING_MONSTER};
-	public enum OptionType{NO_WALL_SLIDING,AUTOPICKUP,TOP_ROW_MOVEMENT,NO_CONFIRMATION_BEFORE_RESTING,NEVER_DISPLAY_TIPS,ALWAYS_RESET_TIPS,DARK_GRAY_UNSEEN,DISABLE_GRAPHICS};
+	public enum OptionType{NO_WALL_SLIDING,AUTOPICKUP,TOP_ROW_MOVEMENT,NO_CONFIRMATION_BEFORE_RESTING,NEVER_DISPLAY_TIPS,ALWAYS_RESET_TIPS,DARK_GRAY_UNSEEN,HIDE_VIEW_MORE,DISABLE_GRAPHICS};
 	public class Game{
 		public Map M;
 		public Queue Q;
@@ -94,6 +95,7 @@ namespace Forays{
 				int height_px = Global.SCREEN_H * 16;
 				int width_px = Global.SCREEN_W * 8;
 				Screen.gl = new GLWindow(width_px,height_px,"Forays into Norrendrin");
+				Screen.gl.Icon = new System.Drawing.Icon(Assembly.GetExecutingAssembly().GetManifestResourceStream("Forays.forays.ico"));
 				Screen.gl.ResizingPreference = ResizeOption.SnapWindow;
 				Screen.gl.ResizingFullScreenPreference = ResizeOption.AddBorder;
 				Screen.gl.KeyDown += Input.KeyDownHandler;
@@ -103,7 +105,7 @@ namespace Forays{
 				Screen.gl.MouseLeave += Input.MouseLeaveHandler;
 				Screen.gl.Closing += Input.OnClosing;
 				Screen.gl.FinalResize += Input.HandleResize;
-				Screen.textSurface = Surface.Create(Screen.gl,"font8x16.bmp",Shader.FontFS(),false,2,4,4);
+				Screen.textSurface = Surface.Create(Screen.gl,"Forays.font8x16.png",true,Shader.AAFontFS(),false,2,4,4);
 				SpriteType.DefineSingleRowSprite(Screen.textSurface,8,1);
 				CellLayout.CreateGrid(Screen.textSurface,Global.SCREEN_H,Global.SCREEN_W,16,8,0,0);
 				Screen.textSurface.SetEasyLayoutCounts(Global.SCREEN_H * Global.SCREEN_W);
@@ -113,14 +115,14 @@ namespace Forays{
 				Screen.textSurface.SetDefaultOtherData(new List<float>(Color.Gray.GetFloatValues()),new List<float>(Color.Black.GetFloatValues()));
 				Screen.textSurface.DefaultUpdateOtherData();
 				Screen.gl.Surfaces.Add(Screen.textSurface);
-				Screen.cursorSurface = Surface.Create(Screen.gl,"font6x12.bmp",Shader.FontFS(),false,2,4,4);
-				SpriteType.DefineSingleRowSprite(Screen.cursorSurface,8,0);
+				Screen.cursorSurface = Surface.Create(Screen.gl,"Forays.font8x16.png",true,Shader.AAFontFS(),false,2,4,4);
+				Screen.cursorSurface.texture = Screen.textSurface.texture;
 				CellLayout.CreateGrid(Screen.cursorSurface,1,1,2,8,0,0);
 				Screen.cursorSurface.SetEasyLayoutCounts(1);
 				Screen.cursorSurface.DefaultUpdatePositions();
 				Screen.cursorSurface.SetDefaultSpriteType(0);
-				Screen.cursorSurface.SetDefaultSprite(0);
-				Screen.cursorSurface.SetDefaultOtherData(new List<float>(Color.Gray.GetFloatValues()),new List<float>(Color.Black.GetFloatValues()));
+				Screen.cursorSurface.SetDefaultSprite(32);
+				Screen.cursorSurface.SetDefaultOtherData(new List<float>(Color.Black.GetFloatValues()),new List<float>(Color.Gray.GetFloatValues()));
 				Screen.cursorSurface.DefaultUpdateOtherData();
 				Screen.gl.Surfaces.Add(Screen.cursorSurface);
 				GL.Enable(EnableCap.Blend);
@@ -135,28 +137,46 @@ namespace Forays{
 			MainMenu();
 		}
 		static void TitleScreen(){
-			for(int i=0;i<Global.title[0].GetLength(0);++i){
-				for(int j=0;j<Global.title[0][0].Length;++j){
-					if(Global.title[0][i][j] != ' '){
-						const int row_offset = 4;
-						const int col_offset = 19;
-						if(Global.title[0][i][j] == '#' && (!Global.LINUX || Screen.GLMode)){
-							Screen.WriteChar(i+row_offset,j+col_offset,' ',Color.Black,Color.Yellow);
-						}
-						else{
-							Screen.WriteChar(i+row_offset,j+col_offset,Global.title[0][i][j],Color.Yellow);
+			if(Screen.GLMode){
+				const int logoW = 512;
+				const int logoH = 412;
+				Surface logo = Surface.Create(Screen.gl,"Forays.logo.png",true,Shader.DefaultFS(),false,2);
+				SpriteType.DefineSingleRowSprite(logo,logoW);
+				CellLayout.CreateGrid(logo,1,1,logoH,logoW,(Screen.gl.ClientRectangle.Height - logoH)/16,(Screen.gl.ClientRectangle.Width - logoW)/2);
+				logo.SetEasyLayoutCounts(1);
+				logo.SetDefaultSpriteType(0);
+				logo.SetDefaultSprite(0);
+				logo.DefaultUpdate();
+				Screen.WriteString(Global.SCREEN_H-2,Global.SCREEN_W-14,"version " + Global.VERSION + " ",Color.DarkGray);
+				Screen.WriteString(Global.SCREEN_H-1,Global.SCREEN_W-19,"by Derrick Creamer ",Color.DarkGray);
+				Screen.WriteString(Global.SCREEN_H-1,0,"logo by Soundlust",Color.DarkerGray);
+				Input.ReadKey();
+				Screen.gl.Surfaces.Remove(logo);
+			}
+			else{
+				for(int i=0;i<Global.title[0].GetLength(0);++i){
+					for(int j=0;j<Global.title[0][0].Length;++j){
+						if(Global.title[0][i][j] != ' '){
+							const int row_offset = 4;
+							const int col_offset = 19;
+							if(Global.title[0][i][j] == '#' && (!Global.LINUX || Screen.GLMode)){
+								Screen.WriteChar(i+row_offset,j+col_offset,' ',Color.Black,Color.Yellow);
+							}
+							else{
+								Screen.WriteChar(i+row_offset,j+col_offset,Global.title[0][i][j],Color.Yellow);
+							}
 						}
 					}
 				}
-			}
-			for(int i=0;i<Global.title[1].GetLength(0);++i){
-				for(int j=0;j<Global.title[1][0].Length;++j){
-					Screen.WriteChar(i+19,j+37,Global.title[1][i][j],Color.Green);
+				for(int i=0;i<Global.title[1].GetLength(0);++i){
+					for(int j=0;j<Global.title[1][0].Length;++j){
+						Screen.WriteChar(i+19,j+37,Global.title[1][i][j],Color.Green);
+					}
 				}
+				Screen.WriteString(Global.SCREEN_H-3,Global.SCREEN_W-14,"version " + Global.VERSION + " ",Color.DarkGray);
+				Screen.WriteString(Global.SCREEN_H-2,Global.SCREEN_W-19,"by Derrick Creamer ",Color.DarkGray);
+				Input.ReadKey();
 			}
-			Screen.WriteString(Global.SCREEN_H-3,Global.SCREEN_W-14,"version " + Global.VERSION + " ",Color.DarkGray);
-			Screen.WriteString(Global.SCREEN_H-2,Global.SCREEN_W-19,"by Derrick Creamer ",Color.DarkGray);
-			Input.ReadKey();
 		}
 		static void MainMenu(){
 			ConsoleKeyInfo command;
@@ -399,7 +419,8 @@ namespace Forays{
 						Actor.player_name = b.ReadString();
 						game.M.currentLevelIdx = b.ReadInt32();
 						game.M.level_types = new List<LevelType>();
-						for(int i=0;i<20;++i){
+						int numLevelTypes = b.ReadInt32();
+						for(int i=0;i<numLevelTypes;++i){
 							game.M.level_types.Add((LevelType)b.ReadInt32());
 						}
 						game.M.wiz_lite = b.ReadBoolean();
@@ -478,6 +499,8 @@ namespace Forays{
 									if(item_id != 0){
 										Item item = new Item();
 										id.Add(item_id,item);
+										item.row = b.ReadInt32();
+										item.col = b.ReadInt32();
 										item.name = b.ReadString();
 										item.the_name = b.ReadString();
 										item.a_name = b.ReadString();
@@ -612,6 +635,8 @@ namespace Forays{
 							if(item_id != 0){
 								t.inv = new Item();
 								id.Add(item_id,t.inv);
+								t.inv.row = b.ReadInt32();
+								t.inv.col = b.ReadInt32();
 								t.inv.name = b.ReadString();
 								t.inv.the_name = b.ReadString();
 								t.inv.a_name = b.ReadString();
@@ -660,6 +685,8 @@ namespace Forays{
 								if(item_id != 0){
 									Item item = new Item();
 									id.Add(item_id,item);
+									item.row = b.ReadInt32();
+									item.col = b.ReadInt32();
 									item.name = b.ReadString();
 									item.the_name = b.ReadString();
 									item.a_name = b.ReadString();
@@ -777,6 +804,26 @@ namespace Forays{
 								throw new Exception("Error: some actors/tiles weren't loaded(7). ");
 							}
 						}
+						game.M.aesthetics = new PosArray<AestheticFeature>(Global.ROWS,Global.COLS);
+						for(int i=0;i<Global.ROWS;++i){
+							for(int j=0;j<Global.COLS;++j){
+								game.M.aesthetics[i,j] = (AestheticFeature)b.ReadInt32();
+							}
+						}
+						game.M.dungeonDescription = b.ReadString();
+						if(b.ReadBoolean()){
+							int numShrines = b.ReadInt32();
+							game.M.nextLevelShrines = new List<SchismDungeonGenerator.CellType>();
+							for(int i=0;i<numShrines;++i){
+								game.M.nextLevelShrines.Add((SchismDungeonGenerator.CellType)b.ReadInt32());
+							}
+						}
+						game.M.shrinesFound = new int[5];
+						for(int i=0;i<5;++i){
+							game.M.shrinesFound[i] = b.ReadInt32();
+						}
+						Tile.spellbooks_generated = b.ReadInt32();
+						UI.viewing_commands_idx = b.ReadInt32();
 						string[] messages = new string[Buffer.log_length];
 						int num_messages = b.ReadInt32();
 						for(int i=0;i<num_messages;++i){
@@ -793,8 +840,6 @@ namespace Forays{
 						Tile.Feature(FeatureType.TELEPORTAL).color = Item.Prototype(ConsumableType.TELEPORTAL).color;
 						game.M.CalculatePoppyDistanceMap();
 						game.M.UpdateDangerValues();
-						if(game.M.aesthetics == null) game.M.aesthetics = new PosArray<AestheticFeature>(Global.ROWS,Global.COLS); //todo! save these properly
-						//todo: also dungeon desc.
 					}
 					Screen.NoClose = true;
 					MouseUI.PushButtonMap(MouseMode.Map);
@@ -1023,7 +1068,7 @@ namespace Forays{
 			UI.DisplayStats();
 			bool showed_IDed_tip = false;
 			if(Global.KILLED_BY != "gave up" && !Help.displayed[TutorialTopic.IdentifiedConsumables]){
-				if(game.player.inv.Where(item=>Item.identified[item.type] && item.Is(ConsumableType.HEALING,ConsumableType.TIME,ConsumableType.TELEPORTAL)).Count > 0){
+				if(game.player.inv.Where(item=>Item.identified[item.type] && item.Is(ConsumableType.HEALING,ConsumableType.TIME)).Count > 0){
 					Help.TutorialTip(TutorialTopic.IdentifiedConsumables);
 					Global.SaveOptions();
 					showed_IDed_tip = true;

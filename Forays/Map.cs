@@ -19,7 +19,7 @@ namespace Forays{
 		public PosArray<Tile> tile = new PosArray<Tile>(ROWS,COLS);
 		public PosArray<Actor> actor = new PosArray<Actor>(ROWS,COLS);
 		public List<LevelType> level_types;
-		public int currentLevelIdx{get;set;}
+		public int currentLevelIdx;
 		public LevelType CurrentLevelType{ get{ return level_types[currentLevelIdx]; } }
 		public int Depth{ //This is the effective level for difficulty calculations etc.
 			get{ return currentLevelIdx + 1; }
@@ -51,8 +51,8 @@ namespace Forays{
 			}
 		}
 		private bool internal_wiz_dark;
-		private Dict<ActorType,int> generated_this_level = null; //used for rejecting monsters if too many already exist on the current level
-		private PosArray<int> monster_density = null;
+		private Dict<ActorType,int> generated_this_level = new Dict<ActorType,int>(); //used for rejecting monsters if too many already exist on the current level
+		private PosArray<int> monster_density = new PosArray<int>(ROWS,COLS);
 		private bool[,] danger_sensed;
 		private static List<pos> allpositions = new List<pos>();
 		public PosArray<int> safetymap = null;
@@ -272,7 +272,7 @@ namespace Forays{
 			LevelType result = current;
 			while(result == current){
 				result = R.WeightedChoice(
-					new int[]{40,20,5,20,12,7,5,12},
+					new int[]{40,20,5,18,12,7,5,12},
 					new LevelType[]{LevelType.Standard,LevelType.Cave,LevelType.Hive,LevelType.Mine,LevelType.Fortress,LevelType.Sewer,LevelType.Garden,LevelType.Crypt}); //hellish is handled elsewhere.
 			}
 			return result;
@@ -830,8 +830,11 @@ namespace Forays{
 				int monsterTier = 1;
 				if(effectiveDepth > 1){ // depth 1 only generates tier 1 monsters.
 					List<int> tiers = new List<int>();
-					if(shallowOnly){
-						for(int i=1;i<baseMonsterTier-2;++i){ // shallow mobs are the ones that can normally no longer appear at the current depth.
+					if(shallowOnly){ // shallow mobs are the ones that can normally no longer appear at the current depth.
+						if(R.OneIn(baseMonsterTier-3)){ // tier 1 is the only possibility for shallow monsters at base tier 4, but becomes less likely on deeper levels.
+							tiers.Add(1);
+						}
+						for(int i=2;i<baseMonsterTier-2;++i){ // the rest of the shallow tiers are always considered.
 							tiers.Add(i);
 						}
 					}
@@ -915,7 +918,7 @@ namespace Forays{
 			int number = 1;
 			if(type == ActorType.SPECIAL){
 				if(CurrentLevelType == LevelType.Hellish){
-					if(R.CoinFlip()){
+					if(R.OneIn(3)){
 						for(int i=0;i<3;++i) result.Add(ActorType.MINOR_DEMON);
 					}
 					else{
@@ -928,7 +931,7 @@ namespace Forays{
 					}
 				}
 				else{
-					number = 1 + (Depth-3) / 3;
+					number = 1 + (Depth-3) / 4; //was number = 1 + (Depth-3) / 3;
 					if(number > 1 && R.CoinFlip()){
 						--number;
 					}
@@ -2497,8 +2500,7 @@ namespace Forays{
 		}
 		private string GetDungeonDescription(){
 			if(R.OneIn(2000)){
-				return R.Choose("You sense a certain tension."
-				);
+				return R.Choose("You sense a certain tension.");
 			}
 			switch(CurrentLevelType){
 			case LevelType.Standard:
@@ -2536,36 +2538,34 @@ namespace Forays{
 				"Soot and cinders attest to this ruined fortress's fate.",
 				"Arrow slits are spaced regularly around the walls.",
 				"Bones of the stronghold's former denizens lie scattered."
-				//"These dark halls were deserted long ago by their builders." //todo: this one doesn't quite match the style.
 			);
 			case LevelType.Garden:
 			return R.Choose("A sweet fragrance fills the air.",
 				"Ornate tapestries hang from every wall.",
-				"A tidy pathway winds between the rooms here." //todo: more?
+				"A tidy pathway winds between the rooms here."
 			);
 			case LevelType.Hive:
 			return R.Choose("A constant droning sound reverberates throughout the hive.",
-				"The walls and floor vibrate slightly.",
-				"The hardened wax ceiling curves overhead." //todo: ???
+				"The walls and floor vibrate slightly to the touch.",
+				"Hardened wax forms a dome overhead."
 			);
 			case LevelType.Mine:
 			return R.Choose("Exposed veins of a dull metal stretch along the walls.",
 				"Tiny hexagonal crystals sprout in clusters from the walls.",
-				"Chunks of coal lie scattered about." //todo ?
-				//todo more
+				"Twisting dead-end tunnels extend in all directions."
+				//todo: need more
 			);
 			case LevelType.Sewer:
-			return R.Choose("You hear the burble of flowing water.",
-				"Squeaking vermin dart here and there, avoiding your presence.",
+			return R.Choose("Squeaking vermin dart here and there, avoiding your presence.",
 				"Nauseating mold grows thick on every surface.",
-				"Filth and stench seep from every crack."
-				//"Your ears detect the distant rush of water." //todo: ?
+				"Filth and stench seep from every crack in the stones here."
+				//"You hear the burble of flowing water.",
 				//__456789012345678901234567890123456789012345678901234567890123456
 			);
 			case LevelType.Hellish:
-			return R.Choose(""); //blood_patterns scratch_marks agony despair doom hell evil pain torment 
+			return R.Choose("Blood has been smeared onto the walls in intricate patterns.");
 			case LevelType.Final:
-			return R.Choose(""); //todo todo todo
+			return R.Choose("What is this hellish place?");
 			default:
 			return "";
 			}
@@ -3277,8 +3277,8 @@ namespace Forays{
 					}
 				}
 			}
-			for(int i=(Depth-3)/4;i>0;--i){ //yes, this is all copied and pasted for a one-line change. i'll try to fix it later.
-				if(R.CoinFlip()){ //generate some shallow monsters
+			for(int i=(Depth-5)/2;i>0;--i){ //yes, this is all copied and pasted for a one-line change. i'll try to fix it later.
+				if(!R.OneIn(3)){ //generate some shallow monsters
 					ActorType type = ChooseMobType(false,true);
 					if(type == ActorType.POLTERGEIST){
 						if(!poltergeist_spawned){
@@ -3467,7 +3467,7 @@ namespace Forays{
 			}
 			actor[player.row,player.col] = player; //this line fixes a bug that occurs when the player ends up in the same position on a new level
 			Screen.screen_center_col = player.col;
-			if(R.CoinFlip() && CurrentLevelType != LevelType.Hellish){ //todo: copied and pasted below
+			if(R.PercentChance(40) && CurrentLevelType != LevelType.Hellish){ //todo: copied and pasted below
 				bool done = false;
 				for(int tries=0;!done && tries<500;++tries){
 					int rr = R.Roll(ROWS-4) + 1;
@@ -3653,7 +3653,9 @@ namespace Forays{
 									hidden.Add(t);
 								}
 								tile[rr,rc].TileInDirection(dirs[0].RotateDir(true,4)).TransformTo(TileType.CHEST);
-								tile[rr,rc].TileInDirection(dirs[0].RotateDir(true,4)).color = Color.Yellow;
+								if(R.FractionalChance(Depth,20)){
+									tile[rr,rc].TileInDirection(dirs[0].RotateDir(true,4)).color = Color.Yellow;
+								}
 							}
 							else{
 								foreach(Tile t in tile[rr,rc].TilesAtDistance(1)){
@@ -3666,7 +3668,9 @@ namespace Forays{
 									hidden.Add(t);
 								}
 								tile[rr,rc].TransformTo(TileType.CHEST);
-								tile[rr,rc].color = Color.Yellow;
+								if(R.FractionalChance(Depth,20)){
+									tile[rr,rc].color = Color.Yellow;
+								}
 							}
 							done = true;
 						}
@@ -4074,6 +4078,7 @@ namespace Forays{
 					case 9:
 						player.Kill();
 						player.curhp = -R.Roll(66,6);
+						Global.KILLED_BY = "turned to ash";
 						break;
 					}
 				}
@@ -4182,6 +4187,7 @@ namespace Forays{
 				}
 			}
 			Q.Add(new Event(500,EventType.FINAL_LEVEL_SPAWN_CULTISTS));
+			dungeonDescription = GetDungeonDescription();
 			currentlyGeneratingLevel = false;
 		}
 		private enum FloorType{Brush,Water,Gravel,GlowingFungus,Ice,PoppyField,GraveDirt};
@@ -4716,11 +4722,11 @@ namespace Forays{
 				break;
 			case LevelType.Sewer:
 				messages.Add("Unwholesome water streams along the walls here, forming pools that froth and swirl. ");
-				messages.Add("The rank odor of these slimy tunnels assaulted you long before you reached them. ");
+				messages.Add("The rank odor of these slimy tunnels assaulted you before you reached them. ");
 				messages.Add("The sound of rushing water fills these tunnels. ");
 			break;
 			case LevelType.Hellish:
-				messages.Add("Before you, leering idols and demonic glyphs surround leaping flames. As you watch, cultists approach the fire, then throw themselves in!");
+				messages.Add("Before you, leering idols and demonic glyphs surround leaping flames. As you watch, cultists approach the fire, then throw themselves in! ");
 			break;
 			/*case LevelType.Ruined:
 				messages.Add("You enter a badly damaged rubble-strewn area of the dungeon. ");
