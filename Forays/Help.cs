@@ -260,7 +260,7 @@ namespace Forays{
 				return result;
 			}
 			if(path != ""){
-				StreamReader file = new StreamReader(path);
+				StreamReader file = new StreamReader(Path.Combine("ForaysHelp",path));
 				for(int i=0;i<startline;++i){
 					file.ReadLine();
 				}

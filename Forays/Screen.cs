@@ -291,7 +291,7 @@ namespace Forays{
 		public static Surface cursorSurface = null;
 		public static int cellHeight = 16;
 		public static int cellWidth = 8;
-		public static string currentFont = "Forays.font8x16.png";
+		public static string currentFont = Global.ForaysImageResources + "font8x16.png";
 		public static bool NoClose{
 			get{
 				if(gl != null){

@@ -33,6 +33,7 @@ namespace Forays{
 		public static bool QUITTING = false;
 		public static bool SAVING = false;
 		public static string KILLED_BY = "";
+		public const string ForaysImageResources = "Forays.ForaysImages.";
 
 		public static Stopwatch Timer;
 

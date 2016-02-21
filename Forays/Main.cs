@@ -95,7 +95,7 @@ namespace Forays{
 				int height_px = Global.SCREEN_H * 16;
 				int width_px = Global.SCREEN_W * 8;
 				Screen.gl = new GLWindow(width_px,height_px,"Forays into Norrendrin");
-				Screen.gl.Icon = new System.Drawing.Icon(Assembly.GetExecutingAssembly().GetManifestResourceStream("Forays.forays.ico"));
+				Screen.gl.Icon = new System.Drawing.Icon(Assembly.GetExecutingAssembly().GetManifestResourceStream(Global.ForaysImageResources + "forays.ico"));
 				Screen.gl.ResizingPreference = ResizeOption.SnapWindow;
 				Screen.gl.ResizingFullScreenPreference = ResizeOption.AddBorder;
 				Screen.gl.KeyDown += Input.KeyDownHandler;
@@ -105,7 +105,7 @@ namespace Forays{
 				Screen.gl.MouseLeave += Input.MouseLeaveHandler;
 				Screen.gl.Closing += Input.OnClosing;
 				Screen.gl.FinalResize += Input.HandleResize;
-				Screen.textSurface = Surface.Create(Screen.gl,"Forays.font8x16.png",true,Shader.AAFontFS(),false,2,4,4);
+				Screen.textSurface = Surface.Create(Screen.gl,Global.ForaysImageResources + "font8x16.png",true,Shader.AAFontFS(),false,2,4,4);
 				SpriteType.DefineSingleRowSprite(Screen.textSurface,8,1);
 				CellLayout.CreateGrid(Screen.textSurface,Global.SCREEN_H,Global.SCREEN_W,16,8,0,0);
 				Screen.textSurface.SetEasyLayoutCounts(Global.SCREEN_H * Global.SCREEN_W);
@@ -115,7 +115,7 @@ namespace Forays{
 				Screen.textSurface.SetDefaultOtherData(new List<float>(Color.Gray.GetFloatValues()),new List<float>(Color.Black.GetFloatValues()));
 				Screen.textSurface.DefaultUpdateOtherData();
 				Screen.gl.Surfaces.Add(Screen.textSurface);
-				Screen.cursorSurface = Surface.Create(Screen.gl,"Forays.font8x16.png",true,Shader.AAFontFS(),false,2,4,4);
+				Screen.cursorSurface = Surface.Create(Screen.gl,Global.ForaysImageResources + "font8x16.png",true,Shader.AAFontFS(),false,2,4,4);
 				Screen.cursorSurface.texture = Screen.textSurface.texture;
 				CellLayout.CreateGrid(Screen.cursorSurface,1,1,2,8,0,0);
 				Screen.cursorSurface.SetEasyLayoutCounts(1);
@@ -140,7 +140,7 @@ namespace Forays{
 			if(Screen.GLMode){
 				const int logoW = 512;
 				const int logoH = 412;
-				Surface logo = Surface.Create(Screen.gl,"Forays.logo.png",true,Shader.DefaultFS(),false,2);
+				Surface logo = Surface.Create(Screen.gl,Global.ForaysImageResources + "logo.png",true,Shader.DefaultFS(),false,2);
 				SpriteType.DefineSingleRowSprite(logo,logoW);
 				CellLayout.CreateGrid(logo,1,1,logoH,logoW,(Screen.gl.ClientRectangle.Height - logoH)/16,(Screen.gl.ClientRectangle.Width - logoW)/2);
 				logo.SetEasyLayoutCounts(1);

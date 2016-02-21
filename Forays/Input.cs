@@ -1388,10 +1388,10 @@ namespace Forays{
 			Screen.UpdateGLBuffer(0,0,Global.SCREEN_H-1,Global.SCREEN_W-1);
 		}
 		private static string GetFontFilename(int w,int h){
-			return $"Forays.font{w}x{h}.png";
+			return Global.ForaysImageResources + $"font{w}x{h}.png";
 		}
 		private static int GetFontPadding(string filename){
-			if(filename == "Forays.font8x16.png") return 1;
+			if(filename == Global.ForaysImageResources + "font8x16.png") return 1;
 			return 0;
 		}
 	}

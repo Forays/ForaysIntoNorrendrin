@@ -94,21 +94,38 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="advanced_help.txt">
+    <Content Include="ForaysHelp\advanced_help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="feat_help.txt">
+    <Content Include="ForaysHelp\feat_help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="help.txt">
+    <Content Include="ForaysHelp\help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="highscore.txt" />
-    <Content Include="item_help.txt">
+    <Content Include="ForaysHelp\item_help.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="options.txt" />
-    <Content Include="spell_help.txt">
+    <Content Include="ForaysHelp\spell_help.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="ForaysImages\font10x20.png" />
+    <EmbeddedResource Include="ForaysImages\font12x18.png" />
+    <EmbeddedResource Include="ForaysImages\font12x24.png" />
+    <EmbeddedResource Include="ForaysImages\font14x28.png" />
+    <EmbeddedResource Include="ForaysImages\font15x27.png" />
+    <EmbeddedResource Include="ForaysImages\font16x32.png" />
+    <EmbeddedResource Include="ForaysImages\font18x36.png" />
+    <EmbeddedResource Include="ForaysImages\font21x38.png" />
+    <EmbeddedResource Include="ForaysImages\font6x12.png" />
+    <EmbeddedResource Include="ForaysImages\font8x12.png" />
+    <EmbeddedResource Include="ForaysImages\font8x16.png" />
+    <EmbeddedResource Include="ForaysImages\forays.ico" />
+    <EmbeddedResource Include="ForaysImages\logo.png" />
+    <Content Include="highscore.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="options.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -133,19 +150,4 @@
   <Target Name="AfterBuild">
   </Target>
   -->
-  <ItemGroup>
-    <EmbeddedResource Include="forays.ico" />
-    <EmbeddedResource Include="logo.png" />
-    <EmbeddedResource Include="font6x12.png" />
-    <EmbeddedResource Include="font8x16.png" />
-    <EmbeddedResource Include="font10x20.png" />
-    <EmbeddedResource Include="font12x24.png" />
-    <EmbeddedResource Include="font16x32.png" />
-    <EmbeddedResource Include="font12x18.png" />
-    <EmbeddedResource Include="font18x36.png" />
-    <EmbeddedResource Include="font21x38.png" />
-    <EmbeddedResource Include="font8x12.png" />
-    <EmbeddedResource Include="font15x27.png" />
-    <EmbeddedResource Include="font14x28.png" />
-  </ItemGroup>
 </Project>
