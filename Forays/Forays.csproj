@@ -67,6 +67,7 @@
     <Compile Include="Actor.cs" />
     <Compile Include="Buffer.cs" />
     <Compile Include="Effect.cs" />
+    <Compile Include="ForaysUtility.cs" />
     <Compile Include="GL.cs" />
     <Compile Include="Global.cs" />
     <Compile Include="Help.cs" />
@@ -88,7 +89,9 @@
     <Compile Include="Color.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
