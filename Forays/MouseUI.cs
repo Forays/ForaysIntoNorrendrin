@@ -1,4 +1,4 @@
-﻿/*Copyright (c) 2015  Derrick Creamer
+﻿/*Copyright (c) 2015-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -173,7 +173,7 @@ namespace Forays{
 					mouselook_current_desc_area = Rectangle.Empty;
 				}
 				mouselook_current_target = null;
-				Screen.CursorVisible = true;
+				Screen.CursorVisible = true; // This should be safe, so long as mouseovers only appear while waiting for the player's move.
 			}
 			if(mouse_path != null){
 				foreach(pos p in mouse_path){

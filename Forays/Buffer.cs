@@ -119,7 +119,6 @@ namespace Forays{
 			int numPrev = NumLines - lines.Count;
 			int prevStartIdx = numPrev - 1;
 			if(repeated) prevStartIdx++;
-			Screen.CursorVisible = false;
 			for(int i=0;i<numPrev;++i) {
 				Screen.WriteString(i,Global.MAP_OFFSET_COLS,GetPreviousMessage(prevStartIdx - i).PadToMapSize(),Color.DarkGray);
 			}
@@ -149,7 +148,6 @@ namespace Forays{
 				Screen.WriteString(NumLines - 1,extraIdx,more,Color.Yellow);
 				MouseUI.PushButtonMap();
 				Screen.SetCursorPosition(extraIdx + more.Length - 1,NumLines - 1);
-				Screen.CursorVisible = true;
 				Input.ReadKey();
 				MouseUI.PopButtonMap();
 			}

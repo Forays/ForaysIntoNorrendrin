@@ -3147,7 +3147,6 @@ compare this number to 1/2:  if less than 1/2, major.
 				Targeting_DisplayContents(tc,always_displayed,unseen_area_message,true,first_iteration);
 				if(!lookmode){
 					bool blocked = false;
-					Screen.CursorVisible = false;
 					if(!no_line){
 						if(extend_line){
 							line = GetBestExtendedLineOfEffect(r,c);
@@ -3275,7 +3274,6 @@ compare this number to 1/2:  if less than 1/2, major.
 				}
 				first_iteration = false;
 				M.tile[r,c].Cursor();
-				Screen.CursorVisible = true;
 				command = Input.ReadKey().GetAction();
 				char ch = command.GetCommandChar();
 				if(!Targeting_HandleCommonCommands(command,ch,ref r,ref c,interesting_targets,ref done,minrow,maxrow,mincol,maxcol,!lookmode)){
@@ -3637,7 +3635,6 @@ compare this number to 1/2:  if less than 1/2, major.
 		}
 		public static void Targeting_RemoveLine(Tile tc,bool done,List<Tile> line,colorchar[,] mem,int radius){
 			if(done){
-				Screen.CursorVisible = false;
 				foreach(Tile t in line){
 					Screen.WriteMapChar(t.row,t.col,mem[t.row,t.col]);
 				}
@@ -3648,7 +3645,6 @@ compare this number to 1/2:  if less than 1/2, major.
 						}
 					}
 				}
-				Screen.CursorVisible = true;
 			}
 		}
 	}

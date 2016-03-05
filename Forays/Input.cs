@@ -272,9 +272,11 @@ namespace Forays{
 			return (char)0;
 			}
 		}
-		public static ConsoleKeyInfo ReadKey(){
+		public static ConsoleKeyInfo ReadKey(bool showCursor = true){
+			if(showCursor) Screen.CursorVisible = true;
 			if(!Screen.GLMode){
 				ConsoleKeyInfo raw = Console.ReadKey(true);
+				Screen.CursorVisible = false;
 				bool shift = (raw.Modifiers & ConsoleModifiers.Shift) == ConsoleModifiers.Shift;
 				ConsoleKeyInfo k = new ConsoleKeyInfo(GetChar(raw.Key,shift),raw.Key,shift,(raw.Modifiers & ConsoleModifiers.Alt) == ConsoleModifiers.Alt,(raw.Modifiers & ConsoleModifiers.Control) == ConsoleModifiers.Control);
 				if(global_rebindings.ContainsKey(k)){
@@ -302,6 +304,7 @@ namespace Forays{
 				}
 				Thread.Sleep(10);
 				if(KeyPressed){
+					Screen.CursorVisible = false;
 					KeyPressed = false;
 					if(global_rebindings.ContainsKey(LastKey)){
 						return global_rebindings[LastKey];
@@ -675,7 +678,6 @@ namespace Forays{
 		public static int EnterInt(int max_length){
 			string s = "";
 			ConsoleKeyInfo command;
-			Screen.CursorVisible = true;
 			bool done = false;
 			int pos = Screen.CursorLeft;
 			Screen.WriteString(Screen.CursorTop,pos,"".PadRight(max_length));
@@ -717,7 +719,6 @@ namespace Forays{
 		public static string EnterString(int max_length){
 			string s = "";
 			ConsoleKeyInfo command;
-			Screen.CursorVisible = true;
 			bool done = false;
 			int cursor = Screen.CursorLeft;
 			Screen.WriteString(Screen.CursorTop,cursor,"".PadRight(max_length));

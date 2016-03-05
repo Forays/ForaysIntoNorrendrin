@@ -104,7 +104,6 @@ namespace Forays{
 				++line;
 			}
 			UI.Display("Discovered item types: ");
-			Screen.CursorVisible = true;
 			Input.ReadKey();
 			MouseUI.PopButtonMap();
 			UI.draw_bottom_commands = true;
@@ -118,7 +117,6 @@ namespace Forays{
 			UI.darken_status_bar = true;
 			MouseUI.CreateMapButton(ConsoleKey.OemMinus,false,0,1);
 			MouseUI.CreateMapButton(ConsoleKey.OemPlus,false,text_height + 1,1);
-			Screen.CursorVisible = false;
 			Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
 			Screen.WriteMapString(text_height + 1,0,"".PadRight(COLS,'-'));
 			ConsoleKeyInfo command;
@@ -150,7 +148,6 @@ namespace Forays{
 					}
 				}
 				UI.Display("Previous messages: ");
-				Screen.CursorVisible = true;
 				command = Input.ReadKey();
 				ConsoleKey ck = command.Key;
 				switch(ck){

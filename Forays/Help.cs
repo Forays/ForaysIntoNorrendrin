@@ -24,7 +24,6 @@ namespace Forays{
 		public static void DisplayHelp(){ DisplayHelp(HelpTopic.Overview); }
 		public static void DisplayHelp(HelpTopic h){
 			MouseUI.PushButtonMap(MouseMode.ScrollableMenu);
-			Screen.CursorVisible = false;
 			Screen.Blank();
 			int num_topics = Enum.GetValues(typeof(HelpTopic)).Length;
 			int topic_start_row = (Global.SCREEN_H - num_topics - 1) / 2;
@@ -79,7 +78,7 @@ namespace Forays{
 						Screen.WriteString(i,text_col,text[i+startline-1].PadRight(text_width));
 					}
 				}
-				command = Input.ReadKey();
+				command = Input.ReadKey(false);
 				ConsoleKey ck = command.Key;
 				switch(ck){
 				case ConsoleKey.Backspace:
@@ -354,7 +353,6 @@ namespace Forays{
 				Screen.WriteString(y,x,s);
 				++y;
 			}
-			Screen.CursorVisible = false;
 			bool mouse_movement = MouseUI.IgnoreMouseMovement;
 			MouseUI.IgnoreMouseMovement = false;
 			Screen.GLUpdate();
@@ -363,7 +361,7 @@ namespace Forays{
 			if(!Actor.player.HasAttr(AttrType.RESTING)){
 				Actor.player.Interrupt();
 			}
-			if(Input.ReadKey().KeyChar == '='){
+			if(Input.ReadKey(false).KeyChar == '='){
 				Global.Options[OptionType.NEVER_DISPLAY_TIPS] = true;
 			}
 			MouseUI.IgnoreMouseMovement = mouse_movement;
@@ -371,7 +369,6 @@ namespace Forays{
 			MouseUI.PopButtonMap();
 			UI.DisplayStats();
 			displayed[topic] = true;
-			Screen.CursorVisible = true;
 		}
 		public static string[] TutorialText(TutorialTopic topic){
 			switch(topic){

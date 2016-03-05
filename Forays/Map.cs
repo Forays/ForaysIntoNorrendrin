@@ -454,7 +454,6 @@ namespace Forays{
 			else{
 				MouseUI.mouselook_objects = new PhysicalObject[Global.SCREEN_H,Global.SCREEN_W];
 				UI.sidebar_objects = new List<PhysicalObject>();
-				Screen.CursorVisible = false;
 				int i_start = 0;
 				int j_start = 0;
 				int row_limit = ROWS;
@@ -560,7 +559,6 @@ namespace Forays{
 		public void Redraw(){ //Redraw should be faster than Draw when most of the screen has changed.
 			MouseUI.mouselook_objects = new PhysicalObject[Global.SCREEN_H,Global.SCREEN_W];
 			UI.sidebar_objects = new List<PhysicalObject>();
-			Screen.CursorVisible = false;
 			int i_start = 0;
 			int j_start = 0;
 			int row_limit = ROWS;

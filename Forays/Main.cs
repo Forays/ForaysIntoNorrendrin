@@ -68,9 +68,10 @@ namespace Forays{
 						Console.Write("Please resize your terminal to {0}x{1}, then press any key.",Global.SCREEN_W,Global.SCREEN_H);
 						Screen.SetCursorPosition(0,1);
 						Console.Write("         Current dimensions are {0}x{1}.".PadRight(57),Console.BufferWidth,Console.BufferHeight);
-						Input.ReadKey();
+						Input.ReadKey(false);
 						Screen.SetCursorPosition(0,0);
 						if(Console.BufferWidth < Global.SCREEN_W || Console.BufferHeight < Global.SCREEN_H){
+							Screen.CursorVisible = true;
 							Environment.Exit(0);
 						}
 					}
@@ -150,7 +151,7 @@ namespace Forays{
 				Screen.WriteString(Global.SCREEN_H-2,Global.SCREEN_W-14,"version " + Global.VERSION + " ",Color.DarkGray);
 				Screen.WriteString(Global.SCREEN_H-1,Global.SCREEN_W-19,"by Derrick Creamer ",Color.DarkGray);
 				Screen.WriteString(Global.SCREEN_H-1,0,"logo by Soundlust",Color.DarkerGray);
-				Input.ReadKey();
+				Input.ReadKey(false);
 				Screen.gl.Surfaces.Remove(logo);
 			}
 			else{
@@ -175,7 +176,7 @@ namespace Forays{
 				}
 				Screen.WriteString(Global.SCREEN_H-3,Global.SCREEN_W-14,"version " + Global.VERSION + " ",Color.DarkGray);
 				Screen.WriteString(Global.SCREEN_H-2,Global.SCREEN_W-19,"by Derrick Creamer ",Color.DarkGray);
-				Input.ReadKey();
+				Input.ReadKey(false);
 			}
 		}
 		static void MainMenu(){
@@ -210,7 +211,7 @@ namespace Forays{
 				}
 				Screen.ResetColors();
 				Screen.SetCursorPosition(Global.MAP_OFFSET_COLS,Global.MAP_OFFSET_ROWS+8);
-				command = Input.ReadKey();
+				command = Input.ReadKey(false);
 				switch(command.KeyChar){
 				case 'a':
 				{
@@ -315,7 +316,6 @@ namespace Forays{
 								MouseUI.CreateButton(ConsoleKey.F22,false,16+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
 								MouseUI.CreateButton(ConsoleKey.F23,false,17+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
 								MouseUI.CreateButton(ConsoleKey.F24,false,18+Global.MAP_OFFSET_ROWS,0,1,Global.SCREEN_W);
-								Screen.CursorVisible = true;
 								command = Input.ReadKey();
 								if((command.KeyChar >= '!' && command.KeyChar <= '~') || command.KeyChar == ' '){
 									if(s.Length < 26){
@@ -854,16 +854,14 @@ namespace Forays{
 						fileout.Close();
 						MouseUI.IgnoreMouseMovement = true;
 						MouseUI.IgnoreMouseClicks = true;
-						Screen.CursorVisible = false;
 						Screen.Blank();
 						Screen.WriteString(12,0,"  An error has occured. See error.txt for more details. Press any key to quit.".PadOuter(Global.SCREEN_W));
-						Input.ReadKey();
+						Input.ReadKey(false);
 						Global.Quit();
 					}
 					MouseUI.PopButtonMap();
 					MouseUI.IgnoreMouseMovement = false;
 					Screen.NoClose = false;
-					Screen.CursorVisible = false;
 					Global.SaveOptions();
 					recentdepth = game.M.Depth;
 					recentname = Actor.player_name;
@@ -1043,7 +1041,7 @@ namespace Forays{
 						}
 						++line;
 					}
-					Input.ReadKey();
+					Input.ReadKey(false);
 					MouseUI.PopButtonMap();
 					break;
 				}
@@ -1142,7 +1140,6 @@ namespace Forays{
 					Screen.MapDrawWithStrings(game.M.last_seen,0,0,Global.ROWS,Global.COLS);
 					game.player.GetTarget(true,-1,-1,true,false,false,"");
 					//game.UI.Display("Press any key to continue. ");
-					//Screen.CursorVisible = true;
 					//Input.ReadKey();
 					MouseUI.PopButtonMap();
 					foreach(Actor a in drawn){
@@ -1163,7 +1160,6 @@ namespace Forays{
 						}
 					}
 					game.UI.Display("Press any key to continue. ");
-					Screen.CursorVisible = true;
 					Screen.WriteMapChar(0,0,'-');
 					game.M.Draw();
 					Input.ReadKey();*/
@@ -1198,7 +1194,6 @@ namespace Forays{
 				case 6:
 				{
 					UI.Display("Enter file name: ");
-					Screen.CursorVisible = true;
 					MouseUI.PushButtonMap();
 					string filename = Input.EnterString(40);
 					MouseUI.PopButtonMap();

@@ -1106,7 +1106,6 @@ namespace Forays{
 					}
 					List<Tile> tiles = new List<Tile>();
 					List<colorchar> memlist = new List<colorchar>();
-					Screen.CursorVisible = false;
 					Tile last_wall = null;
 					while(!t.passable){
 						tiles.Add(t);
@@ -2083,7 +2082,6 @@ namespace Forays{
 						results.IDed = false;
 					}
 					else{
-						Screen.CursorVisible = false;
 						foreach(Tile t in targeting.line_to_targeted){
 							if(t.passable && t != user.tile()){
 								t.AddFeature(FeatureType.WEB);
@@ -2303,7 +2301,6 @@ namespace Forays{
 				Tile prev = line.LastBeforeSolidTile();
 				Actor first = null;
 				bool trigger_trap = true;
-				Screen.CursorVisible = false;
 				if(user != null){
 					first = user.FirstActorInLine(line);
 					B.Add(user.You("fling") + " the " + SingularName() + ". ",user);
@@ -2328,7 +2325,6 @@ namespace Forays{
 						}
 					}
 					user.AnimateProjectile(line.ToFirstSolidTileOrActor(),'*',color);
-					Screen.CursorVisible = false;
 				}
 				else{
 					trigger_trap = false;

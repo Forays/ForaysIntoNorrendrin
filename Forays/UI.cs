@@ -74,7 +74,6 @@ namespace Forays{
 			bool buttons = MouseUI.AutomaticButtonsFromStrings;
 			MouseUI.AutomaticButtonsFromStrings = false;
 			bool commands_darkened = MouseUI.Mode != MouseMode.Map;
-			Screen.CursorVisible = false;
 			int row = 0;
 			if(!viewing_map_shrine_info){
 				string s = ("Health: " + player.curhp.ToString()).PadOuter(Global.STATUS_WIDTH);
@@ -761,7 +760,6 @@ namespace Forays{
 			Screen.WriteMapString(row,0,"".PadRight(COLS,'-'),text);
 			Screen.ResetColors();
 			UI.Display("Character information: ");
-			Screen.CursorVisible = true;
 
 			int result = -1;
 			if(readkey){
@@ -997,7 +995,6 @@ namespace Forays{
 
 				Screen.ResetColors();
 				UI.Display("Your equipment: ");
-				Screen.CursorVisible = true;
 				command = Input.ReadKey();
 				char ch = command.GetCommandChar();
 				switch(ch){
@@ -1318,7 +1315,6 @@ namespace Forays{
 				MouseUI.descend_hack = false;
 			}
 			UI.Display(s + " (y/n): ");
-			Screen.CursorVisible = true;
 			while(true) {
 				switch(Input.ReadKey().KeyChar) {
 					case 'y':
@@ -1340,7 +1336,6 @@ namespace Forays{
 		}
 		public static void Display(string message,bool refreshStatus = true) {
 			if(refreshStatus) UI.DisplayStats();
-			Screen.CursorVisible = false;
 			var wrapped = message.GetWordWrappedList(Global.COLS,false);
 			for(int i=0;i < 3 - wrapped.Count;++i) Screen.WriteString(i,Global.MAP_OFFSET_COLS,"".PadToMapSize());
 			for(int i=0;i < wrapped.Count;++i) Screen.WriteString(3 - wrapped.Count + i,Global.MAP_OFFSET_COLS,message.PadToMapSize());

@@ -2133,7 +2133,6 @@ namespace Forays{
 		}
 		public void InputHuman(){
 			if(HasAttr(AttrType.DETECTING_MOVEMENT) && footsteps.Count > 0 && time_of_last_action < Q.turn){
-				Screen.CursorVisible = false;
 				Screen.AnimateMapCells(footsteps,new colorchar('!',Color.Red));
 				previous_footsteps = footsteps;
 				footsteps = new List<pos>();
@@ -2164,7 +2163,6 @@ namespace Forays{
 				B.DisplayContents();
 			}
 			Cursor();
-			Screen.CursorVisible = true;
 			if(HasAttr(AttrType.PARALYZED,AttrType.ASLEEP)){
 				if(HasAttr(AttrType.ASLEEP)){
 					Thread.Sleep(25);
@@ -2237,7 +2235,7 @@ namespace Forays{
 			if(path.Count > 0){
 				if(!NextStepIsDangerous(M.tile[path[0]])){
 					if(Input.KeyIsAvailable()){
-						ConsoleKeyInfo key = Input.ReadKey();
+						ConsoleKeyInfo key = Input.ReadKey(false);
 						if(key.GetCommandChar() == 'x' && HasAttr(AttrType.AUTOEXPLORE)){
 							PlayerWalk(DirectionOf(path[0]));
 							if(path.Count > 0){
@@ -2357,7 +2355,7 @@ namespace Forays{
 				}
 				else{
 					if(Input.KeyIsAvailable()){
-						Input.ReadKey();
+						Input.ReadKey(false);
 					}
 					attrs[AttrType.RUNNING] = 0;
 					attrs[AttrType.WAITING] = 0;
@@ -2470,7 +2468,7 @@ namespace Forays{
 					}
 					if(monsters_visible || Input.KeyIsAvailable()){
 						if(Input.KeyIsAvailable()){
-							Input.ReadKey();
+							Input.ReadKey(false);
 						}
 						if(monsters_visible){
 							attrs[AttrType.RESTING] = 0;
@@ -3086,7 +3084,6 @@ namespace Forays{
 						MouseUI.CreateButton(ConsoleKey.Y,false,2,Global.MAP_OFFSET_COLS + 22,1,2);
 						MouseUI.CreateButton(ConsoleKey.N,false,2,Global.MAP_OFFSET_COLS + 25,1,2);
 						UI.Display("Travel to the stairs? (y/n): ");
-						Screen.CursorVisible = true;
 						bool done = false;
 						while(!done){
 							command = Input.ReadKey();
@@ -3152,7 +3149,6 @@ namespace Forays{
 				if(FrozenThisTurn()){
 					break;
 				}
-				Screen.CursorVisible = false;
 				Dictionary<Actor,colorchar> old_ch = new Dictionary<Actor,colorchar>();
 				List<Actor> drawn = new List<Actor>();
 				foreach(Actor a in M.AllActors()){
@@ -3408,7 +3404,6 @@ namespace Forays{
 					if(sel.value != -1 && sel.description_requested){
 						MouseUI.PushButtonMap(MouseMode.Inventory);
 						MouseUI.AutomaticButtonsFromStrings = true;
-						Screen.CursorVisible = false;
 						colorchar[,] screen = Screen.GetCurrentScreen();
 						for(int letter=0;letter<inv.Count;++letter){
 							Screen.WriteMapChar(letter+1,1,(char)(letter+'a'),Color.DarkCyan);
@@ -3420,7 +3415,7 @@ namespace Forays{
 							Screen.WriteString(i,j,cs);
 							++i;
 						}
-						switch(Input.ReadKey().GetCommandChar()){
+						switch(Input.ReadKey(false).GetCommandChar()){
 						case 'a':
 							ch = 'a';
 							sel.description_requested = false;
@@ -3443,7 +3438,6 @@ namespace Forays{
 							M.Redraw(); //this will break if the box goes off the map, todo
 							break;
 						}
-						Screen.CursorVisible = true;
 					}
 					else{
 						break;
@@ -4069,7 +4063,6 @@ namespace Forays{
 			case 'm':
 			{
 				MouseUI.PushButtonMap();
-				Screen.CursorVisible = false;
 				Tile stairs = M.AllTiles().Where(x=>x.type == TileType.STAIRS && x.seen).RandomOrDefault();
 				colorchar cch = Screen.BlankChar();
 				if(stairs != null){
@@ -4077,7 +4070,6 @@ namespace Forays{
 					M.last_seen[stairs.row,stairs.col] = new colorchar('>',stairs.color);
 				}
 				Screen.MapDrawWithStrings(M.last_seen,0,0,ROWS,COLS);
-				Screen.CursorVisible = true;
 				UI.viewing_map_shrine_info = true;
 				ChoosePathingDestination(false,false,$"Map of dungeon level {M.Depth}: ");
 				UI.viewing_map_shrine_info = false;
@@ -4143,73 +4135,6 @@ namespace Forays{
 				SharedEffect.ShowKnownItems(Item.identified);
 				Q0();
 				break;
-				/*MouseUI.PushButtonMap();
-				List<colorstring> potions = new List<colorstring>();
-				List<colorstring> scrolls = new List<colorstring>();
-				List<colorstring> orbs = new List<colorstring>();
-				foreach(ConsumableType ct in Enum.GetValues(typeof(ConsumableType))){
-					string type_name = "    " + ct.ToString()[0] + ct.ToString().Substring(1).ToLower();
-					type_name = type_name.Replace('_',' ');
-					Color ided_color = Color.Cyan;
-					if(Item.NameOfItemType(ct) == "potion"){
-						if(Item.identified[ct]){
-							potions.Add(new colorstring(type_name,ided_color));
-			            }
-			            else{
-							potions.Add(new colorstring(type_name,Color.DarkGray));
-						}
-					}
-					else{
-						if(Item.NameOfItemType(ct) == "scroll"){
-							if(Item.identified[ct]){
-								scrolls.Add(new colorstring(type_name,ided_color));
-				            }
-				            else{
-								scrolls.Add(new colorstring(type_name,Color.DarkGray));
-							}
-						}
-						else{
-							if(Item.NameOfItemType(ct) == "orb"){
-								if(Item.identified[ct]){
-									orbs.Add(new colorstring(type_name,ided_color));
-					            }
-					            else{
-									orbs.Add(new colorstring(type_name,Color.DarkGray));
-								}
-							}
-						}
-					}
-				}
-				Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
-				for(int i=1;i<ROWS-1;++i){
-					Screen.WriteMapString(i,0,"".PadToMapSize());
-				}
-				Screen.WriteMapString(ROWS-1,0,"".PadRight(COLS,'-'));
-				Color label_color = Color.Yellow;
-				Screen.WriteMapString(1,0,"  - Potions -",label_color);
-				Screen.WriteMapString(1,33,"  - Scrolls -",label_color);
-				int line = 2;
-				foreach(colorstring s in potions){
-					Screen.WriteMapString(line,0,s);
-					++line;
-				}
-				line = 2;
-				foreach(colorstring s in scrolls){
-					Screen.WriteMapString(line,33,s);
-					++line;
-				}
-				Screen.WriteMapString(12,0,"  - Orbs -",label_color);
-				line = 13;
-				foreach(colorstring s in orbs){
-					Screen.WriteMapString(line,0,s);
-					++line;
-				}
-				UI.Display("Discovered item types: ");
-				Screen.CursorVisible = true;
-				Input.ReadKey();
-				MouseUI.PopButtonMap();
-				Q0();
-				break;*/
 			}
 			case 'O':
 			case '=':
@@ -4238,7 +4163,6 @@ namespace Forays{
 						ls.Add("Disable graphics".PadRight(58) + (Global.Option(OptionType.DISABLE_GRAPHICS)? "yes ":"no ").PadLeft(4));
 					}*/
 					Select("Options: ",ls,true,false,false);
-					Screen.CursorVisible = true;
 					ch = Input.ReadKey().GetCommandChar();
 					switch(ch){
 					case 'a':
@@ -4344,7 +4268,6 @@ namespace Forays{
 				MouseUI.PushButtonMap();
 				UI.draw_bottom_commands = false;
 				UI.darken_status_bar = true;
-				Screen.CursorVisible = false;
 				List<string> commandhelp = Help.HelpText(HelpTopic.Commands);
 				commandhelp.RemoveRange(0,2);
 				Screen.WriteMapString(0,0,"".PadRight(COLS,'-'));
@@ -4353,7 +4276,6 @@ namespace Forays{
 				}
 				Screen.WriteMapString(ROWS+2,0,"".PadRight(COLS,'-'));
 				UI.Display("Commands: ");
-				Screen.CursorVisible = true;
 				Input.ReadKey();
 				MouseUI.PopButtonMap();
 				UI.draw_bottom_commands = true;
@@ -4372,7 +4294,6 @@ namespace Forays{
 				ls.Add("Continue playing");
 				bool no_close = Screen.NoClose;
 				Screen.NoClose = false;
-				Screen.CursorVisible = true;
 				switch(Select("Quit? ",ls)){
 				case 0:
 					if(UI.YesOrNoPrompt("Save game & return to main menu?")){
@@ -4832,7 +4753,6 @@ namespace Forays{
 					}
 					case 4:
 					{
-						Screen.CursorVisible = false;
 						colorchar cch;
 						cch.c = ' ';
 						cch.color = Color.Black;
@@ -4841,7 +4761,6 @@ namespace Forays{
 							t.seen = false;
 							Screen.WriteMapChar(t.row,t.col,cch);
 						}
-						Screen.CursorVisible = true;
 						Q0();
 						break;
 					}
@@ -5467,7 +5386,7 @@ namespace Forays{
 						Screen.WriteString(i,menuCol,(" [" + strings[i-menuRow] + "] ").PadRight(menuWidth),Color.Cyan,Color.DarkerGray);
 						MouseUI.CreateButton((ConsoleKey)(i - menuRow + (int)ConsoleKey.F17),false,i,menuCol,1,menuWidth);
 					}
-					ConsoleKeyInfo menuCommand = Input.ReadKey();
+					ConsoleKeyInfo menuCommand = Input.ReadKey(false);
 					Screen.WriteArray(menuRow,menuCol,mem);
 					UI.darken_status_bar = false;
 					MouseUI.PopButtonMap();
@@ -12331,7 +12250,6 @@ namespace Forays{
 			}
 			int idx = 0;
 			if(animation_line.Count > 0){
-				Screen.CursorVisible = false;
 				PhysicalObject o = t;
 				if(a != null){
 					o = a;
@@ -12343,7 +12261,6 @@ namespace Forays{
 					if(first_line.Count > 0){
 						Screen.AnimateBoltProjectile(animation_line.ToCount(flaming_arrow_start+2),Color.DarkYellow,20);
 					}
-					Screen.CursorVisible = false;
 					if(second_line.Count > 0){
 						Screen.AnimateBoltProjectile(animation_line.FromCount(flaming_arrow_start+2),Color.RandomFire,20);
 					}
@@ -12351,11 +12268,9 @@ namespace Forays{
 				else{
 					Screen.AnimateBoltProjectile(animation_line,Color.DarkYellow,20);
 				}
-				Screen.CursorVisible = false;
 				if(this == player && solid_object_hit && !player.CanSee(o) && (o is Actor || !o.tile().seen)){
 					Screen.AnimateMapCell(o.row,o.col,new colorchar('?',Color.DarkGray),50);
 				}
-				Screen.CursorVisible = false;
 			}
 			idx = 0;
 			foreach(string s in misses){
@@ -13685,7 +13600,6 @@ namespace Forays{
 				if(!UI.YesOrNoPrompt("Really exhaust yourself to cast this spell?")){
 					return false;
 				}
-				Screen.CursorVisible = false;
 			}
 			Tile t = null;
 			List<Tile> line = null;
@@ -14331,7 +14245,6 @@ namespace Forays{
 						MakeNoise(spellVolume);
 						colorchar ch = new colorchar(Color.Cyan,'!');
 						if(this == player){
-							Screen.CursorVisible = false;
 							switch(DirectionOf(t)){
 							case 8:
 							case 2:
@@ -14352,7 +14265,6 @@ namespace Forays{
 						}
 						List<Tile> tiles = new List<Tile>();
 						List<colorchar> memlist = new List<colorchar>();
-						Screen.CursorVisible = false;
 						Tile last_wall = null;
 						while(!t.passable){
 							if(t.row == 0 || t.row == ROWS-1 || t.col == 0 || t.col == COLS-1){
@@ -15312,9 +15224,7 @@ namespace Forays{
 						Help.TutorialTip(TutorialTopic.Feats,true);
 						UI.Display("Your " + Skill.Name(skill) + " skill increases to " + skills[skill] + ". Choose a feat: ");
 					}
-					Screen.CursorVisible = true;
 					command = Input.ReadKey();
-					Screen.CursorVisible = false;
 					char ch = command.GetCommandChar();
 					switch(ch){
 					case 'a':
@@ -16037,7 +15947,6 @@ namespace Forays{
 			UI.Display(s);
 			ConsoleKeyInfo command;
 			char ch;
-			Screen.CursorVisible = true;
 			while(true){
 				command = Input.ReadKey().GetAction();
 				ch = command.GetCommandChar();
@@ -16045,26 +15954,22 @@ namespace Forays{
 				if(i>=1 && i<=9){
 					if(i != 5){
 						if(!orth || i%2==0){ //in orthogonal mode, return only even dirs
-							Screen.CursorVisible = false;
 							MouseUI.PopButtonMap();
 							return i;
 						}
 					}
 					else{
 						if(allow_self_targeting){
-							Screen.CursorVisible = false;
 							MouseUI.PopButtonMap();
 							return i;
 						}
 					}
 				}
 				if(ch == (char)27){ //escape
-					Screen.CursorVisible = false;
 					MouseUI.PopButtonMap();
 					return -1;
 				}
 				if(ch == ' '){
-					Screen.CursorVisible = false;
 					MouseUI.PopButtonMap();
 					return -1;
 				}
@@ -16116,7 +16021,6 @@ namespace Forays{
 				if(!first_iteration || r != row || c != col){
 					Targeting_DisplayContents(nearest,"",unseen_area_message,visible_monsters,first_iteration);
 				}
-				Screen.CursorVisible = false;
 				bool blocked = false;
 				if(visible_path){
 					if(!nearest.TilesWithinDistance(1).Any(x=>(x.passable || x.IsDoorType(false)) && x.seen && known_reachable[x.p])){
@@ -16165,7 +16069,6 @@ namespace Forays{
 				oldline = new List<Tile>(line);
 				first_iteration = false;
 				M.tile[r,c].Cursor();
-				Screen.CursorVisible = true;
 				command = Input.ReadKey().GetAction();
 				char ch = command.GetCommandChar();
 				if(ch == 'X' && visible_path){
@@ -16295,7 +16198,6 @@ namespace Forays{
 		public ItemSelection GetItemSelection(string s,int count,bool no_cancel,bool easy_cancel,bool help_key){
 			ItemSelection result = new ItemSelection();
 			UI.Display(s);
-			Screen.CursorVisible = true;
 			ConsoleKeyInfo command;
 			char ch;
 			while(true){
@@ -16436,7 +16338,6 @@ namespace Forays{
 		public int GetSelection(string s,int count,bool no_cancel,bool easy_cancel,bool help_key){
 			//if(count == 0){ return -1; }
 			UI.Display(s);
-			Screen.CursorVisible = true;
 			ConsoleKeyInfo command;
 			char ch;
 			while(true){
