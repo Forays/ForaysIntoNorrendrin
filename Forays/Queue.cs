@@ -1,4 +1,4 @@
-/*Copyright (c) 2011-2015  Derrick Creamer
+/*Copyright (c) 2011-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -70,7 +70,7 @@ namespace Forays{
 			}
 		}
 
-		public static Buffer B;
+		public static MessageBuffer B;
 		public Queue(Game g){
 			list = new LinkedList<Event>();
 			turn = 0;
@@ -197,7 +197,7 @@ namespace Forays{
 		public bool dead;
 		public int tiebreaker;
 		public static Queue Q;
-		public static Buffer B;
+		public static MessageBuffer B;
 		public static Map M;
 		public static Actor player;
 		public Event(){}
@@ -636,8 +636,7 @@ namespace Forays{
 					if(M.AllActors().Count == 1 && !Q.Contains(EventType.POLTERGEIST)
 					&& !Q.Contains(EventType.REGENERATING_FROM_DEATH) && !Q.Contains(EventType.MIMIC) && !Q.Contains(EventType.MARBLE_HORROR)){
 						//B.Add("The dungeon is still and silent. ");
-						B.Add("The dungeon is utterly silent for a moment. ");
-						B.PrintAll();
+						B.Add(Priority.Important,"The dungeon is utterly silent for a moment. ");
 					}
 					else{
 						Q.Add(new Event((R.Roll(20)+30)*100,EventType.RELATIVELY_SAFE));
@@ -673,7 +672,7 @@ namespace Forays{
 									}
 									else{
 										B.Add("Something throws " + item.AName() + ". ",temporary);
-										B.DisplayNow();
+										B.DisplayContents();
 										Screen.AnimateProjectile(tile.GetBestExtendedLineOfEffect(player).ToFirstSolidTileOrActor(),new colorchar(item.color,item.symbol));
 										player.tile().GetItem(item);
 										B.Add(item.TheName() + " hits you. ");
@@ -689,7 +688,7 @@ namespace Forays{
 							else{
 								if(value >= 2 && area.Any(t => t.DistanceFrom(player) == 1 && t.passable && t.actor() == null)){
 									Tile tile = area.Where(t => t.DistanceFrom(player) == 1 && t.passable && t.actor() == null).Random();
-									B.DisplayNow();
+									B.DisplayContents();
 									for(int i=4;i>0;--i){
 										Screen.AnimateStorm(tile.p,i,2,1,'G',Color.DarkGreen);
 									}
@@ -731,7 +730,7 @@ namespace Forays{
 											}
 											else{
 												B.Add("Something throws " + item.TheName() + ". ",temporary);
-												B.DisplayNow();
+												B.DisplayContents();
 												Screen.AnimateProjectile(tile.GetBestExtendedLineOfEffect(player).ToFirstSolidTileOrActor(),new colorchar(item.color,item.symbol));
 												player.tile().GetItem(item);
 												B.Add(item.TheName() + " hits you. ");
@@ -858,7 +857,7 @@ namespace Forays{
 						if(t.seen){
 							Screen.WriteMapChar(t.row,t.col,M.VisibleColorChar(t.row,t.col));
 						}
-						B.DisplayNow();
+						B.DisplayContents();
 						t.ApplyExplosion(1,"an exploding grenade");
 						/*List<pos> cells = new List<pos>();
 						foreach(Tile tile in t.TilesWithinDistance(1)){
@@ -909,7 +908,7 @@ namespace Forays{
 							if(t.seen){
 								Screen.WriteMapChar(t.row,t.col,M.VisibleColorChar(t.row,t.col));
 							}
-							B.DisplayNow();
+							B.DisplayContents();
 							t.ApplyExplosion(3,"an exploding blast fungus");
 						}
 					}
@@ -1857,8 +1856,7 @@ namespace Forays{
 										ghost.player_visibility_duration = -1;
 										ghost.target = player;
 										t.color = Color.White;
-										B.Add("A vengeful ghost rises! ");
-										B.PrintAll();
+										B.Add(Priority.Important,"A vengeful ghost rises! ");
 										break;
 									}
 								}

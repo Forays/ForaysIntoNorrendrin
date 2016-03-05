@@ -1,4 +1,4 @@
-/*Copyright (c) 2014-2015  Derrick Creamer
+/*Copyright (c) 2014-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -14,7 +14,7 @@ using PosArrays;
 using Utilities;
 namespace Forays{
 	public static class SharedEffect{
-		private static Buffer B{ get{ return Actor.B; } } //todo: add collapse (and/or the falling stones effect) and passage here eventually
+		private static MessageBuffer B{ get{ return Actor.B; } } //todo: add collapse (and/or the falling stones effect) and passage here eventually
 		private static Map M{ get{ return Actor.M; } }
 		private static Queue Q{ get{ return Actor.Q; } }
 		private static Actor player{ get{ return Actor.player; } }
@@ -103,7 +103,7 @@ namespace Forays{
 				Screen.WriteMapString(line,second_column_offset,s);
 				++line;
 			}
-			B.DisplayNow("Discovered item types: ");
+			UI.Display("Discovered item types: ");
 			Screen.CursorVisible = true;
 			Input.ReadKey();
 			MouseUI.PopButtonMap();
@@ -112,7 +112,7 @@ namespace Forays{
 		}
 		public static void ShowPreviousMessages(bool show_footsteps){
 			const int text_height = Global.ROWS + 1;
-			List<string> messages = B.GetMessages();
+			List<string> messages = B.GetMessageLog();
 			MouseUI.PushButtonMap(MouseMode.ScrollableMenu);
 			UI.draw_bottom_commands = false;
 			UI.darken_status_bar = true;
@@ -149,7 +149,7 @@ namespace Forays{
 						Screen.WriteMapString(i,0,messages[i+startline-1].PadToMapSize());
 					}
 				}
-				B.DisplayNow("Previous messages: ");
+				UI.Display("Previous messages: ");
 				Screen.CursorVisible = true;
 				command = Input.ReadKey();
 				ConsoleKey ck = command.Key;
@@ -240,7 +240,7 @@ namespace Forays{
 				if(wand && user == player && !Item.identified[ConsumableType.TELEKINESIS]){
 					Item.identified[ConsumableType.TELEKINESIS] = true;
 					B.Add("(It was a wand of telekinesis!) ");
-					B.PrintAll();
+					B.Print(true);
 				}
 				List<Tile> ai_line = null;
 				if(user != player && t == player.tile()){
@@ -326,7 +326,7 @@ namespace Forays{
 								B.Add(user.YouVisible("throw") + " " + a.TheName(true) + ". ",user,a);
 							}
 						}
-						B.DisplayNow();
+						B.DisplayContents();
 						user.attrs[AttrType.SELF_TK_NO_DAMAGE] = 1;
 						a.attrs[AttrType.TELEKINETICALLY_THROWN] = 1;
 						a.attrs[AttrType.TURN_INTO_CORPSE]++;
@@ -414,7 +414,7 @@ namespace Forays{
 							else{
 								B.Add(user.YouVisible("throw") + " " + itemname + ". ",user,t);
 							}
-							B.DisplayNow();
+							B.DisplayContents();
 							if(i.quantity > 1){
 								i.quantity--;
 								bool revealed = i.revealed_by_light;
@@ -615,7 +615,7 @@ namespace Forays{
 								else{
 									B.Add(user.YouVisible("throw") + " the " + feature_name + ". ",user,t);
 								}
-								B.DisplayNow();
+								B.DisplayContents();
 								user.attrs[AttrType.SELF_TK_NO_DAMAGE] = 1;
 								switch(t.type){
 								case TileType.CRACKED_WALL:

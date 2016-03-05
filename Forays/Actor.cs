@@ -1,4 +1,4 @@
-/*Copyright (c) 2011-2015  Derrick Creamer
+/*Copyright (c) 2011-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -1653,11 +1653,9 @@ namespace Forays{
 			}
 			if(tile().type == TileType.FIRE_RIFT && !HasAttr(AttrType.FLYING)){
 				if(this == player){
-					B.Add("The maw of the Demon King opens beneath you. ");
-					B.PrintAll();
-					B.Add("You fall... ");
-					B.PrintAll();
-					B.Add("Fortunately, you burn to death before you reach the bottom. ");
+					B.Add(Priority.Important,"The maw of the Demon King opens beneath you. ");
+					B.Add(Priority.Important,"You fall... ");
+					B.Add(Priority.Important,"Fortunately, you burn to death before you reach the bottom. ");
 					Kill();
 					curhp = 0;
 					return;
@@ -2163,7 +2161,7 @@ namespace Forays{
 				B.Print(false);
 			}
 			else{
-				B.DisplayNow();
+				B.DisplayContents();
 			}
 			Cursor();
 			Screen.CursorVisible = true;
@@ -2489,7 +2487,7 @@ namespace Forays{
 					}
 					else{
 						attrs[AttrType.RESTING]++;
-						B.Add("You rest... ",true);
+						B.Add(Priority.Minor,"You rest... ");
 						Q1();
 						return;
 					}
@@ -2790,8 +2788,7 @@ namespace Forays{
 										if(R.OneIn(15)){
 											Bow.status[EquipmentStatus.ALMOST_OUT_OF_ARROWS] = false;
 											Bow.status[EquipmentStatus.ONE_ARROW_LEFT] = true;
-											B.Add("You're down to your last arrow! ");
-											B.PrintAll();
+											B.Add(Priority.Important,"You're down to your last arrow! ");
 										}
 									}
 									else{
@@ -2799,15 +2796,13 @@ namespace Forays{
 											if(R.OneIn(20)){
 												Bow.status[EquipmentStatus.LOW_ON_ARROWS] = false;
 												Bow.status[EquipmentStatus.ALMOST_OUT_OF_ARROWS] = true;
-												B.Add("You have only a few arrows left! ");
-												B.PrintAll();
+												B.Add(Priority.Important,"You have only a few arrows left! ");
 											}
 										}
 										else{
 											if(R.OneIn(25)){
 												Bow.status[EquipmentStatus.LOW_ON_ARROWS] = true;
-												B.Add("You're running a bit low on arrows. ");
-												B.PrintAll();
+												B.Add(Priority.Important,"You're running a bit low on arrows. ");
 											}
 										}
 									}
@@ -2933,7 +2928,7 @@ namespace Forays{
 					}
 					if(!monsters_visible){
 						if(curhp < maxhp || curmp < maxmp || exhaustion > 0 || equipment_can_be_repaired){
-							if(!Global.Option(OptionType.NO_CONFIRMATION_BEFORE_RESTING) && !B.YesOrNoPrompt("Rest and repair your equipment?")){
+							if(!Global.Option(OptionType.NO_CONFIRMATION_BEFORE_RESTING) && !UI.YesOrNoPrompt("Rest and repair your equipment?")){
 								Q0();
 								break;
 							}
@@ -2941,7 +2936,7 @@ namespace Forays{
 								break;
 							}
 							attrs[AttrType.RESTING] = 1;
-							B.Add("You rest... ",true);
+							B.Add(Priority.Minor,"You rest... ");
 							Q1();
 						}
 						else{
@@ -3000,7 +2995,7 @@ namespace Forays{
 					}
 					if(attrs[AttrType.RESTING] != -1 && (curhp < maxhp || curmp < maxmp || exhaustion > 0 || equipment_can_be_repaired)){
 						MouseUI.descend_hack = true;
-						if(!B.YesOrNoPrompt("Really take the stairs without resting first?")){
+						if(!UI.YesOrNoPrompt("Really take the stairs without resting first?")){
 							Q0();
 							return;
 						}
@@ -3020,13 +3015,13 @@ namespace Forays{
 					}
 					if(shrine_remaining){
 						Help.TutorialTip(TutorialTopic.DistributionOfShrines);
-						if(!B.YesOrNoPrompt("You feel an ancient power calling you back. Leave anyway?")){
+						if(!UI.YesOrNoPrompt("You feel an ancient power calling you back. Leave anyway?")){
 							Q0();
 							return;
 						}
 					}
 					B.Add("You walk down the stairs. ");
-					B.PrintAll();
+					B.Print(true);
 					if(M.Depth < 20){
 						M.GenerateLevel();
 					}
@@ -3090,7 +3085,7 @@ namespace Forays{
 						MouseUI.PushButtonMap(MouseMode.YesNoPrompt);
 						MouseUI.CreateButton(ConsoleKey.Y,false,2,Global.MAP_OFFSET_COLS + 22,1,2);
 						MouseUI.CreateButton(ConsoleKey.N,false,2,Global.MAP_OFFSET_COLS + 25,1,2);
-						B.DisplayNow("Travel to the stairs? (y/n): ");
+						UI.Display("Travel to the stairs? (y/n): ");
 						Screen.CursorVisible = true;
 						bool done = false;
 						while(!done){
@@ -3513,8 +3508,7 @@ namespace Forays{
 									else{
 										Actor thief = ActorsAtDistance(1).Where(x=>x.type == ActorType.SNEAK_THIEF).RandomOrDefault();
 										if(thief != null){
-											B.Add(thief.YouVisible("snatch",true) + " your " + inv[num].SingularName(false) + "! ");
-											B.PrintAll();
+											B.Add(Priority.Important,thief.YouVisible("snatch",true) + " your " + inv[num].SingularName(false) + "! ");
 											Item stolen = inv[num];
 											if(inv[num].quantity > 1){
 												stolen = new Item(inv[num],inv[num].row,inv[num].col);
@@ -3755,7 +3749,7 @@ namespace Forays{
 							Q1();
 						}
 						else{
-							//B.DisplayNow("Drop how many? (1-" + i.quantity + "): ");
+							//UI.Display("Drop how many? (1-" + i.quantity + "): ");
 							//int count = Global.EnterInt();
 							int count = 1;
 							if(count == 0){
@@ -4210,7 +4204,7 @@ namespace Forays{
 					Screen.WriteMapString(line,0,s);
 					++line;
 				}
-				B.DisplayNow("Discovered item types: ");
+				UI.Display("Discovered item types: ");
 				Screen.CursorVisible = true;
 				Input.ReadKey();
 				MouseUI.PopButtonMap();
@@ -4358,7 +4352,7 @@ namespace Forays{
 					Screen.WriteMapString(i+1,0,commandhelp[i].PadRight(COLS));
 				}
 				Screen.WriteMapString(ROWS+2,0,"".PadRight(COLS,'-'));
-				B.DisplayNow("Commands: ");
+				UI.Display("Commands: ");
 				Screen.CursorVisible = true;
 				Input.ReadKey();
 				MouseUI.PopButtonMap();
@@ -4381,33 +4375,33 @@ namespace Forays{
 				Screen.CursorVisible = true;
 				switch(Select("Quit? ",ls)){
 				case 0:
-					if(B.YesOrNoPrompt("Save game & return to main menu?")){
+					if(UI.YesOrNoPrompt("Save game & return to main menu?")){
 						Global.GAME_OVER = true;
 						Global.SAVING = true;
 					}
 					break;
 				case 1:
-					if(B.YesOrNoPrompt("Save game & quit?")){
+					if(UI.YesOrNoPrompt("Save game & quit?")){
 						Global.GAME_OVER = true;
 						Global.QUITTING = true;
 						Global.SAVING = true;
 					}
 					break;
 				case 2:
-					if(B.YesOrNoPrompt("Really abandon character & return to main menu?")){
+					if(UI.YesOrNoPrompt("Really abandon character & return to main menu?")){
 						Global.GAME_OVER = true;
 						Global.KILLED_BY = "gave up";
 					}
 					break;
 				case 3:
-					if(B.YesOrNoPrompt("Really abandon character & quit?")){
+					if(UI.YesOrNoPrompt("Really abandon character & quit?")){
 						Global.GAME_OVER = true;
 						Global.QUITTING = true;
 						Global.KILLED_BY = "gave up";
 					}
 					break;
 				case 4:
-					if(B.YesOrNoPrompt("Really abandon character & quit immediately?")){
+					if(UI.YesOrNoPrompt("Really abandon character & quit immediately?")){
 						Global.Quit();
 					}
 					break;
@@ -5625,13 +5619,13 @@ namespace Forays{
 						}
 						/*if(CanSee(t) && !HasAttr(AttrType.CONFUSED)){
 							if(t.IsKnownTrap() && !HasAttr(AttrType.FLYING,AttrType.BRUTISH_STRENGTH) && !t.name.Contains("(safe)")){
-								if(!B.YesOrNoPrompt("Really step on " + t.TheName(true) + "?")){
+								if(!UI.YesOrNoPrompt("Really step on " + t.TheName(true) + "?")){
 									Q0();
 									return;
 								}
 							}
 							if(t.IsBurning() && !IsBurning() && !HasAttr(AttrType.SLIMED,AttrType.NONLIVING)){ //nonliving indicates stoneform
-								if(!B.YesOrNoPrompt("Really walk into the fire?")){
+								if(!UI.YesOrNoPrompt("Really walk into the fire?")){
 									Q0();
 									return;
 								}
@@ -5644,29 +5638,29 @@ namespace Forays{
 										break;
 									}
 								}
-								if(fire && !B.YesOrNoPrompt("Really step next to the fire?")){
+								if(fire && !UI.YesOrNoPrompt("Really step next to the fire?")){
 									Q0();
 									return;
 								}
 							}
-							if(t.Is(FeatureType.WEB) && !HasAttr(AttrType.SLIMED,AttrType.OIL_COVERED,AttrType.BRUTISH_STRENGTH) && !B.YesOrNoPrompt("Really walk into the web?")){
+							if(t.Is(FeatureType.WEB) && !HasAttr(AttrType.SLIMED,AttrType.OIL_COVERED,AttrType.BRUTISH_STRENGTH) && !UI.YesOrNoPrompt("Really walk into the web?")){
 								Q0();
 								return;
 							}
 							if(!HasAttr(AttrType.NONLIVING)){
-								if(t.Is(FeatureType.CONFUSION_GAS) && !B.YesOrNoPrompt("Really walk into the confusion gas?")){
+								if(t.Is(FeatureType.CONFUSION_GAS) && !UI.YesOrNoPrompt("Really walk into the confusion gas?")){
 									Q0();
 									return;
 								}
-								if(t.Is(FeatureType.POISON_GAS) && !HasAttr(AttrType.POISONED) && !B.YesOrNoPrompt("Really walk into the poison gas?")){
+								if(t.Is(FeatureType.POISON_GAS) && !HasAttr(AttrType.POISONED) && !UI.YesOrNoPrompt("Really walk into the poison gas?")){
 									Q0();
 									return;
 								}
-								if(t.Is(FeatureType.SPORES) && (!HasAttr(AttrType.POISONED) || !HasAttr(AttrType.STUNNED)) && !B.YesOrNoPrompt("Really walk into the spores?")){
+								if(t.Is(FeatureType.SPORES) && (!HasAttr(AttrType.POISONED) || !HasAttr(AttrType.STUNNED)) && !UI.YesOrNoPrompt("Really walk into the spores?")){
 									Q0();
 									return;
 								}
-								if(t.Is(FeatureType.THICK_DUST) && !B.YesOrNoPrompt("Really walk into the cloud of dust?")){
+								if(t.Is(FeatureType.THICK_DUST) && !UI.YesOrNoPrompt("Really walk into the cloud of dust?")){
 									Q0();
 									return;
 								}
@@ -5791,7 +5785,7 @@ namespace Forays{
 						}
 						if(t.Is(TileType.CHEST)){
 							if(grab_item_at_end_of_path){
-								B.Add("There is a chest here. ",true);
+								B.Add(Priority.Minor,"There is a chest here. ");
 							}
 							else{
 								B.Add("There is a chest here - press g to open it. ");
@@ -5814,18 +5808,19 @@ namespace Forays{
 							B.Add("There is " + t.AName(true) + " here. ");
 						}
 						/*if(t.Is(TileType.CHASM) && !HasAttr(AttrType.FLYING)){
-							if(!B.YesOrNoPrompt("Jump into the chasm?")){
+							if(!UI.YesOrNoPrompt("Jump into the chasm?")){
 								Q0();
 								return;
 							}
 						}*/
 						if(t.inv != null){
 							t.inv.revealed_by_light = true;
+							Priority priority = grab_item_at_end_of_path? Priority.Minor : Priority.Normal;
 							if(t.inv.quantity > 1){
-								B.Add("There are " + t.inv.AName() + " here. ",grab_item_at_end_of_path);
+								B.Add(priority,"There are " + t.inv.AName() + " here. ");
 							}
 							else{
-								B.Add("There is " + t.inv.AName() + " here. ",grab_item_at_end_of_path);
+								B.Add(priority,"There is " + t.inv.AName() + " here. ");
 							}
 							//B.Add("You see " + t.inv.AName() + ". ");
 						}
@@ -5894,7 +5889,7 @@ namespace Forays{
 							}
 							else{
 								if(t.Is(TileType.BARREL,TileType.STANDING_TORCH,TileType.POISON_BULB)){
-									if(t.Is(TileType.POISON_BULB) && !B.YesOrNoPrompt("Really break the poison bulb?")){
+									if(t.Is(TileType.POISON_BULB) && !UI.YesOrNoPrompt("Really break the poison bulb?")){
 										Q0();
 										return;
 									}
@@ -6012,12 +6007,12 @@ namespace Forays{
 		public bool ConfirmsSafetyPrompts(Tile t){
 			if(CanSee(t) && !HasAttr(AttrType.CONFUSED)){
 				if(t.IsKnownTrap() && !HasAttr(AttrType.FLYING,AttrType.BRUTISH_STRENGTH) && !t.name.Contains("(safe)")){
-					if(!B.YesOrNoPrompt("Really step on " + t.TheName(true) + "?")){
+					if(!UI.YesOrNoPrompt("Really step on " + t.TheName(true) + "?")){
 						return false;
 					}
 				}
 				if(t.IsBurning() && !IsBurning() && !HasAttr(AttrType.SLIMED,AttrType.STONEFORM)){
-					if(!B.YesOrNoPrompt("Really walk into the fire?")){
+					if(!UI.YesOrNoPrompt("Really walk into the fire?")){
 						return false;
 					}
 				}
@@ -6029,24 +6024,24 @@ namespace Forays{
 							break;
 						}
 					}
-					if(fire && !B.YesOrNoPrompt("Really step next to the fire?")){
+					if(fire && !UI.YesOrNoPrompt("Really step next to the fire?")){
 						return false;
 					}
 				}
-				if(t.Is(FeatureType.WEB) && !HasAttr(AttrType.SLIMED,AttrType.OIL_COVERED,AttrType.BRUTISH_STRENGTH,AttrType.BURNING) && !B.YesOrNoPrompt("Really walk into the web?")){
+				if(t.Is(FeatureType.WEB) && !HasAttr(AttrType.SLIMED,AttrType.OIL_COVERED,AttrType.BRUTISH_STRENGTH,AttrType.BURNING) && !UI.YesOrNoPrompt("Really walk into the web?")){
 					return false;
 				}
 				if(!HasAttr(AttrType.NONLIVING)){
-					if(t.Is(FeatureType.CONFUSION_GAS) && !HasAttr(AttrType.BURNING) && !B.YesOrNoPrompt("Really walk into the confusion gas?")){
+					if(t.Is(FeatureType.CONFUSION_GAS) && !HasAttr(AttrType.BURNING) && !UI.YesOrNoPrompt("Really walk into the confusion gas?")){
 						return false;
 					}
-					if(t.Is(FeatureType.POISON_GAS) && !HasAttr(AttrType.POISONED) && !B.YesOrNoPrompt("Really walk into the poison gas?")){
+					if(t.Is(FeatureType.POISON_GAS) && !HasAttr(AttrType.POISONED) && !UI.YesOrNoPrompt("Really walk into the poison gas?")){
 						return false;
 					}
-					if(t.Is(FeatureType.SPORES) && !HasAttr(AttrType.BURNING) && (!HasAttr(AttrType.POISONED) || !HasAttr(AttrType.STUNNED)) && !B.YesOrNoPrompt("Really walk into the spores?")){
+					if(t.Is(FeatureType.SPORES) && !HasAttr(AttrType.BURNING) && (!HasAttr(AttrType.POISONED) || !HasAttr(AttrType.STUNNED)) && !UI.YesOrNoPrompt("Really walk into the spores?")){
 						return false;
 					}
-					if(t.Is(FeatureType.THICK_DUST) && !B.YesOrNoPrompt("Really walk into the cloud of dust?")){
+					if(t.Is(FeatureType.THICK_DUST) && !UI.YesOrNoPrompt("Really walk into the cloud of dust?")){
 						return false;
 					}
 				}
@@ -7494,8 +7489,7 @@ namespace Forays{
 							B.Add(YouVisible("stop") + " praying. ");
 							if(still_alive && target.EquippedWeapon.type != WeaponType.NO_WEAPON && !target.EquippedWeapon.status[EquipmentStatus.MERCIFUL]){
 								target.EquippedWeapon.status[EquipmentStatus.MERCIFUL] = true;
-								B.Add(target.You("feel") + " a strange power enter " + target.Your() + " " + target.EquippedWeapon.NameWithoutEnchantment() + "! ",target);
-								B.PrintAll();
+								B.Add(Priority.Important,target.You("feel") + " a strange power enter " + target.Your() + " " + target.EquippedWeapon.NameWithoutEnchantment() + "! ",target);
 								Help.TutorialTip(TutorialTopic.Merciful);
 							}
 						}
@@ -7529,36 +7523,6 @@ namespace Forays{
 						}
 					}
 				}
-				/*if(HasAttr(AttrType.COOLDOWN_2)){
-					attrs[AttrType.COOLDOWN_2] = 0;
-					B.Add(the_name + " finishes the prayer. ",this);
-					if(DistanceFrom(target) == 1 && target.EquippedWeapon.type != WeaponType.NO_WEAPON){
-						target.EquippedWeapon.status[EquipmentStatus.MERCIFUL] = true;
-						B.Add("You feel a strange power enter " + target.Your() + " " + target.EquippedWeapon.NameWithoutEnchantment() + "! ",target);
-						B.PrintAll();
-						Help.TutorialTip(TutorialTopic.Merciful);
-					}
-					Q1();
-				}
-				else{
-					if((maxhp / 5) * 4 > curhp && !HasAttr(AttrType.COOLDOWN_1)){
-						RefreshDuration(AttrType.COOLDOWN_1,R.Between(14,16)*100);
-						attrs[AttrType.COOLDOWN_2]++;
-						B.Add(the_name + " starts praying. ",this);
-						B.Add("A fiery halo appears above " + the_name + ". ",this);
-						RefreshDuration(AttrType.RADIANT_HALO,R.Between(8,10)*100,Your() + " halo fades. ",this);
-						Q1();
-					}
-					else{
-						if(DistanceFrom(target) == 1){
-							Attack(0,target);
-						}
-						else{
-							AI_Step(target);
-							QS();
-						}
-					}
-				}*/
 				break;
 			case ActorType.GIANT_SLUG:
 			{
@@ -8514,7 +8478,7 @@ namespace Forays{
 							if(!HasAttr(AttrType.COOLDOWN_2) && thrall.curhp <= thrall.maxhp / 2){ //check whether you can shield it, if the thrall is low on health.
 								RefreshDuration(AttrType.COOLDOWN_2,1500);
 								B.Add(TheName(true) + " shields " + thrall.TheName(true) + ". ",this,thrall);
-								B.DisplayNow();
+								B.DisplayContents();
 								Screen.AnimateStorm(thrall.p,1,2,5,'*',Color.White);
 								thrall.attrs[AttrType.SHIELDED] = 1;
 								Q1();
@@ -8526,7 +8490,7 @@ namespace Forays{
 									B.Add(TheName(true) + " teleports " + thrall.TheName(true) + ". ",this,thrall);
 									M.Draw();
 									thrall.Move(dest.row,dest.col);
-									B.DisplayNow();
+									B.DisplayContents();
 									Screen.AnimateStorm(dest.p,1,1,4,thrall.symbol,thrall.color);
 									foreach(Tile t2 in thrall.GetBestLineOfEffect(dest)){
 										Screen.AnimateStorm(t2.p,1,1,4,thrall.symbol,thrall.color);
@@ -8537,7 +8501,7 @@ namespace Forays{
 									if(!HasAttr(AttrType.COOLDOWN_2)){
 										RefreshDuration(AttrType.COOLDOWN_2,1500);
 										B.Add(TheName(true) + " shields " + thrall.TheName(true) + ". ",this,thrall);
-										B.DisplayNow();
+										B.DisplayContents();
 										Screen.AnimateStorm(thrall.p,1,2,5,'*',Color.White);
 										thrall.attrs[AttrType.SHIELDED] = 1;
 										Q1();
@@ -8571,7 +8535,7 @@ namespace Forays{
 										B.Add(TheName(true) + " teleports " + thrall.TheName(true) + ". ",this,thrall);
 										M.Draw();
 										thrall.Move(dest.row,dest.col);
-										B.DisplayNow();
+										B.DisplayContents();
 										Screen.AnimateStorm(dest.p,1,1,4,thrall.symbol,thrall.color);
 										foreach(Tile t2 in thrall.GetBestLineOfEffect(dest)){
 											Screen.AnimateStorm(t2.p,1,1,4,thrall.symbol,thrall.color);
@@ -8594,7 +8558,7 @@ namespace Forays{
 										B.Add(TheName(true) + " teleports " + thrall.TheName(true) + ". ",this,thrall);
 										M.Draw();
 										thrall.Move(dest.row,dest.col);
-										B.DisplayNow();
+										B.DisplayContents();
 										Screen.AnimateStorm(dest.p,1,1,4,thrall.symbol,thrall.color);
 										foreach(Tile t2 in thrall.GetBestLineOfEffect(dest)){
 											Screen.AnimateStorm(t2.p,1,1,4,thrall.symbol,thrall.color);
@@ -8668,7 +8632,7 @@ namespace Forays{
 										B.Add(TheName(true) + " teleports " + thrall.TheName(true) + ". ",this,thrall);
 										M.Draw();
 										thrall.Move(tile2.row,tile2.col);
-										B.DisplayNow();
+										B.DisplayContents();
 										Screen.AnimateStorm(tile2.p,1,1,4,thrall.symbol,thrall.color);
 										foreach(Tile t2 in thrall.GetBestLineOfEffect(tile2)){
 											Screen.AnimateStorm(t2.p,1,1,4,thrall.symbol,thrall.color);
@@ -8693,7 +8657,7 @@ namespace Forays{
 									if(!HasAttr(AttrType.COOLDOWN_2) && thrall.attrs[AttrType.ARCANE_SHIELDED] < 25){
 										GainAttr(AttrType.COOLDOWN_2,1500);
 										B.Add(TheName(true) + " shields " + thrall.TheName(true) + ". ",this,thrall);
-										B.DisplayNow();
+										B.DisplayContents();
 										Screen.AnimateStorm(thrall.p,1,2,5,'*',Color.White);
 										thrall.attrs[AttrType.ARCANE_SHIELDED] = 25;
 										Q1();
@@ -11180,7 +11144,7 @@ namespace Forays{
 						Help.TutorialTip(TutorialTopic.Dodging);
 					}
 					if(a == player){
-						B.DisplayNow();
+						B.DisplayContents();
 						Screen.AnimateMapCell(a.row,a.col,new colorchar('!',Color.Green),80);
 					}
 					a.Move(dodge_tile.row,dodge_tile.col);
@@ -11526,11 +11490,10 @@ namespace Forays{
 					}
 				}
 				if(sneak_attack && (this == player || a == player)){
-					B.Add(YouVisible("strike") + " from hiding! ");
+					Priority priority = Priority.Normal;
+					if(a == player && attrs[AttrType.TURNS_VISIBLE] >= 0) priority = Priority.Important;
+					B.Add(priority,YouVisible("strike") + " from hiding! ");
 					if(type != ActorType.PLAYER){
-						if(a == player && attrs[AttrType.TURNS_VISIBLE] >= 0){
-							B.PrintAll();
-						}
 						attrs[AttrType.TURNS_VISIBLE] = -1;
 						attrs[AttrType.NOTICED] = 1;
 						attrs[AttrType.DANGER_SENSED] = 1;
@@ -12076,8 +12039,7 @@ namespace Forays{
 										a.inv.Remove(stolen);
 									}
 									GetItem(stolen);
-									B.Add(YouVisible("steal") + " " + a.YourVisible() + " " + stolen.SingularName() + "! ",this,a);
-									B.PrintAll();
+									B.Add(Priority.Important,YouVisible("steal") + " " + a.YourVisible() + " " + stolen.SingularName() + "! ",this,a);
 								}
 								break;
 							}
@@ -12365,7 +12327,7 @@ namespace Forays{
 						B.Add(You("fire") + " an arrow. ",this);
 					}
 				}
-				B.DisplayNow();
+				B.DisplayContents();
 			}
 			int idx = 0;
 			if(animation_line.Count > 0){
@@ -12975,9 +12937,9 @@ namespace Forays{
 						}
 						M.Draw();
 						if(Global.GAME_OVER == false){
-							B.Add("You die. ");
+							B.Add(Priority.Important,"You die. ");
 						}
-						B.PrintAll();
+						B.Print(true); //todo check print here
 						Global.GAME_OVER = true;
 						return false;
 					}
@@ -12985,16 +12947,8 @@ namespace Forays{
 				else{
 					if(HasAttr(AttrType.BOSS_MONSTER)){
 						M.Draw();
-						B.Add("The fire drake dies. ");
-						B.PrintAll();
-						if(player.curhp > 0){
-							B.Add("The threat to your nation has been slain! You begin the long trek home to deliver the good news... ");
-							Global.KILLED_BY = "Died of ripe old age";
-						}
-						else{
-							B.Add("The threat to your nation has been slain! Unfortunately, you won't be able to deliver the news... ");
-						}
-						B.PrintAll();
+						Global.KILLED_BY = "Died of ripe old age";
+						B.Print(true);
 						Global.GAME_OVER = true;
 						Global.BOSS_KILLED = true;
 					}
@@ -13311,12 +13265,12 @@ namespace Forays{
 					Q.Add(new Event(this,500,AttrType.INVULNERABLE,"You can feel pain again. "));
 				}
 				if(magic_trinkets.Contains(MagicTrinketType.CLOAK_OF_SAFETY) && damage_dealt && dmg.amount >= curhp){
-					B.PrintAll();
+					B.Print(true);
 					M.Draw();
 					MouseUI.PushButtonMap(MouseMode.YesNoPrompt);
 					bool movementIgnored = MouseUI.IgnoreMouseMovement;
 					MouseUI.IgnoreMouseMovement = false;
-					bool vanish = B.YesOrNoPrompt("Your cloak starts to vanish. Use your cloak to escape?",false);
+					bool vanish = UI.YesOrNoPrompt("Your cloak starts to vanish. Use your cloak to escape?",false);
 					MouseUI.IgnoreMouseMovement = movementIgnored;
 					MouseUI.PopButtonMap();
 					if(vanish){
@@ -13728,7 +13682,7 @@ namespace Forays{
 					B.Add("You're too exhausted! ");
 					return false;
 				}
-				if(!B.YesOrNoPrompt("Really exhaust yourself to cast this spell?")){
+				if(!UI.YesOrNoPrompt("Really exhaust yourself to cast this spell?")){
 					return false;
 				}
 				Screen.CursorVisible = false;
@@ -13851,7 +13805,7 @@ namespace Forays{
 					Actor a = M.actor[t.row,t.col];
 					B.Add(You("cast") + " force palm. ",this);
 					MakeNoise(spellVolume);
-					B.DisplayNow();
+					B.DisplayContents();
 					Screen.AnimateMapCell(t.row,t.col,new colorchar('*',Color.Blue),100);
 					bool self_knockback = false;
 					if(a != null){
@@ -14301,7 +14255,7 @@ namespace Forays{
 					B.Add(You("cast") + " magic hammer. ",this);
 					MakeNoise(spellVolume);
 					M.Draw();
-					B.DisplayNow();
+					B.DisplayContents();
 					Screen.AnimateMapCell(t.row,t.col,new colorchar('*',Color.Magenta),100);
 					if(a != null){
 						B.Add(You("wallop") + " " + a.TheName(true) + ". ",this,a);
@@ -14626,7 +14580,7 @@ namespace Forays{
 				if(t != null){
 					B.Add(You("cast") + " collapse. ",this);
 					MakeNoise(spellVolume);
-					B.DisplayNow();
+					B.DisplayContents();
 					for(int dist=2;dist>0;--dist){
 						List<pos> cells = new List<pos>();
 						List<colorchar> chars = new List<colorchar>();
@@ -15243,7 +15197,7 @@ namespace Forays{
 			skills[skill]++;
 			bool active_feat_learned = false;
 			B.Add("You feel a rush of power. ");
-			B.PrintAll();
+			B.Print(true);
 			ConsoleKeyInfo command;
 			bool gain_feat = false;
 			if(!M.feat_gained_this_level){
@@ -15353,10 +15307,10 @@ namespace Forays{
 						Screen.WriteMapChar(bottomBorder,33,new colorchar(Color.Cyan,'?'));
 						MouseUI.RemoveButton(Global.MAP_OFFSET_ROWS + ROWS + 2,Global.MAP_OFFSET_COLS + 47);
 					}
-					B.DisplayNow("Your " + Skill.Name(skill) + " skill increases to " + skills[skill] + ". Choose a feat: ");
+					UI.Display("Your " + Skill.Name(skill) + " skill increases to " + skills[skill] + ". Choose a feat: ");
 					if(!Help.displayed[TutorialTopic.Feats]){
 						Help.TutorialTip(TutorialTopic.Feats,true);
-						B.DisplayNow("Your " + Skill.Name(skill) + " skill increases to " + skills[skill] + ". Choose a feat: ");
+						UI.Display("Your " + Skill.Name(skill) + " skill increases to " + skills[skill] + ". Choose a feat: ");
 					}
 					Screen.CursorVisible = true;
 					command = Input.ReadKey();
@@ -16080,7 +16034,7 @@ namespace Forays{
 				MouseUI.CreateButton((ConsoleKey)(ConsoleKey.NumPad0 + dir),false,Global.MAP_OFFSET_ROWS + neighbor.row,Global.MAP_OFFSET_COLS + neighbor.col,1,1);
 			}
 			MouseUI.CreateButton(ConsoleKey.NumPad5,false,Global.MAP_OFFSET_ROWS + row,Global.MAP_OFFSET_COLS + col,1,1);
-			B.DisplayNow(s);
+			UI.Display(s);
 			ConsoleKeyInfo command;
 			char ch;
 			Screen.CursorVisible = true;
@@ -16151,7 +16105,7 @@ namespace Forays{
 			PosArray<bool> known_reachable = M.tile.GetFloodFillArray(this.p,false,x=>((M.tile[x].passable || M.tile[x].IsDoorType(false)) && M.tile[x].seen));
 			PosArray<int> distance_to_nearest_known_passable = M.tile.GetDijkstraMap(y=>M.tile[y].seen && (M.tile[y].passable || M.tile[y].IsDoorType(false)) && !M.tile[y].IsKnownTrap() && known_reachable[y],x=>false);
 			if(r == row && c == col){
-				B.DisplayNow(unseen_area_message);
+				UI.Display(unseen_area_message);
 			}
 			bool first_iteration = true;
 			bool done = false; //when done==true, we're ready to return 'result'
@@ -16239,7 +16193,7 @@ namespace Forays{
 					}
 					case 'X':
 					{
-						if(this == player && B.YesOrNoPrompt("Travel to this location?")){
+						if(this == player && UI.YesOrNoPrompt("Travel to this location?")){
 							if(!nearest.seen || nearest.IsKnownTrap() || !nearest.TilesWithinDistance(1).Any(x=>x.passable && known_reachable[x.p])){
 								nearest = nearest.TilesAtDistance(distance_to_nearest_known_passable[r,c]).Where(x=>x.seen && (x.passable || x.IsDoorType(false)) && !x.IsKnownTrap() && known_reachable[x.p]).WhereLeast(x=>x.ApproximateEuclideanDistanceFromX10(r,c)).LastOrDefault();
 							}
@@ -16310,7 +16264,7 @@ namespace Forays{
 					Screen.WriteMapString(i+1,0,"".PadRight(COLS));
 				}
 				if(no_ask){
-					B.DisplayNow(message);
+					UI.Display(message);
 					result.value = -1;
 					MouseUI.PopButtonMap();
 					MouseUI.AutomaticButtonsFromStrings = false;
@@ -16340,7 +16294,7 @@ namespace Forays{
 		}
 		public ItemSelection GetItemSelection(string s,int count,bool no_cancel,bool easy_cancel,bool help_key){
 			ItemSelection result = new ItemSelection();
-			B.DisplayNow(s);
+			UI.Display(s);
 			Screen.CursorVisible = true;
 			ConsoleKeyInfo command;
 			char ch;
@@ -16403,7 +16357,7 @@ namespace Forays{
 				Screen.WriteMapString(i+1,0,"".PadRight(COLS));
 			}
 			if(no_ask){
-				B.DisplayNow(message);
+				UI.Display(message);
 				MouseUI.AutomaticButtonsFromStrings = false;
 				return -1;
 			}
@@ -16447,7 +16401,7 @@ namespace Forays{
 					Screen.WriteMapString(i+1,0,"".PadRight(COLS));
 				}
 				if(no_ask){
-					B.DisplayNow(message);
+					UI.Display(message);
 					if(!no_ask){
 						MouseUI.PopButtonMap();
 					}
@@ -16481,7 +16435,7 @@ namespace Forays{
 		}
 		public int GetSelection(string s,int count,bool no_cancel,bool easy_cancel,bool help_key){
 			//if(count == 0){ return -1; }
-			B.DisplayNow(s);
+			UI.Display(s);
 			Screen.CursorVisible = true;
 			ConsoleKeyInfo command;
 			char ch;
@@ -16509,78 +16463,78 @@ namespace Forays{
 			}
 		}
 		public void AnimateProjectile(PhysicalObject o,Color color,char c){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateProjectile(GetBestLineOfEffect(o.row,o.col),new colorchar(color,c));
 		}
 		public void AnimateMapCell(PhysicalObject o,Color color,char c){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateMapCell(o.row,o.col,new colorchar(color,c));
 		}
 		public void AnimateBoltProjectile(PhysicalObject o,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateBoltProjectile(GetBestLineOfEffect(o.row,o.col),color);
 		}
 		public void AnimateBoltProjectile(PhysicalObject o,Color color,int duration){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateBoltProjectile(GetBestLineOfEffect(o.row,o.col),color,duration);
 		}
 		public void AnimateExplosion(PhysicalObject o,int radius,Color color,char c){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateExplosion(o,radius,new colorchar(color,c));
 		}
 		public void AnimateBeam(PhysicalObject o,Color color,char c){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateBeam(GetBestLineOfEffect(o.row,o.col),new colorchar(color,c));
 		}
 		public void AnimateBoltBeam(PhysicalObject o,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateBoltBeam(GetBestLineOfEffect(o.row,o.col),color);
 		}
 		//
 		// i should have made them (char,color) from the start..
 		//
 		public void AnimateProjectile(PhysicalObject o,char c,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateProjectile(GetBestLineOfEffect(o.row,o.col),new colorchar(color,c));
 		}
 		public void AnimateMapCell(PhysicalObject o,char c,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateMapCell(o.row,o.col,new colorchar(color,c));
 		}
 		public void AnimateExplosion(PhysicalObject o,int radius,char c,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateExplosion(o,radius,new colorchar(color,c));
 		}
 		public void AnimateBeam(PhysicalObject o,char c,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateBeam(GetBestLineOfEffect(o.row,o.col),new colorchar(color,c));
 		}
 		//from here forward, i'll just do (char,color)..
 		public void AnimateStorm(int radius,int num_frames,int num_per_frame,char c,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateStorm(p,radius,num_frames,num_per_frame,new colorchar(c,color));
 		}
 		public void AnimateProjectile(List<Tile> line,char c,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateProjectile(line,new colorchar(color,c));
 		}
 		public void AnimateBeam(List<Tile> line,char c,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateBeam(line,new colorchar(color,c));
 		}
 		public void AnimateBoltProjectile(List<Tile> line,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateBoltProjectile(line,color);
 		}
 		public void AnimateBoltBeam(List<Tile> line,Color color){
-			B.DisplayNow();
+			B.DisplayContents();
 			Screen.AnimateBoltBeam(line,color);
 		}
 		public void AnimateVisibleMapCells(List<pos> cells,colorchar ch){ AnimateVisibleMapCells(cells,ch,50); }
 		public void AnimateVisibleMapCells(List<pos> cells,colorchar ch,int duration){
 			List<pos> new_cells = cells.Where(x=>CanSee(x.row,x.col));
 			if(new_cells.Count > 0){
-				B.DisplayNow();
+				B.DisplayContents();
 				Screen.AnimateMapCells(new_cells,ch,duration);
 			}
 		}
@@ -16595,7 +16549,7 @@ namespace Forays{
 				}
 			}
 			if(new_cells.Count > 0){
-				B.DisplayNow();
+				B.DisplayContents();
 				Screen.AnimateMapCells(new_cells,new_chars,duration);
 			}
 		}

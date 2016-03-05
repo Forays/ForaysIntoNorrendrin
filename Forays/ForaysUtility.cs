@@ -50,23 +50,19 @@ namespace ForaysUtilities {
 				s = RemoveLeadingDiscardedSeparators(s);
 				if(s != "") {
 					createNewLine = false;
-					if(reservedWrapData != null) { //if this string exists, handle it specially
+					if(contents.Count == maxLines && reservedSpace > 0 && reservedWrapData != null) {
 						var reserveSplit = SplitOverflow(reservedWrapData,maxLength - reservedSpace);
 						reservedWrapData = null;
 						contents[contents.Count - 1] = reserveSplit[0]; //this string is resplit to make room for reserved space
 						reserveSplit[1] = RemoveLeadingDiscardedSeparators(reserveSplit[1]);
-						if(reserveSplit[1] != "") {
-							contents.Add(reserveSplit[1]); //if there's overflow from *that* line, it gets added before our new addition.
-							CheckForBufferOverflow();
-						}
-						contents[contents.Count - 1] += s;
-						CheckForLineOverflow();
+						contents.Add(reserveSplit[1] + s); //if there's overflow from *that* line, it gets added before our new addition.
 					}
 					else {
+						reservedWrapData = null;
 						contents.Add(s);
-						CheckForBufferOverflow();
-						CheckForLineOverflow();
 					}
+					CheckForBufferOverflow();
+					CheckForLineOverflow();
 				}
 			}
 			else {
@@ -115,7 +111,7 @@ namespace ForaysUtilities {
 			get { return maxLines; }
 			set {
 				if(maxLines != value) {
-					reservedWrapData = null;
+					if(value > 0 && value < contents.Count) reservedWrapData = null;
 					maxLines = value;
 					CheckForBufferOverflow();
 				}
@@ -137,11 +133,12 @@ namespace ForaysUtilities {
 		}
 
 		/// <summary>
-		/// If there are characters in the reserved space (but the line hasn't wrapped yet),
-		/// this method will cause the buffer to overflow while respecting the reserved space.
+		/// If there are characters in the reserved space, this method will cause the current line to wrap
+		/// in accordance with the reserved space. (This method will affect the current line even
+		/// if it isn't the final line.)
 		/// </summary>
 		public void ConfirmReservedSpace() {
-			if(contents.Count == maxLines && contents[contents.Count - 1].Length > maxLength - reservedSpace) {
+			if(contents.Count > 0 && contents[contents.Count - 1].Length > maxLength - reservedSpace) {
 				string line = reservedWrapData ?? contents[contents.Count - 1];
 				var reservedSplit = SplitOverflow(line,maxLength - reservedSpace);
 				reservedWrapData = null;
@@ -169,22 +166,21 @@ namespace ForaysUtilities {
 			while(!createNewLine && contents[contents.Count - 1].Length > maxLength) {
 				createNewLine = true; //no matter what, THIS line is done -- no more will be added to it.
 				var maxSplit = SplitOverflow(contents[contents.Count - 1],maxLength);
-				if(reservedSpace != 0 && contents.Count == maxLines) { //if this is the last line (and if reserved space matters)...
-					if(RemoveLeadingDiscardedSeparators(maxSplit[1]) != "") { //...check whether the default overflow would be printed.
+				maxSplit[1] = RemoveLeadingDiscardedSeparators(maxSplit[1]);
+				if(maxSplit[1] != "") { //if the default overflow would be printed...
+					if(reservedSpace > 0 && contents.Count == maxLines) { //if this is the last line (and if reserved space matters)...
 						var reservedSplit = SplitOverflow(contents[contents.Count - 1],maxLength - reservedSpace); //calculate the reserved space split.
-						//if the default overflow will be printed, use the reserved-space version.
 						contents[contents.Count - 1] = reservedSplit[0];
 						Add(reservedSplit[1]);
 					}
 					else {
-						//if not, make note of the original line, but use the default split.
-						reservedWrapData = contents[contents.Count - 1];//(this will be used as the "reserved space" version, *if* it's needed.)
 						contents[contents.Count - 1] = maxSplit[0];
+						Add(maxSplit[1]);
 					}
 				}
-				else {
-					contents[contents.Count - 1] = maxSplit[0]; //if this is NOT the last line, use the default split.
-					Add(maxSplit[1]);
+				else { //if the default overflow won't be printed, make note of the original string for reserved-space purposes.
+					reservedWrapData = contents[contents.Count - 1];
+					contents[contents.Count - 1] = maxSplit[0];
 				}
 			}
 		}

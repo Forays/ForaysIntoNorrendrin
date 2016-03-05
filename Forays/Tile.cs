@@ -1,4 +1,4 @@
-/*Copyright (c) 2011-2015  Derrick Creamer
+/*Copyright (c) 2011-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -1243,22 +1243,18 @@ namespace Forays{
 			MakeNoise(1);
 			if(click){
 				if(actor() == player || (actor() == null && player.CanSee(this))){
-					B.Add("*CLICK* ",this);
-					B.PrintAll();
+					B.Add(Priority.Important,"*CLICK* ",this);
 				}
 				else{
 					if(actor() != null && player.CanSee(this) && player.CanSee(actor())){
-						B.Add("You hear a *CLICK* from under " + actor().the_name + ". ");
-						B.PrintAll();
+						B.Add(Priority.Important,"You hear a *CLICK* from under " + actor().the_name + ". ");
 					}
 					else{
 						if(DistanceFrom(player) <= 12){
-							B.Add("You hear a *CLICK* nearby. ");
-							B.PrintAll();
+							B.Add(Priority.Important,"You hear a *CLICK* nearby. ");
 						}
 						else{
-							B.Add("You hear a *CLICK* in the distance. ");
-							B.PrintAll();
+							B.Add(Priority.Important,"You hear a *CLICK* in the distance. ");
 						}
 					}
 				}

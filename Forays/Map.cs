@@ -1,4 +1,4 @@
-/*Copyright (c) 2011-2015  Derrick Creamer
+/*Copyright (c) 2011-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -76,7 +76,7 @@ namespace Forays{
 		private const int COLS = Global.COLS;
 		public static Actor player;
 		public static Queue Q;
-		public static Buffer B;
+		public static MessageBuffer B;
 		static Map(){
 			for(int i=0;i<ROWS;++i){
 				for(int j=0;j<COLS;++j){
@@ -4041,14 +4041,12 @@ namespace Forays{
 				"Walls crack and crumble around you. The air turns to pain. Kersai is coming. ",
 				"A crescendo from the demonic chorus announces the arrival of the Demon King. Your flesh turns to ash as Kersai enters this world. "};
 			if(final_level_clock == 1){
-				B.Add(messages[0]);
-				B.PrintAll();
+				B.Add(Priority.Important,messages[0]);
 				return;
 			}
 			for(int i=1;i<=9;++i){
 				if(final_level_clock == i * multiplier){
-					B.Add(messages[i]);
-					B.PrintAll();
+					B.Add(Priority.Important,messages[i]);
 					switch(i){
 					case 7:
 						foreach(Actor a in AllActors()){

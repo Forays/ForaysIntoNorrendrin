@@ -1,4 +1,4 @@
-/*Copyright (c) 2011-2015  Derrick Creamer
+/*Copyright (c) 2011-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -53,7 +53,7 @@ namespace Forays{
 		public int light_radius;
 		
 		public static Map M;
-		public static Buffer B;
+		public static MessageBuffer B;
 		public static Queue Q;
 		public static Actor player;
 		public const int ROWS = Global.ROWS;
@@ -3100,15 +3100,15 @@ compare this number to 1/2:  if less than 1/2, major.
 			if(always_displayed == ""){
 				if(!start_at_interesting_target || interesting_targets.Count == 0){
 					if(lookmode){
-						B.DisplayNow("Move the cursor to look around. ");
+						UI.Display("Move the cursor to look around. ");
 					}
 					else{
-						B.DisplayNow(unseen_area_message);
+						UI.Display(unseen_area_message);
 					}
 				}
 			}
 			else{
-				B.DisplayNow(always_displayed);
+				UI.Display(always_displayed);
 			}
 			if(lookmode){
 				if(!start_at_interesting_target || interesting_targets.Count == 0){
@@ -3295,7 +3295,7 @@ compare this number to 1/2:  if less than 1/2, major.
 						done = true;
 						break;
 					case 'X':
-					if(lookmode && this == player && B.YesOrNoPrompt("Travel to this location?")){
+					if(lookmode && this == player && UI.YesOrNoPrompt("Travel to this location?")){
 						//player.path = player.GetPath(r,c);
 						Tile nearest = M.tile[r,c];
 						PosArray<bool> known_reachable = M.tile.GetFloodFillArray(this.p,false,x=>(M.tile[x].passable || M.tile[x].IsDoorType(false)) && M.tile[x].seen);
@@ -3331,16 +3331,16 @@ compare this number to 1/2:  if less than 1/2, major.
 						string s = "You're standing here. ";
 						//if(tc.ContentsCount() == 0 && tc.type == TileType.FLOOR){
 						if(tc.ContentsCount() == 0 && tc.name == "floor"){
-							B.DisplayNow(s);
+							UI.Display(s);
 						}
 						else{
-							B.DisplayNow(s + tc.ContentsString() + " here. ");
+							UI.Display(s + tc.ContentsString() + " here. ");
 						}
 					}
 				}
 				else{
 					if(player.CanSee(tc)){
-						B.DisplayNow(tc.ContentsString(include_monsters) + ". ");
+						UI.Display(tc.ContentsString(include_monsters) + ". ");
 						if(!Help.displayed[TutorialTopic.Traps] && tc.IsKnownTrap()){
 							Help.TutorialTip(TutorialTopic.Traps);
 						}
@@ -3387,7 +3387,7 @@ compare this number to 1/2:  if less than 1/2, major.
 					}
 					else{
 						if(include_monsters && tc.actor() != null && player.CanSee(tc.actor())){
-							B.DisplayNow("You sense " + tc.actor().a_name + " " + tc.actor().WoundStatus() + ". ");
+							UI.Display("You sense " + tc.actor().a_name + " " + tc.actor().WoundStatus() + ". ");
 						}
 						else{
 							if(tc.seen){
@@ -3396,29 +3396,29 @@ compare this number to 1/2:  if less than 1/2, major.
 									char screench = Screen.MapChar(tc.row,tc.col).c;
 									if(itemch == screench){ //hacky, but it seems to work (when a monster drops an item you haven't seen yet)
 										if(tc.inv.quantity > 1){
-											B.DisplayNow("You can no longer see these " + tc.inv.Name(true) + ". ");
+											UI.Display("You can no longer see these " + tc.inv.Name(true) + ". ");
 										}
 										else{
-											B.DisplayNow("You can no longer see this " + tc.inv.Name(true) + ". ");
+											UI.Display("You can no longer see this " + tc.inv.Name(true) + ". ");
 										}
 									}
 									else{
-										B.DisplayNow("You can no longer see this " + tc.Name(true) + ". ");
+										UI.Display("You can no longer see this " + tc.Name(true) + ". ");
 									}
 								}
 								else{
-									B.DisplayNow("You can no longer see this " + tc.Name(true) + ". ");
+									UI.Display("You can no longer see this " + tc.Name(true) + ". ");
 								}
 							}
 							else{
-								B.DisplayNow(unseen_area_message);
+								UI.Display(unseen_area_message);
 							}
 						}
 					}
 				}
 			}
 			else{
-				B.DisplayNow(always_displayed);
+				UI.Display(always_displayed);
 			}
 		}
 		public static void Targeting_ShowLine(Tile tc,int radius,colorchar[,] mem,List<Tile> line,List<Tile> oldline,ref bool blocked,TileDelegate is_blocking){

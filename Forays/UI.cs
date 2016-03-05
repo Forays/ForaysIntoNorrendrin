@@ -1,4 +1,4 @@
-﻿/*Copyright (c) 2015  Derrick Creamer
+﻿/*Copyright (c) 2015-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -15,7 +15,7 @@ namespace Forays{
 		private static Actor player{get{ return Actor.player; } }
 		private static Map M{get{ return Actor.M; } }
 		private static Queue Q{get{ return Actor.Q; } }
-		private static Buffer B{get{ return Actor.B; } }
+		private static MessageBuffer B{get{ return Actor.B; } }
 		private static int ROWS{ get{ return Global.ROWS; } }
 		private static int COLS{ get{ return Global.COLS; } }
 
@@ -760,7 +760,7 @@ namespace Forays{
 			}
 			Screen.WriteMapString(row,0,"".PadRight(COLS,'-'),text);
 			Screen.ResetColors();
-			B.DisplayNow("Character information: ");
+			UI.Display("Character information: ");
 			Screen.CursorVisible = true;
 
 			int result = -1;
@@ -996,7 +996,7 @@ namespace Forays{
 				}
 
 				Screen.ResetColors();
-				B.DisplayNow("Your equipment: ");
+				UI.Display("Your equipment: ");
 				Screen.CursorVisible = true;
 				command = Input.ReadKey();
 				char ch = command.GetCommandChar();
@@ -1297,6 +1297,54 @@ namespace Forays{
 			if(M.dungeonDescription != "") return M.dungeonDescription;
 			//turn "123456789012345678901234567890123456789012345678901234567890123456";
 			return "You are in a maze of twisty passages, all alike.";
+		}
+		public static bool YesOrNoPrompt(string s,bool easyCancel = true) {
+			player.Interrupt();
+			MouseUI.PushButtonMap(MouseMode.YesNoPrompt);
+			MouseUI.CreateButton(ConsoleKey.Y,false,2,Global.MAP_OFFSET_COLS + s.Length + 1,1,2);
+			MouseUI.CreateButton(ConsoleKey.N,false,2,Global.MAP_OFFSET_COLS + s.Length + 4,1,2);
+			if(MouseUI.descend_hack) {
+				for(int i = 0;i<Global.SCREEN_H;++i) {
+					if(MouseUI.mouselook_objects[i,0] != null) {
+						Tile t = MouseUI.mouselook_objects[i,0] as Tile;
+						if(t?.type == TileType.STAIRS) {
+							MouseUI.CreateStatsButton(ConsoleKey.N,false,i,1);
+						}
+					}
+				}
+				if(UI.viewing_commands_idx == 1) {
+					MouseUI.CreateStatsButton(ConsoleKey.N,false,Global.SCREEN_H-5,1);
+				}
+				MouseUI.descend_hack = false;
+			}
+			UI.Display(s + " (y/n): ");
+			Screen.CursorVisible = true;
+			while(true) {
+				switch(Input.ReadKey().KeyChar) {
+					case 'y':
+					case 'Y':
+						MouseUI.PopButtonMap();
+						return true;
+					case 'n':
+					case 'N':
+						MouseUI.PopButtonMap();
+						return false;
+					default:
+						if(easyCancel) {
+							MouseUI.PopButtonMap();
+							return false;
+						}
+						break;
+				}
+			}
+		}
+		public static void Display(string message,bool refreshStatus = true) {
+			if(refreshStatus) UI.DisplayStats();
+			Screen.CursorVisible = false;
+			var wrapped = message.GetWordWrappedList(Global.COLS,false);
+			for(int i=0;i < 3 - wrapped.Count;++i) Screen.WriteString(i,Global.MAP_OFFSET_COLS,"".PadToMapSize());
+			for(int i=0;i < wrapped.Count;++i) Screen.WriteString(3 - wrapped.Count + i,Global.MAP_OFFSET_COLS,message.PadToMapSize());
+			Screen.SetCursorPosition(Global.MAP_OFFSET_COLS + message.Length,2);
 		}
 	}
 }

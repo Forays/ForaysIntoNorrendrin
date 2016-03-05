@@ -1,4 +1,4 @@
-/*Copyright (c) 2011-2015  Derrick Creamer
+/*Copyright (c) 2011-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -34,6 +34,7 @@ namespace Forays{
 		public static bool SAVING = false;
 		public static string KILLED_BY = "";
 		public const string ForaysImageResources = "Forays.ForaysImages.";
+		public const int MESSAGE_LOG_LENGTH = 1000;
 
 		public static Stopwatch Timer;
 
@@ -133,7 +134,7 @@ namespace Forays{
 		public static void CheckForVictory(bool circleDestroyed){
 			Map M = Actor.M;
 			Actor player = Actor.player; // can't wait to change this setup.
-			Buffer B = Actor.B;
+			MessageBuffer B = Actor.B;
 			if(M.CurrentLevelType != LevelType.Final) return;
 			bool circles = false;
 			bool demons = false;
@@ -154,24 +155,21 @@ namespace Forays{
 				if(!demons){ //victory
 					player.curhp = 100;
 					if(circleDestroyed){
-						B.Add("As the last summoning circle is destroyed, your victory gives you a new surge of strength. ");
+						B.Add(Priority.Important,"As the last summoning circle is destroyed, your victory gives you a new surge of strength. ");
 					}
 					else{
-						B.Add("As the last demon falls, your victory gives you a new surge of strength. ");
+						B.Add(Priority.Important,"As the last demon falls, your victory gives you a new surge of strength. ");
 					}
-					B.PrintAll();
-					B.Add("Kersai's summoning has been stopped. His cult will no longer threaten the area. ");
-					B.PrintAll();
-					B.Add("You begin the journey home to deliver the news. ");
-					B.PrintAll();
+					B.Add(Priority.Important,"Kersai's summoning has been stopped. His cult will no longer threaten the area. ");
+					B.Add(Priority.Important,"You begin the journey home to deliver the news. ");
+					B.Print(true);
 					Global.GAME_OVER = true;
 					Global.BOSS_KILLED = true;
 					Global.KILLED_BY = "nothing";
 				}
 				else{
 					if(circleDestroyed){
-						B.Add("The summoning circles have been destroyed, but demons yet remain! ");
-						B.PrintAll();
+						B.Add(Priority.Important,"The summoning circles have been destroyed, but demons yet remain! ");
 					}
 				}
 			}
@@ -277,7 +275,7 @@ namespace Forays{
 			}
 		}
 		public delegate int IDMethod(PhysicalObject o);
-		public static void SaveGame(Buffer B,Map M,Queue Q){ //games are loaded in Main.cs
+		public static void SaveGame(MessageBuffer B,Map M,Queue Q){ //games are loaded in Main.cs
 			FileStream file = new FileStream("forays.sav",FileMode.CreateNew);
 			BinaryWriter b = new BinaryWriter(file);
 			Dictionary<PhysicalObject,int> id = new Dictionary<PhysicalObject, int>();
@@ -603,7 +601,7 @@ namespace Forays{
 			List<string> result = new List<string>();
 			while(s.Length > max_length){
 				for(int i=max_length;i>=0;--i){
-					if(s.Substring(i,1) == " "){
+					if(s[i] == ' '){
 						if(match_length_exactly){
 							result.Add(s.Substring(0,i).PadRight(max_length));
 						}

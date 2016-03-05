@@ -1,4 +1,4 @@
-/*Copyright (c) 2011-2015  Derrick Creamer
+/*Copyright (c) 2011-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -41,7 +41,7 @@ namespace Forays{
 	public class Game{
 		public Map M;
 		public Queue Q;
-		public Buffer B;
+		public MessageBuffer B;
 		public Actor player;
 
 		static void Main(string[] args){
@@ -235,7 +235,7 @@ namespace Forays{
 						game.player.armors.AddLast(new Armor(ArmorType.FULL_PLATE));
 					}
 					game.M = new Map(game);
-					game.B = new Buffer(game);
+					game.B = new MessageBuffer(game);
 					game.Q = new Queue(game);
 					Map.Q = game.Q;
 					Map.B = game.B;
@@ -472,7 +472,7 @@ namespace Forays{
 								if(a.type == ActorType.PLAYER){
 									game.player = a;
 									Actor.player = a;
-									Buffer.player = a;
+									//Buffer.player = a; //todo check
 									Item.player = a;
 									Map.player = a;
 									Event.player = a;
@@ -824,12 +824,12 @@ namespace Forays{
 						}
 						Tile.spellbooks_generated = b.ReadInt32();
 						UI.viewing_commands_idx = b.ReadInt32();
-						string[] messages = new string[Buffer.log_length];
+						string[] messages = new string[Global.MESSAGE_LOG_LENGTH];
 						int num_messages = b.ReadInt32();
 						for(int i=0;i<num_messages;++i){
 							messages[i] = b.ReadString();
 						}
-						for(int i=num_messages;i<Buffer.log_length;++i){
+						for(int i=num_messages;i<Global.MESSAGE_LOG_LENGTH;++i){
 							messages[i] = "";
 						}
 						int message_pos = b.ReadInt32();
@@ -1141,7 +1141,7 @@ namespace Forays{
 					}
 					Screen.MapDrawWithStrings(game.M.last_seen,0,0,Global.ROWS,Global.COLS);
 					game.player.GetTarget(true,-1,-1,true,false,false,"");
-					//game.B.DisplayNow("Press any key to continue. ");
+					//game.UI.Display("Press any key to continue. ");
 					//Screen.CursorVisible = true;
 					//Input.ReadKey();
 					MouseUI.PopButtonMap();
@@ -1162,7 +1162,7 @@ namespace Forays{
 							}
 						}
 					}
-					game.B.DisplayNow("Press any key to continue. ");
+					game.UI.Display("Press any key to continue. ");
 					Screen.CursorVisible = true;
 					Screen.WriteMapChar(0,0,'-');
 					game.M.Draw();
@@ -1197,7 +1197,7 @@ namespace Forays{
 					break;
 				case 6:
 				{
-					game.B.DisplayNow("Enter file name: ");
+					UI.Display("Enter file name: ");
 					Screen.CursorVisible = true;
 					MouseUI.PushButtonMap();
 					string filename = Input.EnterString(40);
@@ -1267,7 +1267,7 @@ namespace Forays{
 					}
 					file.WriteLine();
 					file.WriteLine("Last messages: ");
-					foreach(string s in game.B.GetMessages()){
+					foreach(string s in game.B.GetMessageLog()){
 						if(s != ""){
 							file.WriteLine(s);
 						}

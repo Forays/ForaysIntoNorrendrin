@@ -1,4 +1,4 @@
-/*Copyright (c) 2011-2015  Derrick Creamer
+/*Copyright (c) 2011-2016  Derrick Creamer
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish,
 distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -1178,8 +1178,7 @@ namespace Forays{
 					B.Add("Time stops for a moment. ",user);
 				}
 				else{
-					B.Add("Time warps around " + user.the_name + "! ",user);
-					B.PrintAll();
+					B.Add(Priority.Important,"Time warps around " + user.the_name + "! ",user);
 				}
 				if(Fire.fire_event == null){ //this prevents fire from updating while time is frozen
 					Fire.fire_event = new Event(0,EventType.FIRE);
