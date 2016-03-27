@@ -10,8 +10,10 @@ using System;
 using System.Collections.Generic;
 using Utilities;
 using PosArrays;
+using Nym;
+using static Nym.NameElement;
 namespace Forays{
-	public class PhysicalObject{
+	public class PhysicalObject : INamed{
 		public pos p;
 		public int row{
 			get{
@@ -29,9 +31,6 @@ namespace Forays{
 				p.col = value;
 			}
 		}
-		public string name;
-		public string a_name;
-		public string the_name;
 		public colorchar visual;
 		public char symbol{
 			get{
@@ -51,6 +50,9 @@ namespace Forays{
 		}
 		public pos sprite_offset;
 		public int light_radius;
+		public int Quantity => 1;
+		public Name Name { get; set; }
+		public Func<string> GetExtraInfo => null;
 		
 		public static Map M;
 		public static MessageBuffer B;
@@ -58,47 +60,22 @@ namespace Forays{
 		public static Actor player;
 		public const int ROWS = Global.ROWS;
 		public const int COLS = Global.COLS;
-		public PhysicalObject(){
+		public PhysicalObject(){ //todo, remove empty constructors?
 			row = -1;
 			col = -1;
-			name = "";
-			a_name = "";
-			the_name = "";
 			symbol = '%';
 			color = Color.White;
 			light_radius = 0;
 			sprite_offset = new pos(0,1);
 		}
-		public PhysicalObject(string name_,char symbol_,Color color_){
+		public PhysicalObject(string name_,char symbol_,Color color_) : this(new Name(name_),symbol_, color_) { }
+		public PhysicalObject(Name n, char symbol_, Color color_) {
 			row = -1;
 			col = -1;
-			SetName(name_);
+			Name = n;
 			symbol = symbol_;
 			color = color_;
 			light_radius = 0;
-		}
-		public void SetName(string new_name){
-			name = new_name;
-			the_name = "the " + name;
-			a_name = "a " + name;
-			if(name == "you"){ //todo: this is a one-off exception. Maybe move this out?
-				the_name = "you";
-				a_name = "you";
-			}
-			switch(name[0]){
-			case 'a':
-			case 'e':
-			case 'i':
-			case 'o':
-			case 'u':
-			case 'A':
-			case 'E':
-			case 'I':
-			case 'O':
-			case 'U':
-				a_name = "an " + name;
-				break;
-			}
 		}
 		public void Cursor(){
 			Screen.SetCursorPosition(col+Global.MAP_OFFSET_COLS,row+Global.MAP_OFFSET_ROWS);
@@ -137,7 +114,7 @@ namespace Forays{
 			if(p.Equals(UI.MapCursor)){
 				text = UI.darken_status_bar? Colors.status_highlight_darken : Colors.status_highlight;
 			}
-			foreach(string s in name.GetWordWrappedList(17,true)){
+			foreach(string s in this.GetName().GetWordWrappedList(17,true)){
 				colorstring cs = new colorstring();
 				result.Add(cs);
 				if(result.Count == 1){
@@ -148,11 +125,11 @@ namespace Forays{
 					cs.strings.Add(new cstr("   " + s,text));
 				}
 			}
-			if(name == "troll corpse"){ //gotta do this here, since TerrainFeature isn't a class.
+			if(Name.Singular == "troll corpse"){ //gotta do this here, since TerrainFeature isn't a class.
 				result.Add(new colorstring("Regenerating".PadOuter(Global.STATUS_WIDTH),text,Color.StatusEffectBar));
 			}
 			else{
-				if(name == "troll bloodwitch corpse"){
+				if(Name.Singular == "troll bloodwitch corpse"){
 					result.Add(new colorstring("Regenerating 3".PadOuter(Global.STATUS_WIDTH),text,Color.StatusEffectBar));
 				}
 			}
@@ -279,8 +256,7 @@ namespace Forays{
 			bool immobile = a.MovementPrevented(line[0]);
 			string knocked_back_message = "";
 			if(!a.HasAttr(AttrType.TELEKINETICALLY_THROWN,AttrType.SELF_TK_NO_DAMAGE) && !immobile && player.CanSee(a)){ //if the player can see it now, don't check CanSee later.
-				knocked_back_message = a.YouAre() + " knocked back. ";
-				//B.Add(a.YouAre() + " knocked back. ",a);
+				knocked_back_message = a.GetName(false,The,Are) + " knocked back. ";
 			}
 			int dice = 1;
 			int damage_dice_to_other = 1;
@@ -301,7 +277,7 @@ namespace Forays{
 				immobile = a.MovementPrevented(t);
 				if(immobile){
 					if(player.CanSee(a.tile())){
-						B.Add(a.YouVisibleAre() + " knocked about. ",a);
+						B.Add(a.GetName(false,The,Are) + " knocked about. ",a);
 					}
 					if(a.type == ActorType.SPORE_POD){
 						return true;
@@ -309,15 +285,15 @@ namespace Forays{
 					return a.TakeDamage(DamageType.NORMAL,DamageClass.PHYSICAL,R.Roll(dice,6),damage_source,"crashing into the floor");
 				}
 				if(!t.passable){
-					string deathstringname = t.AName(false);
+					string deathstringname = t.GetName(false,An);
 					if(t.Is(TileType.CRACKED_WALL,TileType.DOOR_C,TileType.HIDDEN_DOOR) && !a.HasAttr(AttrType.SMALL)){
-						string tilename = t.TheName(true);
+						string tilename = t.GetName(true,The);
 						if(t.type == TileType.HIDDEN_DOOR){
 							tilename = "a hidden door";
 							t.Toggle(null);
 						}
 						if(player.CanSee(a.tile())){
-							B.Add(a.YouVisibleAre() + " knocked through " + tilename + ". ",a,t);
+							B.Add(a.GetName(true,The,Are) + " knocked through " + tilename + ". ",a,t);
 						}
 						else{
 							B.Add(knocked_back_message);
@@ -342,7 +318,7 @@ namespace Forays{
 					}
 					else{
 						if(player.CanSee(a.tile())){
-							B.Add(a.YouVisibleAre() + " knocked into " + t.TheName(true) + ". ",a,t);
+							B.Add(a.GetName(true,The,Are) + " knocked into " + t.GetName(true,The) + ". ",a,t);
 						}
 						else{
 							B.Add(knocked_back_message);
@@ -365,14 +341,14 @@ namespace Forays{
 				else{
 					if(t.actor() != null){
 						if(player.CanSee(a.tile()) || player.CanSee(t)){
-							B.Add(a.YouVisibleAre() + " knocked into " + t.actor().TheName(true) + ". ",a,t.actor());
+							B.Add(a.GetName(true,The,Are) + " knocked into " + t.actor().GetName(true,The) + ". ",a,t.actor());
 						}
 						else{
 							B.Add(knocked_back_message);
 						}
 						knocked_back_message = "";
-						string actorname = t.actor().AName(false);
-						string actorname2 = a.AName(false);
+						string actorname = t.actor().GetName(false,An);
+						string actorname2 = a.GetName(false,An);
 						if(t.actor().type != ActorType.SPORE_POD && !t.actor().HasAttr(AttrType.SELF_TK_NO_DAMAGE)){
 							t.actor().TakeDamage(DamageType.NORMAL,DamageClass.PHYSICAL,R.Roll(damage_dice_to_other,6),damage_source,"colliding with " + actorname2);
 						}
@@ -419,7 +395,7 @@ namespace Forays{
 				immobile = a.MovementPrevented(t);
 				if(immobile){
 					if(player.CanSee(a.tile())){
-						B.Add(a.YouVisibleAre() + " knocked about. ",a);
+						B.Add(a.GetName(true,The,Are) + " knocked about. ",a);
 					}
 					if(a.type == ActorType.SPORE_POD){
 						return true;
@@ -427,15 +403,15 @@ namespace Forays{
 					return a.TakeDamage(DamageType.NORMAL,DamageClass.PHYSICAL,R.Roll(dice,6),damage_source,"crashing into the floor");
 				}
 				if(!t.passable){
-					string deathstringname = t.AName(false);
+					string deathstringname = t.GetName(false,An);
 					if(t.Is(TileType.CRACKED_WALL,TileType.DOOR_C,TileType.HIDDEN_DOOR) && !a.HasAttr(AttrType.SMALL)){
-						string tilename = t.TheName(true);
+						string tilename = t.GetName(true,The);
 						if(t.type == TileType.HIDDEN_DOOR){
 							tilename = "a hidden door";
 							t.Toggle(null);
 						}
 						if(player.CanSee(a.tile())){
-							B.Add(a.YouVisibleAre() + " knocked through " + tilename + ". ",a,t);
+							B.Add(a.GetName(true,The,Are) + " knocked through " + tilename + ". ",a,t);
 						}
 						else{
 							B.Add(knocked_back_message);
@@ -460,7 +436,7 @@ namespace Forays{
 					}
 					else{
 						if(player.CanSee(a.tile())){
-							B.Add(a.YouVisibleAre() + " knocked into " + t.TheName(true) + ". ",a,t);
+							B.Add(a.GetName(true,The,Are) + " knocked into " + t.GetName(true,The) + ". ",a,t);
 						}
 						else{
 							B.Add(knocked_back_message);
@@ -483,14 +459,14 @@ namespace Forays{
 				else{
 					if(t.actor() != null){
 						if(player.CanSee(a.tile()) || player.CanSee(t)){
-							B.Add(a.YouVisibleAre() + " knocked into " + t.actor().TheName(true) + ". ",a,t.actor());
+							B.Add(a.GetName(true,The,Are) + " knocked into " + t.actor().GetName(true,The) + ". ",a,t.actor());
 						}
 						else{
 							B.Add(knocked_back_message);
 						}
 						knocked_back_message = "";
-						string actorname = t.actor().AName(false);
-						string actorname2 = a.AName(false);
+						string actorname = t.actor().GetName(false,An);
+						string actorname2 = a.GetName(false,An);
 						if(t.actor().type != ActorType.SPORE_POD && !t.actor().HasAttr(AttrType.SELF_TK_NO_DAMAGE)){
 							t.actor().TakeDamage(DamageType.NORMAL,DamageClass.PHYSICAL,R.Roll(damage_dice_to_other,6),damage_source,"colliding with " + actorname2);
 						}
@@ -508,7 +484,7 @@ namespace Forays{
 							slip = true;
 							if(!slip_message_printed){
 								slip_message_printed = true;
-								B.Add(a.You("slide") + "! ");
+								B.Add(a.GetName(false,The,Verb("slide")) + "! ");
 							}
 						}
 						else{
@@ -521,7 +497,7 @@ namespace Forays{
 								extra_slip_tiles = 2;
 								if(!slip_message_printed){
 									slip_message_printed = true;
-									B.Add(a.You("slide") + "! ");
+									B.Add(a.GetName(false,The,Verb("slide")) + "! ");
 								}
 							}
 						}
@@ -534,7 +510,7 @@ namespace Forays{
 							slip = true;
 							if(!slip_message_printed){
 								slip_message_printed = true;
-								B.Add(a.You("slide") + "! ");
+								B.Add(a.GetName(false,The,Verb("slide") + "! ");
 							}
 						}
 						else{
@@ -544,7 +520,7 @@ namespace Forays{
 								extra_slip_tiles = 2;
 								if(!slip_message_printed){
 									slip_message_printed = true;
-									B.Add(a.You("slide") + "! ");
+									B.Add(a.GetName(false,The,Verb("slide") + "! ");
 								}
 							}
 						}*/
@@ -638,23 +614,13 @@ namespace Forays{
 							a.CorpseCleanup();
 						}
 						if(t.inv != null && t.inv.type != ConsumableType.BLAST_FUNGUS){
-							if(t.inv.quantity > 1){
-								if(t.inv.IsBreakable()){
-									B.Add(t.inv.TheName(true) + " break! ",t);
-								}
-								else{
-									B.Add(t.inv.TheName(true) + " are destroyed! ",t);
-								}
+							if(t.inv.IsBreakable()){
+								B.Add($"{t.inv.GetName(true, The, Extra, Verb("break"))}! ", t);
 							}
 							else{
-								if(t.inv.IsBreakable()){
-									B.Add(t.inv.TheName(true) + " breaks! ",t);
-								}
-								else{
-									B.Add(t.inv.TheName(true) + " is destroyed! ",t);
-								}
+								B.Add($"{t.inv.GetName(true,The,Extra,Are)} destroyed! ",t);
 							}
-							if(t.inv.NameOfItemType() != "orb"){
+							if(t.inv.ItemClass != ConsumableClass.ORB){
 								t.inv.CheckForMimic();
 								t.inv = null;
 							}
@@ -707,64 +673,6 @@ namespace Forays{
 				}
 			}
 			MakeNoise(12);
-		}
-		public string YouAre(){
-			if(name == "you"){
-				return "you are";
-			}
-			else{
-				return the_name + " is";
-			}
-		}
-		public string Your(){
-			if(name == "you"){
-				return "your";
-			}
-			else{
-				return the_name + "'s";
-			}
-		}
-		public string You(string s){ return You(s,false,false); }
-		public string You(string s,bool ends_in_es){ return You(s,ends_in_es,false); }
-		public string You(string s,bool ends_in_es,bool ends_in_y){
-			if(name == "you"){
-				return "you " + s;
-			}
-			else{
-				if(ends_in_y){
-					return the_name + " " + s.Substring(0,s.Length-1) + "ies";
-				}
-				else{
-					if(ends_in_es){
-						return the_name + " " + s + "es";
-					}
-					else{
-						return the_name + " " + s + "s";
-					}
-				}
-			}
-		}
-		virtual public string YouVisible(string s){ return YouVisible(s,false); }
-		virtual public string YouVisible(string s,bool ends_in_es){ //same as You(). overridden by Actor.
-			if(name == "you"){
-				return "you " + s;
-			}
-			else{
-				if(ends_in_es){
-					return the_name + " " + s + "es";
-				}
-				else{
-					return the_name + " " + s + "s";
-				}
-			}
-		}
-		public string YouFeel(){
-			if(name == "you"){
-				return "you feel";
-			}
-			else{
-				return the_name + " looks";
-			}
 		}
 		public int DistanceFrom(PhysicalObject o){ return DistanceFrom(o.row,o.col); }
 		public int DistanceFrom(pos p){ return DistanceFrom(p.row,p.col); }
@@ -3328,7 +3236,7 @@ compare this number to 1/2:  if less than 1/2, major.
 					if(!first_iteration){
 						string s = "You're standing here. ";
 						//if(tc.ContentsCount() == 0 && tc.type == TileType.FLOOR){
-						if(tc.ContentsCount() == 0 && tc.name == "floor"){
+						if(tc.ContentsCount() == 0 && tc.Name.Singular == "floor"){
 							UI.Display(s);
 						}
 						else{
@@ -3385,7 +3293,7 @@ compare this number to 1/2:  if less than 1/2, major.
 					}
 					else{
 						if(include_monsters && tc.actor() != null && player.CanSee(tc.actor())){
-							UI.Display("You sense " + tc.actor().a_name + " " + tc.actor().WoundStatus() + ". ");
+							UI.Display("You sense " + tc.actor().GetName(An) + " " + tc.actor().WoundStatus() + ". ");
 						}
 						else{
 							if(tc.seen){
@@ -3393,19 +3301,14 @@ compare this number to 1/2:  if less than 1/2, major.
 									char itemch = tc.inv.symbol;
 									char screench = Screen.MapChar(tc.row,tc.col).c;
 									if(itemch == screench){ //hacky, but it seems to work (when a monster drops an item you haven't seen yet)
-										if(tc.inv.quantity > 1){
-											UI.Display("You can no longer see these " + tc.inv.Name(true) + ". ");
-										}
-										else{
-											UI.Display("You can no longer see this " + tc.inv.Name(true) + ". ");
-										}
+										UI.Display($"You can no longer see {tc.inv.ThisThese()} {tc.inv.GetName(true,Extra)}. ");
 									}
 									else{
-										UI.Display("You can no longer see this " + tc.Name(true) + ". ");
+										UI.Display("You can no longer see this " + tc.GetName(true) + ". ");
 									}
 								}
 								else{
-									UI.Display("You can no longer see this " + tc.Name(true) + ". ");
+									UI.Display("You can no longer see this " + tc.GetName(true) + ". ");
 								}
 							}
 							else{

@@ -79,6 +79,7 @@
     <Compile Include="Queue.cs" />
     <Compile Include="Schism.cs" />
     <Compile Include="Screen.cs" />
+    <Compile Include="Name.cs" />
     <Compile Include="Spell.cs" />
     <Compile Include="Tile.cs" />
     <Compile Include="Utility.cs" />
@@ -127,7 +128,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="options.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>

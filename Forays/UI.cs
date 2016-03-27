@@ -10,6 +10,8 @@ using System;
 using System.Collections.Generic;
 using PosArrays;
 using Utilities;
+using Nym;
+using static Nym.NameElement;
 namespace Forays{
 	public static class UI{
 		private static Actor player{get{ return Actor.player; } }
@@ -555,14 +557,14 @@ namespace Forays{
 					widest = s.Length;
 				}
 			}
-			if((!lookmode || mouselook) && item.Name(true).Length > widest){
-				widest = item.Name(true).Length;
+			if((!lookmode || mouselook) && item.GetName(true,Extra).Length > widest){
+				widest = item.GetName(true,Extra).Length;
 			}
 			widest += 2; //one space on each side
 			List<colorstring> box = new List<colorstring>();
 			box.Add(new colorstring("+",box_corner_color,"".PadRight(widest,'-'),box_edge_color,"+",box_corner_color));
 			if(!lookmode || mouselook){
-				box.Add(new colorstring("|",box_edge_color) + item.Name(true).PadOuter(widest).GetColorString(Color.White) + new colorstring("|",box_edge_color));
+				box.Add(new colorstring("|",box_edge_color) + item.GetName(true,Extra).PadOuter(widest).GetColorString(Color.White) + new colorstring("|",box_edge_color));
 				box.Add(new colorstring("|",box_edge_color,"".PadRight(widest),Color.Gray,"|",box_edge_color));
 			}
 			foreach(string s in text){
@@ -1119,7 +1121,7 @@ namespace Forays{
 						case FeatureType.TROLL_CORPSE:
 						case FeatureType.TROLL_BLOODWITCH_CORPSE:
 						{
-							string s = $"A mangled troll twitches on {t.the_name}.";
+							string s = $"A mangled troll twitches on {t.GetName(The)}.";
 							if(s.Length > COLS){
 								return "A mangled troll twitches here.";
 							}
@@ -1137,7 +1139,7 @@ namespace Forays{
 						}
 						case FeatureType.SLIME:
 						{
-							string s = $"A thick layer of slippery slime covers {t.the_name}.";
+							string s = $"A thick layer of slippery slime covers {t.GetName(The)}.";
 							if(s.Length > COLS){
 								return "A thick layer of slippery slime covers every surface here.";
 							}
@@ -1145,7 +1147,7 @@ namespace Forays{
 						}
 						case FeatureType.OIL:
 						{
-							string s = $"Oil is puddled on {t.the_name} here, awaiting a spark.";
+							string s = $"Oil is puddled on {t.GetName(The)} here, awaiting a spark.";
 							if(s.Length > COLS){
 								return "Oil is puddled here, awaiting a spark.";
 							}
@@ -1209,9 +1211,9 @@ namespace Forays{
 				case TileType.SPIRIT_SHRINE:
 				case TileType.STEALTH_SHRINE:
 				case TileType.SPELL_EXCHANGE_SHRINE:
-				return $"The {t.name} glows faintly.";
+				return $"The {t.GetName()} glows faintly.";
 				case TileType.RUINED_SHRINE:
-				return $"The power has faded from the {t.name}.";
+				return $"The power has faded from the {t.GetName()}.";
 				case TileType.FIRE_GEYSER:
 				return "An unbearable wave of heat heralds another spray of liquid fire.";
 				case TileType.POOL_OF_RESTORATION:
@@ -1271,10 +1273,10 @@ namespace Forays{
 				}
 			}
 			if(t.IsKnownTrap()){
-				if(t.name.Contains("(safe)")){ //this is the hacky way in which Disarm Trap is implemented
-					return $"You safely cross the {t.name}.";
+				if(t.Name.Singular.Contains("(safe)")){ //this is the hacky way in which Disarm Trap is implemented
+					return $"You safely cross the {t.GetName()}.";
 				}
-				string s = $"The trigger mechanism of a {t.name} waits beneath you.";
+				string s = $"The trigger mechanism of a {t.GetName()} waits beneath you.";
 				if(!t.revealed_by_light || s.Length > COLS){
 					return "The trigger mechanism of a dangerous trap waits beneath you.";
 				}

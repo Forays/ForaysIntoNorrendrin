@@ -342,9 +342,7 @@ namespace Forays{
 				b.Write(GetID(t));
 				b.Write(t.row);
 				b.Write(t.col);
-				b.Write(t.name);
-				b.Write(t.the_name);
-				b.Write(t.a_name);
+				//todo name
 				b.Write(t.symbol);
 				b.Write((int)t.color);
 				b.Write(t.light_radius);
@@ -439,13 +437,13 @@ namespace Forays{
 			b.Write(UI.viewing_commands_idx);
 			b.Write(M.feat_gained_this_level);
 			b.Write(M.extra_danger);
-			b.Write(Item.unIDed_name.Count);
-			foreach(ConsumableType ct in Item.unIDed_name.Keys){
-				b.Write((int)ct);
-				b.Write(Item.unIDed_name[ct]);
-			}
-			b.Write(Item.identified.d.Count);
-			foreach(ConsumableType ct in Item.identified.d.Keys){
+			//b.Write(Item.unIDed_name.Count);
+			//foreach(ConsumableType ct in Item.unIDed_name.Keys){
+				//b.Write((int)ct);
+				//b.Write(Item.unIDed_name[ct]); todo broke saving here
+			//}
+			b.Write(Item.identified.hashSet.Count);
+			foreach(ConsumableType ct in Item.identified){
 				b.Write((int)ct);
 				b.Write(Item.identified[ct]);
 			}
@@ -493,9 +491,7 @@ namespace Forays{
 			b.Write(get_id(a));
 			b.Write(a.row);
 			b.Write(a.col);
-			b.Write(a.name);
-			b.Write(a.the_name);
-			b.Write(a.a_name);
+			//todo name
 			b.Write(a.symbol);
 			b.Write((int)a.color);
 			b.Write((int)a.type);
@@ -572,9 +568,7 @@ namespace Forays{
 			b.Write(get_id(i));
 			b.Write(i.row);
 			b.Write(i.col);
-			b.Write(i.name);
-			b.Write(i.the_name);
-			b.Write(i.a_name);
+			//todo name
 			b.Write(i.symbol);
 			b.Write((int)i.color);
 			b.Write(i.light_radius);

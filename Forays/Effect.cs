@@ -9,9 +9,10 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Forays;
 using PosArrays;
 using Utilities;
+using Nym;
+using static Nym.NameElement;
 namespace Forays{
 	public static class SharedEffect{
 		private static MessageBuffer B{ get{ return Actor.B; } } //todo: add collapse (and/or the falling stones effect) and passage here eventually
@@ -20,7 +21,7 @@ namespace Forays{
 		private static Actor player{ get{ return Actor.player; } }
 		private static int ROWS{ get{ return Global.ROWS; } }
 		private static int COLS{ get{ return Global.COLS; } }
-		public static void ShowKnownItems(Dict<ConsumableType,bool> IDed){
+		public static void ShowKnownItems(Hash<ConsumableType> IDed){
 			MouseUI.PushButtonMap();
 			UI.draw_bottom_commands = false;
 			UI.darken_status_bar = true;
@@ -39,12 +40,12 @@ namespace Forays{
 				int item_idx = 0;
 				while(item_idx + 1 < item_list.Count){
 					ConsumableType[] ct = new ConsumableType[2];
-					string[] name = new string[2];
+					string[] names = new string[2];
 					Color[] ided_color = new Color[2];
 					for(int i=0;i<2;++i){
 						ct[i] = item_list[item_idx + i];
-						name[i] = ct[i].ToString()[0] + ct[i].ToString().Substring(1).ToLower();
-						name[i] = name[i].Replace('_',' ');
+						names[i] = ct[i].ToString()[0] + ct[i].ToString().Substring(1).ToLower();
+						names[i] = names[i].Replace('_',' ');
 						if(IDed[ct[i]]){
 							ided_color[i] = Color.Cyan;
 						}
@@ -52,20 +53,20 @@ namespace Forays{
 							ided_color[i] = Color.DarkGray;
 						}
 					}
-					int num_spaces = width - (name[0].Length + name[1].Length);
-					string_lists[list_idx].Add(new colorstring(name[0],ided_color[0],"".PadRight(num_spaces),Color.Black,name[1],ided_color[1]));
+					int num_spaces = width - (names[0].Length + names[1].Length);
+					string_lists[list_idx].Add(new colorstring(names[0],ided_color[0],"".PadRight(num_spaces),Color.Black,names[1],ided_color[1]));
 					item_idx += 2;
 				}
 				if(item_list.Count % 2 == 1){
 					ConsumableType ct = item_list.Last();
-					string name = (ct.ToString()[0] + ct.ToString().Substring(1).ToLower()).Replace('_',' ');
+					string n = (ct.ToString()[0] + ct.ToString().Substring(1).ToLower()).Replace('_',' ');
 					//name = name[i].Replace('_',' ');
 					Color ided_color = Color.DarkGray;
 					if(IDed[ct]){
 						ided_color = Color.Cyan;
 					}
-					int num_spaces = width - name.Length;
-					string_lists[list_idx].Add(new colorstring(name,ided_color,"".PadRight(num_spaces),Color.Black));
+					int num_spaces = width - n.Length;
+					string_lists[list_idx].Add(new colorstring(n,ided_color,"".PadRight(num_spaces),Color.Black));
 				}
 				++list_idx;
 			}
@@ -271,7 +272,7 @@ namespace Forays{
 					Actor.tiebreakers[troll_event.tiebreaker] = troll;
 					troll.symbol = '%';
 					troll.attrs[AttrType.CORPSE] = 1;
-					troll.SetName(troll.name + "'s corpse");
+					troll.Name = new Name(troll.GetName(Possessive) + " corpse");
 					troll.curhp = troll_event.value;
 					troll.attrs[AttrType.PERMANENT_DAMAGE] = troll_event.secondary_value;
 					troll.attrs[AttrType.NO_ITEM]++;
@@ -279,7 +280,7 @@ namespace Forays{
 					a = troll;
 				}
 				if(a != null){
-					string msg = "Throw " + a.TheName(true) + " in which direction? ";
+					string msg = "Throw " + a.GetName(true,The) + " in which direction? ";
 					if(a == player){
 						msg = "Throw yourself in which direction? ";
 					}
@@ -301,7 +302,7 @@ namespace Forays{
 							return false;
 						}
 						if(cast){
-							B.Add(user.You("cast") + " telekinesis. ",user);
+							B.Add(user.GetName(false,The,Verb("cast")) + " telekinesis. ",user);
 							user.MakeNoise(6); //should match spellVolume, hack
 							if(a.type == ActorType.ALASI_BATTLEMAGE && !a.HasSpell(SpellType.TELEKINESIS)){
 								a.curmp += Spell.Tier(SpellType.TELEKINESIS);
@@ -309,7 +310,7 @@ namespace Forays{
 									a.curmp = a.maxmp;
 								}
 								a.GainSpell(SpellType.TELEKINESIS);
-								B.Add("Runes on " + a.Your() + " armor align themselves with the spell. ",a);
+								B.Add("Runes on " + a.GetName(false,The,Possessive) + " armor align themselves with the spell. ",a);
 							}
 						}
 						if(a == user && a == player){
@@ -317,10 +318,10 @@ namespace Forays{
 						}
 						else{
 							if(line.Count == 1){
-								B.Add(user.YouVisible("throw") + " " + a.TheName(true) + " into the ceiling. ",user,a);
+								B.Add(user.GetName(true,The,Verb("throw")) + " " + a.GetName(true,The) + " into the ceiling. ",user,a);
 							}
 							else{
-								B.Add(user.YouVisible("throw") + " " + a.TheName(true) + ". ",user,a);
+								B.Add(user.GetName(true,The,Verb("throw")) + " " + a.GetName(true,The) + ". ",user,a);
 							}
 						}
 						B.DisplayContents();
@@ -369,10 +370,7 @@ namespace Forays{
 							itemname = "the blast fungus";
 						}
 						else{
-							itemname = i.TheName(true);
-							if(i.quantity > 1){
-								itemname = "the " + i.SingularName();
-							}
+							itemname = i.GetName(true,The, Extra);
 						}
 						string msg = "Throw " + itemname + " in which direction? ";
 						List<Tile> line = null;
@@ -390,7 +388,7 @@ namespace Forays{
 								line = line.ToCount(13); //for range 12
 							}
 							if(cast){
-								B.Add(user.You("cast") + " telekinesis. ",user);
+								B.Add(user.GetName(false,The,Verb("cast")) + " telekinesis. ",user);
 								user.MakeNoise(6); //should match spellVolume
 							}
 							if(blast_fungus){
@@ -406,10 +404,10 @@ namespace Forays{
 								}
 							}
 							if(line.Count == 1){
-								B.Add(user.YouVisible("throw") + " " + itemname + " into the ceiling. ",user,t);
+								B.Add(user.GetName(true,The,Verb("throw")) + " " + itemname + " into the ceiling. ",user,t);
 							}
 							else{
-								B.Add(user.YouVisible("throw") + " " + itemname + ". ",user,t);
+								B.Add(user.GetName(true,The,Verb("throw")) + " " + itemname + ". ",user,t);
 							}
 							B.DisplayContents();
 							if(i.quantity > 1){
@@ -457,7 +455,7 @@ namespace Forays{
 								user.AnimateProjectile(line,i.symbol,i.color);
 							}
 							if(first == user){
-								B.Add(user.You("catch",true) + " it! ",user);
+								B.Add(user.GetName(false,The,Verb("catch")) + " it! ",user);
 								if(user.inv.Count < Global.MAX_INVENTORY_SIZE){
 									user.GetItem(i);
 								}
@@ -469,16 +467,11 @@ namespace Forays{
 							}
 							else{
 								if(first != null){
-									B.Add("It hits " + first.the_name + ". ",first);
+									B.Add("It hits " + first.GetName(The) + ". ",first);
 								}
 								if(i.IsBreakable()){
-									if(i.quantity > 1){
-										B.Add(i.TheName(true) + " break! ",t2);
-									}
-									else{
-										B.Add(i.TheName(true) + " breaks! ",t2);
-									}
-									if(i.NameOfItemType() == "orb"){
+									B.Add($"{i.GetName(true,The,Extra,Verb("break"))}! ",t2);
+									if(i.ItemClass == ConsumableClass.ORB){
 										i.Use(null,new List<Tile>{t2});
 									}
 									else{
@@ -511,7 +504,7 @@ namespace Forays{
 					else{
 						if(!t.Is(FeatureType.GRENADE) && (t.Is(TileType.DOOR_C,TileType.DOOR_O,TileType.POISON_BULB) || t.Is(FeatureType.WEB,FeatureType.FORASECT_EGG,FeatureType.BONES))){
 							if(cast){
-								B.Add(user.You("cast") + " telekinesis. ",user);
+								B.Add(user.GetName(false,The,Verb("cast")) + " telekinesis. ",user);
 								user.MakeNoise(6); //should match spellVolume
 							}
 							if(t.Is(TileType.DOOR_C)){
@@ -603,14 +596,14 @@ namespace Forays{
 							}
 							if(line != null){
 								if(cast){
-									B.Add(user.You("cast") + " telekinesis. ",user);
+									B.Add(user.GetName(false,The,Verb("cast")) + " telekinesis. ",user);
 									user.MakeNoise(6); //should match spellVolume
 								}
 								if(line.Count == 1){
-									B.Add(user.YouVisible("throw") + " the " + feature_name + " into the ceiling. ",user,t);
+									B.Add(user.GetName(true,The,Verb("throw")) + " the " + feature_name + " into the ceiling. ",user,t);
 								}
 								else{
-									B.Add(user.YouVisible("throw") + " the " + feature_name + ". ",user,t);
+									B.Add(user.GetName(true,The,Verb("throw")) + " the " + feature_name + ". ",user,t);
 								}
 								B.DisplayContents();
 								user.attrs[AttrType.SELF_TK_NO_DAMAGE] = 1;
@@ -659,7 +652,7 @@ namespace Forays{
 									line.RemoveAt(0);
 									if(!t2.passable){
 										if(t2.Is(TileType.CRACKED_WALL,TileType.DOOR_C,TileType.HIDDEN_DOOR) && impact_damage_dice > 0){
-											string tilename = t2.TheName(true);
+											string tilename = t2.GetName(true,The);
 											if(t2.type == TileType.HIDDEN_DOOR){
 												tilename = "a hidden door";
 												t2.Toggle(null);
@@ -669,7 +662,7 @@ namespace Forays{
 											Screen.WriteMapChar(current_row,current_col,mem[current_row,current_col]);
 										}
 										else{
-											B.Add("The " + feature_name + " flies into " + t2.TheName(true) + ". ",t2);
+											B.Add("The " + feature_name + " flies into " + t2.GetName(true,The) + ". ",t2);
 											if(impact_damage_dice > 0){
 												t2.Bump(M.tile[current_row,current_col].DirectionOf(t2));
 											}
@@ -680,7 +673,7 @@ namespace Forays{
 									}
 									else{
 										if(t2.actor() != null){
-											B.Add("The " + feature_name + " flies into " + t2.actor().TheName(true) + ". ",t2);
+											B.Add("The " + feature_name + " flies into " + t2.actor().GetName(true,The) + ". ",t2);
 											if(t2.actor().type != ActorType.SPORE_POD && !t2.actor().HasAttr(AttrType.SELF_TK_NO_DAMAGE)){
 												t2.actor().TakeDamage(DamageType.NORMAL,DamageClass.PHYSICAL,R.Roll(impact_damage_dice,6),user,"colliding with a " + feature_name);
 											}
@@ -731,7 +724,7 @@ namespace Forays{
 											}
 											else{
 												t3.actor().attrs[AttrType.OIL_COVERED] = 1;
-												B.Add(t3.actor().YouAre() + " covered in oil. ",t3.actor());
+												B.Add(t3.actor().GetName(false,The,Are) + " covered in oil. ",t3.actor());
 												if(t3.actor() == player){
 													Help.TutorialTip(TutorialTopic.Oiled);
 												}

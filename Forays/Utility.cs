@@ -7,9 +7,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.*/
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using PosArrays;
-//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v14)
+//This file contains utility classes and extension methods. Some are meant to be used with 2D grids, while others are more general. (v15)
 namespace Utilities{
 	public class Dict<TKey,TValue>{ //a Dictionary that returns the default value for keys that haven't been added
 		public Dictionary<TKey,TValue> d;
@@ -22,7 +23,23 @@ namespace Utilities{
 			}
 		}
 		public Dict(){ d = new Dictionary<TKey,TValue>(); }
-		public Dict(Dict<TKey,TValue> d2){ d = new Dictionary<TKey, TValue>(d2.d); }
+		public Dict(Dict<TKey,TValue> d2) : this(d2.d){ }
+		public Dict(Dictionary<TKey,TValue> d2) { d = new Dictionary<TKey,TValue>(d2); }
+	}
+	public class Hash<T> : IEnumerable<T> {
+		public HashSet<T> hashSet;
+		public bool this[T t] {
+			get { return hashSet.Contains(t); }
+			set {
+				if(value) hashSet.Add(t);
+				else hashSet.Remove(t);
+			}
+		}
+		IEnumerator IEnumerable.GetEnumerator() => hashSet.GetEnumerator();
+		IEnumerator<T> IEnumerable<T>.GetEnumerator() => hashSet.GetEnumerator();
+		public Hash() { hashSet = new HashSet<T>(); }
+		public Hash(Hash<T> h) : this(h.hashSet) { }
+		public Hash(HashSet<T> h) { hashSet = new HashSet<T>(h); }
 	}
 	public class Cached<T>{
 		protected T value;

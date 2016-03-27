@@ -10,13 +10,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Reflection;
 using OpenTK;
-using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL;
 using Utilities;
-using Forays;
+using Nym;
+using static Nym.NameElement;
 using PosArrays;
 using GLDrawing;
 namespace Forays{
@@ -28,6 +27,7 @@ namespace Forays{
 	public enum SkillType{COMBAT,DEFENSE,MAGIC,SPIRIT,STEALTH,NUM_SKILLS,NO_SKILL};
 	public enum FeatType{QUICK_DRAW,WHIRLWIND_STYLE,LUNGE,DRIVE_BACK,ARMOR_MASTERY,CUNNING_DODGE,DEFLECT_ATTACK,TUMBLE,MASTERS_EDGE,ARCANE_INTERFERENCE,CHAIN_CASTING,FORCE_OF_WILL,CONVICTION,ENDURING_SOUL,FEEL_NO_PAIN,BOILING_BLOOD,NECK_SNAP,DISARM_TRAP,CORNER_CLIMB,DANGER_SENSE,NUM_FEATS,NO_FEAT};
 	public enum ConsumableType{HEALING,REGENERATION,STONEFORM,VAMPIRISM,BRUTISH_STRENGTH,ROOTS,HASTE,SILENCE,CLOAKING,MYSTIC_MIND,BLINKING,PASSAGE,TIME,KNOWLEDGE,SUNLIGHT,DARKNESS,RENEWAL,CALLING,TRAP_CLEARING,ENCHANTMENT,THUNDERCLAP,FIRE_RING,RAGE,FREEZING,FLAMES,FOG,DETONATION,BREACHING,SHIELDING,TELEPORTAL,PAIN,CONFUSION,BLADES,DUST_STORM,INVISIBILITY,FLESH_TO_FIRE,WEBS,SLUMBER,REACH,TELEKINESIS,BANDAGES,FLINT_AND_STEEL,BLAST_FUNGUS,MAGIC_TRINKET};
+	public enum ConsumableClass { POTION,SCROLL,ORB,WAND,OTHER };
 	public enum WeaponType{SWORD,MACE,DAGGER,STAFF,BOW,NUM_WEAPONS,NO_WEAPON};
 	public enum ArmorType{LEATHER,CHAINMAIL,FULL_PLATE,NUM_ARMORS,NO_ARMOR};
 	public enum EnchantmentType{CHILLING,ECHOES,DISRUPTION,PRECISION,VICTORY,NUM_ENCHANTMENTS,NO_ENCHANTMENT};
@@ -133,6 +133,7 @@ namespace Forays{
 				Global.Timer.Start();
 				Screen.CursorVisible = false;
 			}
+			Nym.Verbs.Register("feel","looks"); //Useful for generating messages like "You feel stronger" / "The foo looks stronger".
 			Input.LoadKeyRebindings();
 			TitleScreen();
 			MainMenu();
@@ -222,7 +223,7 @@ namespace Forays{
 					Game game = new Game();
 					Actor.attack[ActorType.PLAYER] = new List<AttackInfo>{new AttackInfo(100,2,AttackEffect.NO_CRIT,"& hit *","& miss *","")};
 					if(!saved_game){
-						game.player = new Actor(ActorType.PLAYER,"you",'@',Color.White,100,100,0,0,AttrType.HUMANOID_INTELLIGENCE);
+						game.player = new Actor(ActorType.PLAYER,new Nym.Name("you",noArticles:true,secondPerson:true),'@',Color.White,100,100,0,0,AttrType.HUMANOID_INTELLIGENCE);
 						game.player.inv = new List<Item>();
 						Actor.feats_in_order = new List<FeatType>();
 						Actor.spells_in_order = new List<SpellType>();
@@ -463,9 +464,7 @@ namespace Forays{
 									game.M.actor[a.row,a.col] = a;
 								}
 								Actor.tiebreakers.Add(a);
-								a.name = b.ReadString();
-								a.the_name = b.ReadString();
-								a.a_name = b.ReadString();
+										//todo name
 								a.symbol = b.ReadChar();
 								a.color = (Color)b.ReadInt32();
 								a.type = (ActorType)b.ReadInt32();
@@ -501,9 +500,7 @@ namespace Forays{
 										id.Add(item_id,item);
 										item.row = b.ReadInt32();
 										item.col = b.ReadInt32();
-										item.name = b.ReadString();
-										item.the_name = b.ReadString();
-										item.a_name = b.ReadString();
+												//todo name
 										item.symbol = b.ReadChar();
 										item.color = (Color)b.ReadInt32();
 										item.light_radius = b.ReadInt32();
@@ -610,9 +607,7 @@ namespace Forays{
 							t.row = b.ReadInt32();
 							t.col = b.ReadInt32();
 							game.M.tile[t.row,t.col] = t;
-							t.name = b.ReadString();
-							t.the_name = b.ReadString();
-							t.a_name = b.ReadString();
+									//todo name
 							t.symbol = b.ReadChar();
 							t.color = (Color)b.ReadInt32();
 							t.light_radius = b.ReadInt32();
@@ -637,9 +632,7 @@ namespace Forays{
 								id.Add(item_id,t.inv);
 								t.inv.row = b.ReadInt32();
 								t.inv.col = b.ReadInt32();
-								t.inv.name = b.ReadString();
-								t.inv.the_name = b.ReadString();
-								t.inv.a_name = b.ReadString();
+										//todo name
 								t.inv.symbol = b.ReadChar();
 								t.inv.color = (Color)b.ReadInt32();
 								t.inv.light_radius = b.ReadInt32();
@@ -687,9 +680,7 @@ namespace Forays{
 									id.Add(item_id,item);
 									item.row = b.ReadInt32();
 									item.col = b.ReadInt32();
-									item.name = b.ReadString();
-									item.the_name = b.ReadString();
-									item.a_name = b.ReadString();
+											//todo name
 									item.symbol = b.ReadChar();
 									item.color = (Color)b.ReadInt32();
 									item.light_radius = b.ReadInt32();
@@ -781,7 +772,7 @@ namespace Forays{
 						for(int i=0;i<num_unIDed;++i){
 							ConsumableType ct = (ConsumableType)b.ReadInt32();
 							string s = b.ReadString();
-							Item.unIDed_name[ct] = s;
+							//Item.unIDed_name[ct] = s; //todo broke loading here
 						}
 						int num_IDed = b.ReadInt32();
 						for(int i=0;i<num_IDed;++i){
@@ -1074,8 +1065,8 @@ namespace Forays{
 			}
 			if(!showed_IDed_tip && Global.KILLED_BY != "gave up" && !Help.displayed[TutorialTopic.UnidentifiedConsumables]){
 				int known_count = 0;
-				foreach(ConsumableType ct in Item.identified.d.Keys){
-					if(Item.identified[ct] && Item.NameOfItemType(ct) != "other"){
+				foreach(ConsumableType ct in Item.identified){
+					if(Item.identified[ct] && Item.GetItemClass(ct) != ConsumableClass.OTHER){
 						++known_count;
 					}
 				}
@@ -1084,28 +1075,22 @@ namespace Forays{
 					Global.SaveOptions();
 				}
 			}
-			Dict<ConsumableType,bool> known_items = new Dict<ConsumableType,bool>(Item.identified);
+			Hash<ConsumableType> knownAtTimeOfDeath = new Hash<ConsumableType>(Item.identified);
+			foreach(ConsumableType ct in Enum.GetValues(typeof(ConsumableType))) {
+				Item.identified[ct] = true;
+			}
+			List<string> postMortemInventoryList = new List<string>();
 			foreach(Item i in game.player.inv){
-				if(i.NameOfItemType() != "other"){
-					if(!Item.identified[i.type]){
-						if(!Item.unIDed_name[i.type].Contains("{tried}")){
-							Item.unIDed_name[i.type] = Item.unIDed_name[i.type] + " {untried}";
-						}
-						Item.identified[i.type] = true;
+				if(i.ItemClass == ConsumableClass.WAND) i.other_data = -1;
+				if(knownAtTimeOfDeath[i.type]) {
+					postMortemInventoryList.Add(i.GetName(false,An,Extra));
+				}
+				else {
+					if(Item.tried[i.type]) {
+						postMortemInventoryList.Add(i.GetName(false, An, Extra) + " {tried}");
 					}
-					else{
-						known_items[i.type] = true;
-					}
-					if(i.NameOfItemType() == "wand"){
-						i.other_data = -1;
-					}
-					if(Item.unIDed_name[i.type].Contains("{tried}")){
-						i.SetName(i.name + " {tried}");
-					}
-					else{
-						if(Item.unIDed_name[i.type].Contains("{untried}")){
-							i.SetName(i.name + " {untried}");
-						}
+					else {
+						postMortemInventoryList.Add(i.GetName(false, An, Extra) + " {untried}");
 					}
 				}
 			}
@@ -1179,13 +1164,13 @@ namespace Forays{
 						Screen.WriteMapString(i,0,"".PadRight(Global.COLS));
 					}
 					MouseUI.AutomaticButtonsFromStrings = false;
-					game.player.Select("In your pack: ",game.player.InventoryList(),true,false,false);
+					game.player.Select("In your pack: ",postMortemInventoryList,true,false,false);
 					Input.ReadKey();
 					MouseUI.PopButtonMap();
 					break;
 				case 4:
 				{
-					SharedEffect.ShowKnownItems(known_items);
+					SharedEffect.ShowKnownItems(knownAtTimeOfDeath);
 					break;
 				}
 				case 5:
@@ -1214,19 +1199,19 @@ namespace Forays{
 					}
 					file.WriteLine();
 					file.WriteLine("Inventory: ");
-					foreach(string s in game.player.InventoryList()){
+					foreach(string s in postMortemInventoryList){
 						file.WriteLine(s);
 					}
-					if(game.player.InventoryList().Count == 0){
+					if(postMortemInventoryList.Count == 0){
 						file.WriteLine("(nothing)");
 					}
 					file.WriteLine();
 					file.WriteLine("Known items: ");
 					bool known_items_found = false;
-					foreach(ConsumableType ct in known_items.d.Keys){
-						if(known_items[ct] && (Item.NameOfItemType(ct) == "potion" || Item.NameOfItemType(ct) == "scroll" || Item.NameOfItemType(ct) == "orb")){
-							file.WriteLine(Item.Prototype(ct).Name(false));
+					foreach(ConsumableType ct in knownAtTimeOfDeath) {
+						if(Item.GetItemClass(ct) != ConsumableClass.OTHER) {
 							known_items_found = true;
+							file.WriteLine(Item.Prototype(ct).Name.Singular);
 						}
 					}
 					if(!known_items_found){
@@ -1262,7 +1247,7 @@ namespace Forays{
 					}
 					file.WriteLine();
 					file.WriteLine("Last messages: ");
-					foreach(string s in game.B.GetMessageLog()){
+					foreach(string s in game.B.GetMessageLog()){ //todo, limit message log size?
 						if(s != ""){
 							file.WriteLine(s);
 						}

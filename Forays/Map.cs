@@ -12,6 +12,7 @@ using SchismDungeonGenerator;
 using Utilities;
 using PosArrays;
 using SchismExtensionMethods;
+using Nym;
 namespace Forays{
 	public enum LevelType{Standard,Cave,Hive,Mine,Fortress,Sewer,Garden,Crypt,Hellish,Final};
 	public enum AestheticFeature{None,Charred,BloodDarkRed,BloodOther}; //todo: blood colors? smashed barrels? melted wax walls? crushed forasect eggs?
@@ -2932,7 +2933,7 @@ namespace Forays{
 							if(Depth == 20){
 								Tile.Create(TileType.STAIRS,i,j);
 								tile[i,j].color = Color.Red;
-								tile[i,j].SetName("scorched stairway");
+								tile[i,j].Name = new Name("scorched stairway");
 								stairs = tile[i,j];
 							}
 							else{
@@ -2966,9 +2967,7 @@ namespace Forays{
 						TileType type = Tile.RandomTrap();
 						Tile.Create(type,i,j);
 						if(tile[i,j].IsTrap()){
-							tile[i,j].name = "floor";
-							tile[i,j].the_name = "the floor";
-							tile[i,j].a_name = "a floor";
+							tile[i,j].Name = Tile.Prototype(TileType.FLOOR).Name;
 							tile[i,j].symbol = '.';
 							tile[i,j].color = Color.White;
 							hidden.Add(tile[i,j]);
@@ -3153,7 +3152,7 @@ namespace Forays{
 					foreach(int dir in U.FourDirections){
 						if(R.CoinFlip()){
 							Tile neighbor = t.TileInDirection(dir);
-							if(neighbor?.name == "floor" && neighbor.color == Color.White){
+							if(neighbor?.Name.Singular == "floor" && neighbor.color == Color.White){
 								neighbor.AddBlood(Color.DarkRed);
 							}
 						}
@@ -3554,9 +3553,7 @@ namespace Forays{
 											hidden.Add(t);
 										}
 										t.TransformTo(tt);
-										t.name = "floor";
-										t.the_name = "the floor";
-										t.a_name = "a floor";
+										t.Name = Tile.Prototype(TileType.FLOOR).Name;
 										t.symbol = '.';
 										t.color = Color.White;
 										if(t.DistanceFrom(tile[rr,rc]) < distance+2){
@@ -3570,9 +3567,7 @@ namespace Forays{
 												}
 												neighbor.TransformTo(tt);
 												if(possible_traps.Contains(tt)){
-													neighbor.name = "floor";
-													neighbor.the_name = "the floor";
-													neighbor.a_name = "a floor";
+													neighbor.Name = Tile.Prototype(TileType.FLOOR).Name;
 													neighbor.symbol = '.';
 													neighbor.color = Color.White;
 													hidden.Add(neighbor);
@@ -3588,9 +3583,7 @@ namespace Forays{
 												}
 												neighbor.TransformTo(tt);
 												if(possible_traps.Contains(tt)){
-													neighbor.name = "floor";
-													neighbor.the_name = "the floor";
-													neighbor.a_name = "a floor";
+													neighbor.Name = Tile.Prototype(TileType.FLOOR).Name;
 													neighbor.symbol = '.';
 													neighbor.color = Color.White;
 													hidden.Add(neighbor);
@@ -3606,9 +3599,7 @@ namespace Forays{
 										}
 										t.TransformTo(tt);
 										if(tt != TileType.FLOOR){
-											t.name = "floor";
-											t.the_name = "the floor";
-											t.a_name = "a floor";
+											t.Name = Tile.Prototype(TileType.FLOOR).Name;
 											t.symbol = '.';
 											t.color = Color.White;
 										}
@@ -3631,9 +3622,7 @@ namespace Forays{
 									}
 									else{
 										t.TransformTo(TileType.ALARM_TRAP);
-										t.name = "floor";
-										t.the_name = "the floor";
-										t.a_name = "a floor";
+										t.Name = Tile.Prototype(TileType.FLOOR).Name;
 										t.symbol = '.';
 										t.color = Color.White;
 										hidden.AddUnique(t);
@@ -3643,9 +3632,7 @@ namespace Forays{
 							if(long_corridor && connections == 1){
 								foreach(Tile t in tile[rr,rc].TilesWithinDistance(1)){
 									t.TransformTo(possible_traps.Random());
-									t.name = "floor";
-									t.the_name = "the floor";
-									t.a_name = "a floor";
+									t.Name = Tile.Prototype(TileType.FLOOR).Name;
 									t.symbol = '.';
 									t.color = Color.White;
 									hidden.Add(t);
@@ -3658,9 +3645,7 @@ namespace Forays{
 							else{
 								foreach(Tile t in tile[rr,rc].TilesAtDistance(1)){
 									t.TransformTo(Tile.RandomTrap());
-									t.name = "floor";
-									t.the_name = "the floor";
-									t.a_name = "a floor";
+									t.Name = Tile.Prototype(TileType.FLOOR).Name;
 									t.symbol = '.';
 									t.color = Color.White;
 									hidden.Add(t);
@@ -3675,199 +3660,6 @@ namespace Forays{
 					}
 				}
 			}
-			/*if(R.CoinFlip()){
-				bool done = false;
-				for(int tries=0;!done && tries<500;++tries){
-					int rr = R.Roll(ROWS-4) + 1;
-					int rc = R.Roll(COLS-4) + 1;
-					bool good = true;
-					foreach(Tile t in tile[rr,rc].TilesWithinDistance(2)){
-						if(t.type != TileType.WALL){
-							good = false;
-							break;
-						}
-					}
-					if(good){
-						List<int> dirs = new List<int>();
-						bool long_corridor = false;
-						int connections = 0;
-						for(int i=2;i<=8;i+=2){
-							Tile t = tile[rr,rc].TileInDirection(i).TileInDirection(i);
-							bool good_dir = true;
-							int distance = -1;
-							while(good_dir && t != null && t.type == TileType.WALL){
-								if(t.TileInDirection(i.RotateDir(false,2)).type != TileType.WALL){
-									good_dir = false;
-								}
-								if(t.TileInDirection(i.RotateDir(true,2)).type != TileType.WALL){
-									good_dir = false;
-								}
-								t = t.TileInDirection(i);
-								if(t != null && t.type == TileType.STATUE){
-									good_dir = false;
-								}
-								++distance;
-							}
-							if(good_dir && t != null){
-								dirs.Add(i);
-								++connections;
-								if(distance >= 4){
-									long_corridor = true;
-								}
-							}
-						}
-						if(dirs.Count > 0){
-							List<TileType> possible_traps = new List<TileType>();
-							int trap_roll = R.Roll(7);
-							if(trap_roll == 1 || trap_roll == 4 || trap_roll == 5 || trap_roll == 7){
-								possible_traps.Add(TileType.GRENADE_TRAP);
-							}
-							if(trap_roll == 2 || trap_roll == 4 || trap_roll == 6 || trap_roll == 7){
-								possible_traps.Add(TileType.POISON_GAS_TRAP);
-							}
-							if(trap_roll == 3 || trap_roll == 5 || trap_roll == 6 || trap_roll == 7){
-								possible_traps.Add(TileType.PHANTOM_TRAP);
-							}
-							bool stone_slabs = false; //(instead of hidden doors)
-							if(R.OneIn(4)){
-								stone_slabs = true;
-							}
-							foreach(int i in dirs){
-								Tile t = tile[rr,rc].TileInDirection(i);
-								int distance = -2; //distance of the corridor between traps and secret door
-								while(t.type == TileType.WALL){
-									++distance;
-									t = t.TileInDirection(i);
-								}
-								if(long_corridor && distance < 4){
-									continue;
-								}
-								t = tile[rr,rc].TileInDirection(i);
-								while(t.type == TileType.WALL){
-									if(distance >= 4){
-										TileType tt = TileType.FLOOR;
-										if(R.Roll(3) >= 2){
-											tt = possible_traps.Random();
-											hidden.Add(t);
-										}
-										t.TransformTo(tt);
-										t.name = "floor";
-										t.the_name = "the floor";
-										t.a_name = "a floor";
-										t.symbol = '.';
-										t.color = Color.White;
-										if(t.DistanceFrom(tile[rr,rc]) < distance+2){
-											Tile neighbor = t.TileInDirection(i.RotateDir(false,2));
-											if(neighbor.TileInDirection(i.RotateDir(false,1)).type == TileType.WALL
-											   && neighbor.TileInDirection(i.RotateDir(false,2)).type == TileType.WALL
-											   && neighbor.TileInDirection(i.RotateDir(false,3)).type == TileType.WALL){
-												tt = TileType.FLOOR;
-												if(R.Roll(3) >= 2){
-													tt = possible_traps.Random();
-												}
-												neighbor.TransformTo(tt);
-												if(possible_traps.Contains(tt)){
-													neighbor.name = "floor";
-													neighbor.the_name = "the floor";
-													neighbor.a_name = "a floor";
-													neighbor.symbol = '.';
-													neighbor.color = Color.White;
-													hidden.Add(neighbor);
-												}
-											}
-											neighbor = t.TileInDirection(i.RotateDir(true,2));
-											if(neighbor.TileInDirection(i.RotateDir(true,1)).type == TileType.WALL
-											   && neighbor.TileInDirection(i.RotateDir(true,2)).type == TileType.WALL
-											   && neighbor.TileInDirection(i.RotateDir(true,3)).type == TileType.WALL){
-												tt = TileType.FLOOR;
-												if(R.Roll(3) >= 2){
-													tt = possible_traps.Random();
-												}
-												neighbor.TransformTo(tt);
-												if(possible_traps.Contains(tt)){
-													neighbor.name = "floor";
-													neighbor.the_name = "the floor";
-													neighbor.a_name = "a floor";
-													neighbor.symbol = '.';
-													neighbor.color = Color.White;
-													hidden.Add(neighbor);
-												}
-											}
-										}
-									}
-									else{
-										TileType tt = TileType.FLOOR;
-										if(R.CoinFlip()){
-											tt = Tile.RandomTrap();
-											hidden.Add(t);
-										}
-										t.TransformTo(tt);
-										if(tt != TileType.FLOOR){
-											t.name = "floor";
-											t.the_name = "the floor";
-											t.a_name = "a floor";
-											t.symbol = '.';
-											t.color = Color.White;
-										}
-									}
-									t = t.TileInDirection(i);
-								}
-								t = t.TileInDirection(i.RotateDir(true,4));
-								if(stone_slabs){
-									t.TransformTo(TileType.STONE_SLAB);
-									Q.Add(new Event(t,new List<Tile>{t.TileInDirection(i.RotateDir(true,4))},100,EventType.STONE_SLAB));
-								}
-								else{
-									t.TransformTo(TileType.HIDDEN_DOOR);
-									hidden.AddUnique(t);
-								}
-								t = t.TileInDirection(i.RotateDir(true,4));
-								if(R.CoinFlip()){
-									if(t.IsTrap()){
-										t.type = TileType.ALARM_TRAP;
-									}
-									else{
-										t.TransformTo(TileType.ALARM_TRAP);
-										t.name = "floor";
-										t.the_name = "the floor";
-										t.a_name = "a floor";
-										t.symbol = '.';
-										t.color = Color.White;
-										hidden.AddUnique(t);
-									}
-								}
-							}
-							if(long_corridor && connections == 1){
-								foreach(Tile t in tile[rr,rc].TilesWithinDistance(1)){
-									t.TransformTo(possible_traps.Random());
-									t.name = "floor";
-									t.the_name = "the floor";
-									t.a_name = "a floor";
-									t.symbol = '.';
-									t.color = Color.White;
-									hidden.Add(t);
-								}
-								tile[rr,rc].TileInDirection(dirs[0].RotateDir(true,4)).TransformTo(TileType.CHEST);
-								tile[rr,rc].TileInDirection(dirs[0].RotateDir(true,4)).color = Color.Yellow;
-							}
-							else{
-								foreach(Tile t in tile[rr,rc].TilesAtDistance(1)){
-									t.TransformTo(Tile.RandomTrap());
-									t.name = "floor";
-									t.the_name = "the floor";
-									t.a_name = "a floor";
-									t.symbol = '.';
-									t.color = Color.White;
-									hidden.Add(t);
-								}
-								tile[rr,rc].TransformTo(TileType.CHEST);
-								tile[rr,rc].color = Color.Yellow;
-							}
-							done = true;
-						}
-					}
-				}
-			}*/
 			foreach(Tile t in AllTiles()){
 				if(t.type != TileType.WALL){
 					foreach(Tile neighbor in t.TilesAtDistance(1)){
@@ -3889,7 +3681,7 @@ namespace Forays{
 						if((dijkstra[i,j] == 1 && !R.OneIn(20)) || (dijkstra[i,j] == 2 && R.CoinFlip())){
 							if(i == 0 || j == 0 || i == ROWS-1 || j == COLS-1){
 								tile[i,j].color = Color.DarkYellow;
-								tile[i,j].SetName("waxy wall"); //borders become waxy but don't burn
+								tile[i,j].Name = new Name("waxy wall"); //borders become waxy but don't burn
 							}
 							else{
 								tile[i,j].Toggle(null,TileType.WAX_WALL);
