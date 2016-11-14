@@ -45,7 +45,9 @@ namespace Forays{
 		public Actor player;
 
 		static void Main(string[] args){
-			//Screen.GLMode = false;
+#if CONSOLE
+            Screen.GLMode = false;
+#endif
 			{
 				int os = (int)Environment.OSVersion.Platform;
 				if(os == 4 || os == 6 ||  os == 128){
